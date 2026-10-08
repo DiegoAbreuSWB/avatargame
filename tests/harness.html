@@ -20,6 +20,7 @@ if (PARAMS.r === '3d') {
 </script>
 <script src="../js/config.js"></script>
 <script src="../js/settings.js"></script>
+<script src="../js/save.js"></script>
 <script src="../js/i18n.js"></script>
 <script src="../js/audio.js"></script>
 <script src="../js/music.js"></script>
@@ -28,6 +29,7 @@ if (PARAMS.r === '3d') {
 <script src="../js/touch.js"></script>
 <script src="../js/particles.js"></script>
 <script src="../js/characters.js"></script>
+<script src="../js/skins.js"></script>
 <script src="../js/draw.js"></script>
 <script src="../js/stages.js"></script>
 <script src="../js/projectiles.js"></script>
@@ -43,11 +45,14 @@ if (PARAMS.r === '3d') {
 <script src="../js/content.js"></script>
 <script src="../js/netplay.js"></script>
 <script src="../js/online.js"></script>
+<script src="../js/modifiers.js"></script>
+<script src="../js/daily.js"></script>
+<script src="../js/tournament.js"></script>
 <script>
 (function () {
   const out = { errors: window.__errors, warns: window.__warns, mode: PARAMS.mode || 'all', r: PARAMS.r || '2d', scenes: {}, moves: [], cpuFight: null, matchups: null, shot: null };
   const mode = PARAMS.mode || 'all';
-  Settings.load();
+  Settings.load(); Save.load();
   Settings.data.difficulty = PARAMS.level || 'normal';
   const game = new Game(document.getElementById('game'));
   window.game = game;
@@ -63,6 +68,7 @@ if (PARAMS.r === '3d') {
     safe('scene remap', () => { game.remap = { player: 'p1', index: 0, listening: false, message: '' }; game.scene = 'remap'; game.update(); game.draw(); out.scenes.remap = 'ok'; });
     safe('scenes en', () => { Settings.data.lang = 'en'; for (const sc of ['title', 'controls', 'settings', 'select', 'stage']) { game.scene = sc; game.update(); game.draw(); } Settings.data.lang = 'pt'; out.scenes.en = 'ok'; });
     safe('scene result', () => { game.mode = '2p'; game.select.p1 = 0; game.select.p2 = 1; game.seed = seed; game.startMatch(); game.winner = game.fighters[0]; game.scene = 'result'; game.resultT = 0; game.update(); game.draw(); out.scenes.result = 'ok'; });
+    safe('scenes v07', () => { game.gotoRules(); game.update(); game.draw(); game.scene = 'daily'; game.update(); game.draw(); game.startTournamentSetup(); game.update(); game.draw(); game.tournament.slots.forEach((s) => { s.cpu = true; }); game.buildBracket(); game.update(); game.draw(); out.scenes.v07 = 'ok'; game.scene = 'title'; });
     safe('scene online', () => { game.online = { step: 'menu', index: 0, msg: '' }; game.scene = 'online'; game.update(); game.draw(); out.scenes.online = 'ok'; });
     safe('scene training', () => {
       game.mode = 'training'; game.select.p1 = 0; game.select.p2 = 1; game.seed = seed; game.startMatch(); game.phase = 'play'; game.fighters.forEach((f) => { f.state = 'idle'; });
@@ -267,6 +273,92 @@ if (PARAMS.r === '3d') {
     game.aiLevelOverride = null;
   }
 
+  if (mode === 'all' || mode === 'v07') {
+    const v = out.v07 = {};
+    const press = (keys) => Object.assign(Input.emptyPad(), keys);
+    const run = (n) => { for (let i = 0; i < n; i++) game.update(); };
+    const setup = (p1, p2, mods, dist) => {
+      game.mode = '2p'; game.select = { p1, p2, p1Done: true, p2Done: true, timer: 0, skin1: 0, skin2: 0, msg: '' }; game.stageIndex = 0; game.seed = seed;
+      game.modifiers = mods.slice(); game.startMatch(); game.phase = 'play'; game.announce = null; game.fighters.forEach((f) => { f.state = 'idle'; });
+      const [a, b] = game.fighters; a.x = 500; b.x = 500 + (dist || 90); a.chi = 100; return [a, b];
+    };
+    // regras
+    safe('v07 eclipse', () => {
+      const [a, b] = setup(2, 3, ['eclipse'], 300);
+      let qa = [press({ special: true })]; game.padSourceA = () => qa.shift() || Input.emptyPad();
+      run(4); const zukoBlocked = a.state !== 'attack' && a.noBending === true;
+      let qb = [press({ special: true })]; game.padSourceB = () => qb.shift() || Input.emptyPad();
+      run(4); const tophFree = b.state === 'attack';
+      game.padSourceA = game.padSourceB = null; v.eclipse = zukoBlocked && tophFree;
+    });
+    safe('v07 luaCheia', () => {
+      const [a, b] = setup(1, 2, ['luaCheia']); a.startAttack(a.moves.kick); run(12); const boosted = 100 - b.hp;
+      const [c, d] = setup(1, 2, []); c.startAttack(c.moves.kick); run(12); const base = 100 - d.hp;
+      v.luaCheia = base === 8 && boosted === 10; v.luaCheiaValues = [base, boosted];
+    });
+    safe('v07 cometa', () => {
+      const [a, b] = setup(2, 3, ['cometa'], 300); a.startAttack(a.moves.special); run(12);
+      const p = game.projectiles.find((x) => x.type === 'fire'); const w = p ? p.w : 0;
+      run(60); v.cometa = w === 76 && 100 - b.hp === 15; v.cometaValues = [w, 100 - b.hp];
+    });
+    safe('v07 tempestade', () => {
+      const [a, b] = setup(0, 5, ['tempestade'], 400); const seen = new Set(); let moved = false; const ax = a.x;
+      for (let i = 0; i < 700; i++) { game.update(); for (const p of game.projectiles) seen.add(p.type); if (a.x !== ax) moved = true; if (game.phase !== 'play') break; }
+      v.tempestade = seen.has('bolt') && moved; v.tempestadeTypes = [...seen];
+    });
+    safe('v07 vidaContinua', () => {
+      const [a, b] = setup(2, 3, ['vidaContinua']); a.hp = 40; a.hpGhost = 40; b.hp = 1;
+      a.startAttack(a.moves.kick); let guard = 0; while (game.round === 1 && guard++ < 1200) game.update();
+      v.vidaContinua = game.round === 2 && game.fighters[0].hp === 40; v.vidaContinuaHp = game.fighters[0].hp;
+    });
+    safe('v07 tempoCurto', () => { setup(0, 1, ['tempoCurto']); v.tempoCurto = game.timer === 30; });
+    safe('v07 superInfinito', () => { const [a, b] = setup(0, 1, ['superInfinito']); a.chi = 0; b.chi = 0; run(2); v.superInfinito = a.chi === 100 && b.chi === 100; });
+    game.modifiers = [];
+    // salvamento
+    safe('v07 save', () => {
+      Save.reset(); Save.recordMatch('aang', 'zuko', 'cpu'); Save.recordMatch('aang', 'zuko', 'cpu');
+      const wins = Save.data.stats.wins.aang === 2 && Save.data.stats.matches === 2;
+      localStorage.setItem('avatarArena.save', '{corrompido'); Save.load();
+      const recovered = Save.data.schema === Save.SCHEMA && Save.data.stats.matches === 0 && !!localStorage.getItem('avatarArena.save.bak');
+      localStorage.removeItem('avatarArena.save'); localStorage.setItem('avatarArena.survivalBest', '7'); Save.load();
+      const legacy = Save.data.stats.survivalBest === 7;
+      const migrated = Save.migrate({ stats: { matches: 5 } }); const mig = migrated.schema === Save.SCHEMA && migrated.stats.matches === 5 && !!migrated.unlocks;
+      v.save = wins && recovered && legacy && mig; v.saveParts = [wins, recovered, legacy, mig];
+      Save.reset();
+    });
+    // trajes
+    safe('v07 skins', () => {
+      Save.reset(); const ch = CHARACTERS[0]; const list = skinList(ch);
+      const lockedAtStart = list.length === 3 && !skinUnlocked(ch, list[1]) && !skinUnlocked(ch, list[2]);
+      Save.data.stats.wins.aang = 5; const u1 = checkUnlocks(); const treino = u1.some((u) => u.char.id === 'aang' && u.skin.id === 'treino');
+      Save.data.stats.arcadeWins.aang = 1; const u2 = checkUnlocks(); const tema = u2.some((u) => u.char.id === 'aang' && u.skin.id === 'nacaoFogo');
+      const sc = skinnedChar(ch, 1), again = skinnedChar(ch, 1);
+      const colors = sc.colors.primary !== ch.colors.primary && sc === again && skinnedChar(ch, 0) === ch;
+      v.skins = lockedAtStart && treino && tema && colors && skinUnlocked(ch, list[1]); Save.reset();
+    });
+    // desafio diário
+    safe('v07 daily', () => {
+      Save.reset(); game._daily = null; const d1 = game.dailyChallenge(); game._daily = null; const d2 = game.dailyChallenge();
+      const stable = JSON.stringify(d1) === JSON.stringify(d2) && d1.p1 !== d1.p2 && d1.mods.length >= 1;
+      game.startDaily(); const started = game.mode === 'daily' && game.modifiers.length === d1.mods.length && game.fighters[1].aiLevel === 'hard';
+      game.fighters[0].isCPU = true; game.fighters[1].maxHp = 5; game.fighters[1].hp = 5; game.fighters[1].hpGhost = 5;
+      let guard = 0; while (game.scene === 'fight' && guard++ < 40000) game.update();
+      const rec = Save.data.daily[d1.key];
+      v.daily = stable && started && game.scene === 'daily' && !!rec && rec.tries === 1; v.dailyRec = rec;
+      game.fighters[0].isCPU = false; game.aiLevelOverride = null; game.modifiers = []; Save.reset();
+    });
+    // torneio
+    safe('v07 tournament', () => {
+      Save.reset(); game.startTournamentSetup(); game.tournament.size = 4; game.tournament.slots.forEach((s) => { s.cpu = true; });
+      game.buildBracket(); let guard = 0;
+      while (game.tournament.champion === null && guard++ < 10) { game.startNextTournamentMatch(); }
+      const t = game.tournament;
+      v.tournament = t.champion !== null && t.bracket.length === 2 && Save.data.tournament.champions.length === 1 && game.scene === 'bracket';
+      v.tournamentChampion = t.champion; game.scene = 'title'; game.mode = '2p'; Save.reset();
+    });
+    game.seed = null; game.modifiers = []; game.aiLevelOverride = null;
+  }
+
   if (mode === 'all' || mode === 'netplay') {
     safe('netplay', () => {
       const cv2 = document.createElement('canvas'); cv2.width = 1280; cv2.height = 720;
@@ -316,7 +408,7 @@ if (PARAMS.r === '3d') {
     });
   }
 
-  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { if (PARAMS.scene === 'remap') game.remap = { player: 'p1', index: 4, listening: true, message: '' }; if (PARAMS.scene === 'result') { game.winner = game.fighters[0]; game.fighters[0].stats.hits = 23; game.fighters[0].stats.maxCombo = 4; game.fighters[0].stats.damage = 210; game.fighters[1].stats.hits = 11; game.fighters[1].stats.damage = 96; game.fighters[1].stats.throws = 1; } if (PARAMS.scene === 'ladder') { game.mode = 'arcade'; game.select.p1 = parseInt(PARAMS.p1 || '0', 10); game.startArcade(); } game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
+  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { if (PARAMS.scene === 'remap') game.remap = { player: 'p1', index: 4, listening: true, message: '' }; if (PARAMS.scene === 'result') { game.winner = game.fighters[0]; game.fighters[0].stats.hits = 23; game.fighters[0].stats.maxCombo = 4; game.fighters[0].stats.damage = 210; game.fighters[1].stats.hits = 11; game.fighters[1].stats.damage = 96; game.fighters[1].stats.throws = 1; } if (PARAMS.scene === 'rules') game.gotoRules(); if (PARAMS.scene === 'tournamentSetup') game.startTournamentSetup(); if (PARAMS.scene === 'bracket') { game.startTournamentSetup(); game.tournament.slots.forEach((s) => { s.cpu = true; }); game.buildBracket(); } if (PARAMS.scene === 'ladder') { game.mode = 'arcade'; game.select.p1 = parseInt(PARAMS.p1 || '0', 10); game.startArcade(); } game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
   document.getElementById('log').textContent = JSON.stringify(out);
 })();
 </script>

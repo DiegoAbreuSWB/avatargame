@@ -167,8 +167,9 @@ class Fighter {
       return;
     }
     // ataques (prioridade: super > especial 2 > especial > chute > soco)
-    if (this.buf.super > 0 && this.chi >= CFG.MAX_CHI) { this.buf.super = 0; if (this.chiBlocked > 0) return this.chiBlockedFx(); return this.startAttack(this.moves.super); }
-    if (this.buf.special > 0) { this.buf.special = 0; if (this.chiBlocked > 0) return this.chiBlockedFx(); return this.startAttack(pad.down ? this.moves.special2 : this.moves.special); }
+    const noBend = this.chiBlocked > 0 || this.noBending;
+    if (this.buf.super > 0 && this.chi >= CFG.MAX_CHI) { this.buf.super = 0; if (noBend) return this.chiBlockedFx(); return this.startAttack(this.moves.super); }
+    if (this.buf.special > 0) { this.buf.special = 0; if (noBend) return this.chiBlockedFx(); return this.startAttack(pad.down ? this.moves.special2 : this.moves.special); }
     if (this.buf.punch > 0 && this.buf.kick > 0) { this.buf.punch = this.buf.kick = 0; return this.startThrow(); }
     if (this.buf.kick > 0) { this.buf.kick = 0; this.pending = { key: 'kick', frames: 2 }; return; }
     if (this.buf.punch > 0) { this.buf.punch = 0; this.pending = { key: 'punch', frames: 2 }; return; }
@@ -266,7 +267,7 @@ class Fighter {
     const active = af > m.startup && af <= m.startup + m.active;
 
     // cancelamento: normal que conectou -> especial; especial que conectou -> super
-    if (this.attackConnected && m.cancel && af > m.startup && af <= m.startup + m.active + 6 && this.chiBlocked <= 0) {
+    if (this.attackConnected && m.cancel && af > m.startup && af <= m.startup + m.active + 6 && this.chiBlocked <= 0 && !this.noBending) {
       if (m.cancel.includes('special') && this.buf.special > 0) { this.buf.special = 0; return this.startAttack(this.pad.down ? this.moves.special2 : this.moves.special); }
       if (m.cancel.includes('super') && this.buf.super > 0 && this.chi >= CFG.MAX_CHI) { this.buf.super = 0; return this.startAttack(this.moves.super); }
     }
@@ -358,7 +359,7 @@ class Fighter {
     }
     // escalonamento de dano: cada golpe do combo vale 10% a menos, até o mínimo de 40%
     const comboSoFar = attacker.comboTimer > 0 ? attacker.combo : 0;
-    const scale = Math.max(0.4, 1 - 0.1 * comboSoFar);
+    const scale = Math.max(0.4, 1 - 0.1 * comboSoFar) * Modifiers.damageMult(this.game, attacker);
     const dmg = data.damage ? Math.max(1, Math.round(data.damage * scale)) : 0;
     this.hp = Math.max(0, this.hp - dmg);
     this.lastHitAt = this.game.t;
@@ -376,7 +377,7 @@ class Fighter {
     if (data.pull) this.vx = -dir * data.pull;
     if (data.applies && data.applies.chiBlock) { this.chiBlocked = Math.max(this.chiBlocked, data.applies.chiBlock); this.game.setAnnounce(T('CHI BLOQUEADO!'), 50, { size: 40, color: '#f48fb1', y: 240 }); }
     this.chi = Math.min(CFG.MAX_CHI, this.chi + 3);
-    attacker.chi = Math.min(CFG.MAX_CHI, attacker.chi + (data.chi || 5));
+    attacker.chi = Math.min(CFG.MAX_CHI, attacker.chi + Math.round((data.chi || 5) * Modifiers.chiMult(this.game, attacker)));
     attacker.combo = comboSoFar + 1;
     this.comboTimer = 45;
     attacker.comboTimer = 45;

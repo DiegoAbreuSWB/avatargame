@@ -201,7 +201,11 @@ class Renderer3D {
         return this.renderShowcase(game, STAGES[0],
           CHARACTERS.map((ch, i) => ({ key: 't' + i, char: ch, x: xs[i], pose: 'idle', t: game.t + i * 17, facing: i < 3 ? 1 : -1 })),
           [640, 330, 1500], [640, 230, 0]); }
-      case 'controls': case 'settings': case 'remap': return this.renderShowcase(game, STAGES[3], [], [640, 330, 1500], [640, 230, 0]);
+      case 'controls': case 'settings': case 'remap': case 'tournamentSetup': case 'bracket': return this.renderShowcase(game, STAGES[3], [], [640, 330, 1500], [640, 230, 0]);
+      case 'rules': return this.renderShowcase(game, STAGES[game.stageIndex], [], [640, 330, 1500], [640, 230, 0]);
+      case 'daily': { const d = game.dailyChallenge(); return this.renderShowcase(game, STAGES[d.stage], [
+        { key: 'L', char: CHARACTERS[d.p1], x: 330, pose: 'idle', t: game.t, facing: 1 }, { key: 'R', char: CHARACTERS[d.p2], x: 950, pose: 'idle', t: game.t + 20, facing: -1 },
+      ], [640, 250, 1250], [640, 110, 0]); }
       case 'ladder': return this.renderShowcase(game, STAGES[game.stageIndex], [
         { key: 'L', char: CHARACTERS[game.select.p1], x: 330, pose: 'idle', t: game.t, facing: 1 },
         { key: 'R', char: CHARACTERS[game.select.p2], x: 950, pose: 'idle', t: game.t + 20, facing: -1 },
@@ -211,8 +215,8 @@ class Renderer3D {
       case 'survivalEnd': return this.renderShowcase(game, STAGES[game.stageIndex], [{ key: 'L', char: CHARACTERS[game.select.p1], x: 640, pose: 'ko', t: game.t, facing: 1 }], [640, 250, 1250], [640, 110, 0]);
       case 'select': { const s = game.select;
         return this.renderShowcase(game, STAGES[1], [
-          { key: 'L', char: CHARACTERS[s.p1], x: 250, pose: s.p1Done ? 'win' : 'idle', t: game.t, facing: 1 },
-          { key: 'R', char: CHARACTERS[s.p2], x: 1030, pose: s.p2Done ? 'win' : 'idle', t: game.t + 30, facing: -1 },
+          { key: 'L', char: skinnedChar(CHARACTERS[s.p1], s.skin1), x: 250, pose: s.p1Done ? 'win' : 'idle', t: game.t, facing: 1 },
+          { key: 'R', char: skinnedChar(CHARACTERS[s.p2], s.skin2), x: 1030, pose: s.p2Done ? 'win' : 'idle', t: game.t + 30, facing: -1 },
         ], [640, 230, 1180], [640, 95, 0]); }
       case 'stage': return this.renderShowcase(game, STAGES[game.stageIndex], [
         { key: 'L', char: CHARACTERS[game.select.p1], x: 380, pose: 'idle', t: game.t, facing: 1 },
@@ -402,6 +406,14 @@ function makeProjectileVisual(p, r) {
       const a = add(G.box, toon('#cfd8dc'), [p.w, 7, 3]), b = add(G.box, toon('#cfd8dc'), [p.w, 7, 3]);
       a.rotation.z = 0.5; b.rotation.z = -0.5; a.position.x = -p.w * 0.3; b.position.x = p.w * 0.3;
       v.update = (p) => { pos(p); group.rotation.z = p.rot * 1.4; };
+      break;
+    }
+    case 'bolt': {
+      const core = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff') }), [6, CFG.GROUND, 6]);
+      const halo = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#4fd5ff'), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }), [22, CFG.GROUND, 22]);
+      const warn = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#9be7ff'), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }), [p.w * 1.2, 2, p.w * 1.2]);
+      const light = new THREE.PointLight(0x9be7ff, 3, 900, 2); group.add(light); light.position.y = 150;
+      v.update = (p) => { group.position.set(p.x, 0, 0); const on = p.delay <= 0; core.visible = halo.visible = on; light.visible = on; warn.visible = !on; core.position.y = halo.position.y = CFG.GROUND / 2; core.position.x = on ? rand(-6, 6) : 0; warn.position.y = 2; };
       break;
     }
     case 'breath': {

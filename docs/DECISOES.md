@@ -214,3 +214,30 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 **Contexto.** O usuário indicou o repositório https://github.com/DiegoAbreuSWB/avatargame. O primeiro workflow (fonte "GitHub Actions" com `configure-pages`) falhou duas vezes com "Resource not accessible by integration": o token padrão não pode criar o site do Pages; isso exigiria um clique em Settings → Pages.
 **Escolha.** Workflow que espelha a `main` na branch `gh-pages` (`peaceiris/actions-gh-pages`, `contents: write`). Em repositório público o GitHub ativa o Pages automaticamente ao ver essa branch; o site ficou no ar em https://diegoabreuswb.github.io/avatargame/ sem configuração manual.
 **Consequências.** A branch `gh-pages` é gerada e sobrescrita a cada push (`force_orphan`); nunca editar nela. Se um dia a fonte for trocada para "GitHub Actions" nas configurações, o workflow precisa voltar ao par `upload-pages-artifact` + `deploy-pages`.
+
+## ADR-032 · Modificadores de luta como ganchos, fora de `Fighter`
+
+**Contexto.** v0.7 (roadmap de expansão): eventos ambientais (eclipse, lua cheia, cometa, tempestade) e regras de festa (vida contínua, round de 30 s, super infinito) precisavam entrar sem espalhar `if` pelo motor de luta.
+**Escolha.** `modifiers.js` expõe ganchos chamados pelo `Game` em pontos fixos: início da partida (tempo do round), início/fim do round (vida contínua), a cada frame antes dos lutadores lerem o input (flags como `noBending`, vento, raios), multiplicadores de dano e de chi em `receiveHit`, e ajuste do projétil em `spawnProjectile`. Os raios são "perigos de cenário": projéteis com um dono fictício (`hazardOwner`) que atingem os dois lutadores uma vez cada.
+**Por quê.** `Fighter` só conhece duas flags novas (`noBending`, multiplicadores); as regras ficam num lugar só e são determinísticas (sorteios com `Rng` e `roundFrame`), então valem para o Online (viajam no `cfg` de início) e para o Desafio Diário.
+**Consequências.** O gancho por frame roda **antes** dos updates dos lutadores (um teste pegou o Zuko soltando fogo no primeiro frame do eclipse). As regras ficam fora da simulação de balanceamento e do Arcade/Sobrevivência; no Versus e no Online são escolhidas na tela "Regras especiais", lembradas em `Settings.rules`.
+
+## ADR-033 · Salvamento versionado separado das configurações
+
+**Escolha.** `save.js` guarda progresso (estatísticas, desbloqueios, desafio diário, torneios) em `avatarArena.save` com campo `schema`; migrações encadeadas por versão; JSON corrompido vai para `.bak` e o jogo segue com padrões; o recorde antigo de Sobrevivência (chave avulsa) é importado.
+**Por quê.** Preferências e progresso têm ciclos de vida diferentes (restaurar padrões não pode apagar trajes). O teste `save` cobre gravação, corrupção, chave antiga e migração.
+
+## ADR-034 · Trajes são só paletas
+
+**Escolha.** Um traje é um conjunto de cores por personagem (`skins.js`); 2D e 3D já derivam tudo das cores, então nenhum desenho novo foi necessário. `skinnedChar` devolve uma cópia do personagem com as cores trocadas, com identidade estável por (personagem, traje) para o cache de rigs 3D. Desbloqueio: traje temático ao terminar o Arcade com o personagem; "roupa de treino" com 5 vitórias. Trocar com a tecla de especial na seleção; trajes bloqueados aparecem com a condição e não podem ser confirmados.
+**Consequências.** Trajes viajam no `cfg` do Online. Máscara do Espírito Azul é uma cor de pele azul (limite da abordagem por paleta).
+
+## ADR-035 · Desafio diário determinístico pela data
+
+**Escolha.** Semente = AAAAMMDD; lutadores, cenário e 1–2 regras saem de `Rng` com essa semente; a própria luta usa a mesma semente, então a IA (difícil) joga igual para todos. Placar como o do Arcade; melhor placar e tentativas por dia no save.
+**Consequências.** Depende do relógio do aparelho; sem servidor não há ranking global (fica como "o mesmo desafio para todos").
+
+## ADR-036 · Torneio local com simulação instantânea entre CPUs
+
+**Escolha.** 4 ou 8 vagas, cada uma humana (P1 x P2 no teclado, passando a vez) ou CPU; chave sorteada com `Rng`; lutas CPU x CPU são resolvidas chamando `updateFight` em loop sem desenhar. Campeões ficam no save.
+**Por quê.** Reaproveita o fluxo de duas pessoas no teclado e o Arcade de IA; o torneio só adiciona a chave e a ordem das lutas.

@@ -22,11 +22,14 @@ class Game {
     this.training = { dummy: 0, chiInf: true, history: [], lastCombo: 0 };
     this.settingsIndex = 0; this.remap = null;
     this.prevPadA = Input.emptyPad();
+    this.modifiers = []; this.roundFrame = 0; this.newUnlocks = [];
+    // "dono" fictício dos perigos de cenário (raios da tempestade): tem os campos que receiveHit lê
+    this.hazardOwner = { isHazard: true, x: CFG.W / 2, y: CFG.GROUND, facing: 1, char: { id: 'hazard', element: 'nao', name: '' }, stats: { hits: 0, damage: 0, maxCombo: 0, throws: 0 }, combo: 0, comboTimer: 0, chi: 0, hitsLeft: 0, opponent: null, game: this };
   }
   get is3D() { return !!(this.r3d && this.use3D); }
   get p1PicksBoth() { return this.mode === 'cpu' || this.mode === 'training' || this.mode === 'online'; }
   get soloMode() { return this.mode === 'arcade' || this.mode === 'survival'; }
-  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'CONTROLES', 'CONFIGURAÇÕES']; }
+  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'DESAFIO DIÁRIO', 'TORNEIO', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'CONTROLES', 'CONFIGURAÇÕES']; }
 
   /* ---------- utilidades ---------- */
   get stage() { return STAGES[this.stageIndex]; }
@@ -41,7 +44,14 @@ class Game {
   pausePressed() { return Input.pressed('Escape') || !!this.extMenu().start; }
   setAnnounce(text, frames, extra = {}) { this.announce = Object.assign({ text, timer: frames, max: frames }, extra); }
   shakeScreen(n) { this.shake = Math.max(this.shake, n); }
+  spawnHazard(spec) {
+    const p = new Projectile(this.hazardOwner, null, spec);
+    p.hitSet = new Set();
+    this.projectiles.push(p);
+    Audio_.play('lightning');
+  }
   spawnProjectile(owner, spec) {
+    spec = Modifiers.projectileSpec(this, owner, spec);
     if (spec.exclusive !== false && this.projectiles.some((p) => p.owner === owner && p.exclusive && !p.dead)) return;
     const p = new Projectile(owner, owner.opponent, spec);
     this.projectiles.push(p);
@@ -53,6 +63,7 @@ class Game {
   }
   onKO(loser, winner) {
     if (this.phase !== 'play') return;
+    if (!winner || winner.isHazard) winner = loser.opponent;
     if (this.mode === 'training') { loser.hp = CFG.MAX_HP; loser.hpGhost = CFG.MAX_HP; return; }
     this.phase = 'ko'; this.phaseT = 0; this.winner = winner;
     loser.setKO();
@@ -81,6 +92,10 @@ class Game {
     switch (this.scene) {
       case 'title': this.updateTitle(); break;
       case 'online': this.updateOnline(); break;
+      case 'rules': this.updateRules(); break;
+      case 'daily': this.updateDaily(); break;
+      case 'tournamentSetup': this.updateTournamentSetup(); break;
+      case 'bracket': this.updateBracket(); break;
       case 'controls': if (this.backPressed() || this.confirmPressed()) { Audio_.play('back'); this.scene = 'title'; } break;
       case 'settings': this.updateSettings(); break;
       case 'remap': this.updateRemap(); break;
@@ -92,7 +107,7 @@ class Game {
       case 'fight': this.updateFight(); if (this.net) this.net.advance(); break;
       case 'result': this.updateResult(); break;
     }
-    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'ladder', 'continue', 'ending', 'survivalEnd', 'result'].includes(this.scene) ? 'menu' : null;
+    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'rules', 'daily', 'tournamentSetup', 'bracket', 'ladder', 'continue', 'ending', 'survivalEnd', 'result'].includes(this.scene) ? 'menu' : null;
     if (typeof Music !== 'undefined') Music.ensure(theme, Settings.data.music);
   }
 
@@ -108,6 +123,10 @@ class Game {
     switch (this.scene) {
       case 'title': drawTitle(ctx, this); break;
       case 'online': drawOnline(ctx, this); break;
+      case 'rules': drawRules(ctx, this); break;
+      case 'daily': drawDaily(ctx, this); break;
+      case 'tournamentSetup': drawTournamentSetup(ctx, this); break;
+      case 'bracket': drawBracket(ctx, this); break;
       case 'controls': drawControls(ctx, this); break;
       case 'settings': drawSettings(ctx, this); break;
       case 'remap': drawRemap(ctx, this); break;
@@ -136,16 +155,27 @@ class Game {
         case 1: this.mode = 'cpu'; this.gotoSelect(); break;
         case 2: this.mode = 'arcade'; this.gotoSelect(); break;
         case 3: this.mode = 'survival'; this.gotoSelect(); break;
-        case 4: this.mode = 'training'; this.gotoSelect(); break;
-        case 5: this.online = { step: 'menu', index: 0, msg: '' }; this.scene = 'online'; break;
-        case 6: this.scene = 'controls'; break;
-        case 7: this.scene = 'settings'; this.settingsIndex = 0; break;
+        case 4: this.dailyResult = null; this.dailyT = 0; this.scene = 'daily'; break;
+        case 5: this.startTournamentSetup(); break;
+        case 6: this.mode = 'training'; this.gotoSelect(); break;
+        case 7: this.online = { step: 'menu', index: 0, msg: '' }; this.scene = 'online'; break;
+        case 8: this.scene = 'controls'; break;
+        case 9: this.scene = 'settings'; this.settingsIndex = 0; break;
       }
     }
   }
   gotoSelect() {
-    this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0 };
+    this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0, skin1: 0, skin2: 0, msg: '' };
     this.scene = 'select';
+  }
+  cycleSkin(which) {
+    const s = this.select, ch = CHARACTERS[which === 1 ? s.p1 : s.p2], n = skinList(ch).length;
+    s['skin' + which] = (s['skin' + which] + 1) % n; s.msg = ''; Audio_.play('menu');
+  }
+  skinAllowed(which) {
+    const s = this.select, ch = CHARACTERS[which === 1 ? s.p1 : s.p2], skin = skinList(ch)[s['skin' + which] || 0];
+    if (skinUnlocked(ch, skin)) return true;
+    s.msg = T('Traje bloqueado: {0}', skinUnlockText(skin)); Audio_.play('back'); return false;
   }
 
   /* ---------- seleção de personagem ---------- */
@@ -156,7 +186,7 @@ class Game {
     if (Input.pressed(map.right)) i = (i % cols === cols - 1 || i === n - 1) ? i - (i % cols) : i + 1;
     if (Input.pressed(map.up)) i = i - cols < 0 ? Math.min(i + cols * (rows - 1), n - 1) : i - cols;
     if (Input.pressed(map.down)) i = i + cols >= n ? i % cols : i + cols;
-    if (i !== this.select[key]) { this.select[key] = clamp(i, 0, n - 1); Audio_.play('menu'); }
+    if (i !== this.select[key]) { this.select[key] = clamp(i, 0, n - 1); this.select[key === 'p1' ? 'skin1' : 'skin2'] = 0; this.select.msg = ''; Audio_.play('menu'); }
   }
   updateSelect() {
     const s = this.select;
@@ -172,15 +202,18 @@ class Game {
     if (s.p1Done && this.soloMode) { if (++s.timer > 30) { if (this.mode === 'arcade') this.startArcade(); else this.startSurvival(); } return; }
     if (!s.p1Done) {
       this.moveCursor('p1', KEYMAPS.p1);
-      if (Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter')) { s.p1Done = true; Audio_.play('confirm'); }
+      if (Input.pressed(KEYMAPS.p1.special)) this.cycleSkin(1);
+      if ((Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter')) && this.skinAllowed(1)) { s.p1Done = true; Audio_.play('confirm'); }
     } else if (this.p1PicksBoth && !s.p2Done) {
       this.moveCursor('p2', KEYMAPS.p1);
-      if (Input.pressed(KEYMAPS.p1.kick)) s.p2 = Rng.int(0, CHARACTERS.length - 1);
-      if (Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter') || Input.pressed(KEYMAPS.p1.kick)) { s.p2Done = true; Audio_.play('confirm'); }
+      if (Input.pressed(KEYMAPS.p1.special)) this.cycleSkin(2);
+      if (Input.pressed(KEYMAPS.p1.kick)) { s.p2 = Rng.int(0, CHARACTERS.length - 1); s.skin2 = 0; }
+      if ((Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter') || Input.pressed(KEYMAPS.p1.kick)) && this.skinAllowed(2)) { s.p2Done = true; Audio_.play('confirm'); }
     }
     if (!this.p1PicksBoth && !s.p2Done) {
       this.moveCursor('p2', KEYMAPS.p2);
-      if (Input.pressed(KEYMAPS.p2.punch) || (s.p1Done && Input.pressed('Enter') && !Input.pressed(KEYMAPS.p1.punch))) { s.p2Done = true; Audio_.play('confirm'); }
+      if (Input.pressed(KEYMAPS.p2.special)) this.cycleSkin(2);
+      if ((Input.pressed(KEYMAPS.p2.punch) || (s.p1Done && Input.pressed('Enter') && !Input.pressed(KEYMAPS.p1.punch))) && this.skinAllowed(2)) { s.p2Done = true; Audio_.play('confirm'); }
     }
   }
 
@@ -190,12 +223,13 @@ class Game {
     const n = STAGES.length;
     if (this.menuLeft()) { this.stageIndex = (this.stageIndex + n - 1) % n; Audio_.play('menu'); }
     if (this.menuRight()) { this.stageIndex = (this.stageIndex + 1) % n; Audio_.play('menu'); }
-    if (this.confirmPressed()) { Audio_.play('confirm'); if (this.mode === 'online' && this.net) return this.netHostStart(); this.startMatch(); }
+    if (this.confirmPressed()) { Audio_.play('confirm'); if (this.mode === 'training') return this.startMatch(); this.gotoRules(); }
   }
 
   /* ---------- luta ---------- */
   startMatch() {
-    const c1 = CHARACTERS[this.select.p1], c2 = CHARACTERS[this.select.p2];
+    const c1 = skinnedChar(CHARACTERS[this.select.p1], this.select.skin1), c2 = skinnedChar(CHARACTERS[this.select.p2], this.select.skin2);
+    this.modifiers = this.modifiers || [];
     this.matchSeed = this.seed != null ? this.seed : ((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
     Rng.set(this.matchSeed);
     this.fighters = [new Fighter(c1, 0, this), new Fighter(c2, 1, this)];
@@ -210,7 +244,8 @@ class Game {
     this.round = 1; this.winner = null; this.paused = false;
     this.training.history = []; this.training.lastCombo = 0;
     this.quotes = this.fighters.map((f) => { const q = (typeof QUOTES !== 'undefined' && QUOTES[f.char.id]) || { intro: [''], win: [''] }; return { intro: Rng.pick(q.intro), win: Rng.pick(q.win) }; });
-    this.cam2d = null;
+    this.cam2d = null; this.newUnlocks = [];
+    Modifiers.onMatchStart(this);
     this.scene = 'fight';
     this.startRound();
   }
@@ -220,7 +255,8 @@ class Game {
     a.hpGhost = a.hp; b.hpGhost = b.hp;
     a.state = b.state = 'intro';
     this.projectiles = []; Particles.clear();
-    this.timer = this.infiniteTime ? 0 : Settings.data.roundTime; this.timerFrames = 0;
+    this.timer = this.infiniteTime ? 0 : (this.roundTimeOverride || Settings.data.roundTime); this.timerFrames = 0;
+    this.roundFrame = 0; Modifiers.onRoundStart(this);
     this.phase = 'intro'; this.phaseT = 0; this.hitstop = 0; this.shake = 0; this.superFlash = 0;
     const final = a.rounds === this.roundsToWin - 1 && b.rounds === this.roundsToWin - 1;
     const label = this.mode === 'training' ? T('TREINO') : final ? T('ROUND FINAL') : T('ROUND {0}', this.round);
@@ -296,6 +332,8 @@ class Game {
       if (a.combo > this.training.lastCombo) this.training.lastCombo = a.combo;
       if (a.combo === 0 && b.canAct) this.training.lastCombo = this.training.lastCombo; // mantém o último até o próximo combo
     }
+    this.roundFrame++;
+    if (control) Modifiers.onFrame(this);   // antes dos lutadores lerem o input (flags como 'sem dobra')
     a.update(padA, control); b.update(padB, control);
     this.separate(a, b);
 
@@ -338,8 +376,20 @@ class Game {
       const res = o.receiveHit(f, f.attack, cx, cy, { isLast });
       if (res === 'hit' || res === 'block') f.attackConnected = true;
     }
+    // perigos de cenário atingem os dois lutadores
+    for (const p of this.projectiles) {
+      if (!p.hazard || !p.active) continue;
+      for (const f of this.fighters) {
+        if (p.hitSet.has(f) || f.isInvulnerable || f.state === 'ko') continue;
+        const pb = p.box, ob = f.hurtbox; if (!rectsOverlap(pb, ob)) continue;
+        p.hitSet.add(f); this.hazardOwner.x = p.x;
+        f.receiveHit(this.hazardOwner, p, f.x, f.y - 100, { fromProjectile: true, isLast: true });
+        Particles.element('raio', f.x, f.y - 100, 12);
+      }
+    }
     // projéteis contra lutadores
     for (const p of this.projectiles) {
+      if (p.hazard) continue;
       if (!p.active || p.hitsLeft <= 0 || p.hitCooldown > 0) continue;
       const o = p.target;
       if (o.isInvulnerable || o.state === 'ko') continue;
@@ -396,10 +446,24 @@ class Game {
 
   nextRound() {
     const w = this.fighters.find((f) => f.rounds >= this.roundsToWin);
-    if (w && this.soloMode) { this.winner = w; return this.onMatchEnd(w); }
-    if (w) { this.winner = w; this.scene = 'result'; this.resultT = 0; Audio_.play('win'); return; }
+    if (w) {
+      this.winner = w; this.onMatchFinished(w);
+      if (this.mode === 'daily') return this.onDailyEnd(w);
+      if (this.mode === 'tournament') return this.onTournamentEnd(w);
+      if (this.soloMode) return this.onMatchEnd(w);
+      this.scene = 'result'; this.resultT = 0; Audio_.play('win'); return;
+    }
+    Modifiers.onRoundEnd(this);
     this.round++;
     this.startRound();
+  }
+
+  /* estatísticas e desbloqueios ao fim de qualquer partida (menos treino) */
+  onMatchFinished(w) {
+    if (this.mode === 'training') return;
+    const l = this.fighters[1 - w.side];
+    Save.recordMatch(w.isCPU ? null : w.char.id, l.char.id, this.mode);
+    this.newUnlocks = checkUnlocks();
   }
 
   updatePause() {

@@ -30,14 +30,15 @@ Game.prototype.netConnected = function (session) {
 };
 
 Game.prototype.netHostStart = function () {
-  const cfg = { p1: this.select.p1, p2: this.select.p2, stage: this.stageIndex, seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0 };
+  const cfg = { p1: this.select.p1, p2: this.select.p2, stage: this.stageIndex, seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, mods: this.modifiers.slice(), skin1: this.select.skin1 || 0, skin2: this.select.skin2 || 0 };
   this.net.send({ t: 'start', cfg });
   this.netStartMatch(cfg);
 };
 
 Game.prototype.netStartMatch = function (cfg) {
   this.mode = 'online';
-  this.select.p1 = cfg.p1; this.select.p2 = cfg.p2; this.stageIndex = cfg.stage;
+  this.select.p1 = cfg.p1; this.select.p2 = cfg.p2; this.stageIndex = cfg.stage; this.modifiers = (cfg.mods || []).slice();
+  this.select.skin1 = cfg.skin1 || 0; this.select.skin2 = cfg.skin2 || 0;
   this.seed = cfg.seed; this.startMatch(); this.seed = null;
   this.net.resetFrames(); this.netStalled = 0;
 };

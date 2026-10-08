@@ -56,7 +56,8 @@ function drawHUD(ctx, game) {
     const tag = f.isCPU ? (game.mode === 'training' ? T('  (BONECO)') : T('  (CPU)')) : '';
     txt(ctx, f.char.name.toUpperCase() + tag, nameX, y + barH + 18, { font: FONT_DISPLAY, size: 20, align: side === 0 ? 'left' : 'right', color: '#fff', stroke: 'rgba(0,0,0,.8)' });
     txt(ctx, T(ELEMENT_NAMES[f.char.element]).toUpperCase(), nameX, y + barH + 38, { size: 12, align: side === 0 ? 'left' : 'right', color: ELEMENT_COLORS[f.char.element], stroke: 'rgba(0,0,0,.8)' });
-    if (f.chiBlocked > 0) txt(ctx, T('CHI BLOQUEADO {0}s', Math.ceil(f.chiBlocked / 60)), nameX, y + barH + 58, { size: 13, align: side === 0 ? 'left' : 'right', color: '#f48fb1', stroke: 'rgba(0,0,0,.9)' });
+    if (f.noBending) txt(ctx, T('SEM DOBRA (ECLIPSE)'), nameX, y + barH + 58, { size: 13, align: side === 0 ? 'left' : 'right', color: '#ffab91', stroke: 'rgba(0,0,0,.9)' });
+    else if (f.chiBlocked > 0) txt(ctx, T('CHI BLOQUEADO {0}s', Math.ceil(f.chiBlocked / 60)), nameX, y + barH + 58, { size: 13, align: side === 0 ? 'left' : 'right', color: '#f48fb1', stroke: 'rgba(0,0,0,.9)' });
     const rtw = Math.min(game.roundsToWin, 5);
     for (let i = 0; i < rtw; i++) {
       const dx = side === 0 ? x0 + barW - 16 - i * 26 : x0 + 16 + i * 26;
@@ -85,6 +86,8 @@ function drawHUD(ctx, game) {
   const tstr = game.infiniteTime ? '∞' : String(game.timer).padStart(2, '0');
   txt(ctx, tstr, W / 2, 50, { font: FONT_DISPLAY, size: 44, color: !game.infiniteTime && game.timer <= 10 ? '#ff5252' : '#fff' });
   if (Audio_.isMuted()) txt(ctx, T('MUDO (M)'), W / 2, 96, { size: 12, color: '#bbb', stroke: 'rgba(0,0,0,.8)' });
+  const mods = Modifiers.labels(game);
+  if (mods.length) txt(ctx, mods.join('  ·  '), W / 2, Audio_.isMuted() ? 112 : 96, { size: 12, color: '#ffd54f', stroke: 'rgba(0,0,0,.9)' });
   drawQuotes(ctx, game);
 }
 

@@ -38,7 +38,7 @@ viram ADR em `DECISOES.md` quando forem implementadas.
 
 | Versão | Conteúdo | Por quê nesta ordem |
 |---|---|---|
-| **v0.7 Regras e progressão** | modificadores de luta, salvamento versionado, trajes/desbloqueios, desafio diário, torneio local | Barato, divertido já no Versus, e são os alicerces da campanha e da Hama |
+| **v0.7 Regras e progressão** ✔ feito (2026-10-08) | modificadores de luta, salvamento versionado, trajes/desbloqueios, desafio diário, torneio local | Barato, divertido já no Versus, e são os alicerces da campanha e da Hama |
 | **v0.8 Companheiros** | Momo, Appa, Nyla; tecla, HUD, IA, 3D, online; opção competitiva desligada | Release próprio porque toca todos os subsistemas |
 | **v0.9 Novos guerreiros** | Homem Combustão, Jet, Pakku, Hama (+ 1 ou 2 cenários) | Jet e Azula são rivais do piloto do Zuko; melhor existirem antes |
 | **v1.0 Crônicas: piloto do Zuko** | motor de campanha + diálogos + mapa + campanha completa do Zuko | Valida o formato narrativo com um único personagem |

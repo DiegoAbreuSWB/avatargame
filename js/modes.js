@@ -11,12 +11,14 @@ Game.prototype.startArcade = function () {
   const boss = me.id === 'ozai' ? getCharacter('azula') : getCharacter('ozai');
   const ladder = pool.slice(0, ARCADE_FIGHTS - 1).concat([boss]);
   this.arcade = { ladder: ladder.map((c) => c.id), index: 0, score: 0, continues: 0 };
+  this.modifiers = []; this.select.skin2 = 0;
   this.gotoLadder();
 };
 
 Game.prototype.startSurvival = function () {
   Rng.set((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
-  this.survival = { wins: 0, hpCarry: CFG.MAX_HP, chiCarry: 0, best: parseInt(loadSetting('survivalBest') || '0', 10) };
+  this.survival = { wins: 0, hpCarry: CFG.MAX_HP, chiCarry: 0, best: Math.max(Save.data.stats.survivalBest || 0, parseInt(loadSetting('survivalBest') || '0', 10)) };
+  this.modifiers = []; this.select.skin2 = 0;
   this.gotoLadder();
 };
 
@@ -59,7 +61,7 @@ Game.prototype.onMatchEnd = function (winner) {
     if (won) {
       this.arcade.score += 1000 + me.hp * 10 + (this.infiniteTime ? 0 : this.timer * 5) + (me.rounds - this.fighters[1].rounds) * 300;
       this.arcade.index++;
-      if (this.arcade.index >= ARCADE_FIGHTS) { this.scene = 'ending'; this.endingT = 0; this.aiLevelOverride = null; Audio_.play('win'); return; }
+      if (this.arcade.index >= ARCADE_FIGHTS) { Save.recordMatch(me.char.id, null, 'arcadeComplete'); this.newUnlocks = checkUnlocks(); this.scene = 'ending'; this.endingT = 0; this.aiLevelOverride = null; Audio_.play('win'); return; }
       this.gotoLadder();
     } else { this.scene = 'continue'; this.continueT = 0; this.continueIndex = 0; }
     return;
@@ -70,7 +72,7 @@ Game.prototype.onMatchEnd = function (winner) {
       this.survival.hpCarry = Math.min(me.maxHp, me.hp + 30);
       this.survival.chiCarry = me.chi;
       this.survival.lastId = this.survival.nextId; this.survival.nextId = null;
-      if (this.survival.wins > this.survival.best) { this.survival.best = this.survival.wins; saveSetting('survivalBest', String(this.survival.wins)); }
+      if (this.survival.wins > this.survival.best) { this.survival.best = this.survival.wins; Save.data.stats.survivalBest = this.survival.wins; Save.save(); }
       this.gotoLadder();
     } else { this.scene = 'survivalEnd'; this.endingT = 0; this.aiLevelOverride = null; }
   }
@@ -136,6 +138,7 @@ function drawEnding(ctx, game) {
     wrapText(ctx, lines[i], 850, 190 + i * 44, 700, 19, '#fff', alpha);
   }
   txt(ctx, T('{0} · Pontuação final: {1}', me.name, game.arcade.score) + (game.arcade.continues ? T(' · continues: {0}', game.arcade.continues) : ''), CFG.W / 2 + 120, 150 + 60 + lines.length * 44 + 30, { size: 18, color: '#ffd54f', stroke: 'rgba(0,0,0,.9)' });
+  if (game.newUnlocks && game.newUnlocks.length) txt(ctx, T('Novo traje desbloqueado: {0}', game.newUnlocks.map((u) => `${u.char.name} · ${T(u.skin.name)}`).join(', ')), CFG.W / 2 + 120, CFG.H - 80, { size: 18, color: '#80deea', stroke: 'rgba(0,0,0,.9)' });
   txt(ctx, T('Enter para voltar ao menu'), CFG.W / 2, CFG.H - 40, { size: 16, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
 }
 

@@ -67,6 +67,7 @@ if (j.mechanics) {
   if (bad.length) { failed = true; console.log('  FALHARAM: ' + bad.join(', ')); }
 }
 if (j.modes) { console.log('modos:', JSON.stringify(j.modes)); if (j.modes.arcade && !j.modes.arcade.reachedEnding) { failed = true; console.log('  FALHOU: arcade não chegou ao final'); } if (j.modes.survival && !j.modes.survival.ended) { failed = true; console.log('  FALHOU: sobrevivência não terminou'); } }
+if (j.v07) { const bad = Object.entries(j.v07).filter(([k, x]) => typeof x === 'boolean' && !x).map(([k]) => k); console.log('v0.7:', Object.entries(j.v07).map(([k, x]) => `${k}=${typeof x === 'object' ? JSON.stringify(x) : x}`).join(' ')); if (bad.length) { failed = true; console.log('  FALHARAM: ' + bad.join(', ')); } }
 if (j.netplay) { console.log('netplay:', JSON.stringify(j.netplay)); if (!j.netplay.ok) { failed = true; console.log('  FALHOU: lockstep dessincronizou ou não avançou'); } }
 if (j.cpuFight) console.log('luta CPU:', JSON.stringify(j.cpuFight));
 if (j.matchups) {

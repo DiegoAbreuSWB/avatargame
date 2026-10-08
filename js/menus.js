@@ -24,11 +24,11 @@ function drawTitle(ctx, game) {
   const opts = game.titleOptions().map((o) => T(o));
   opts.forEach((o, i) => {
     const sel = i === game.menuIndex;
-    const y = 290 + i * 42;
-    if (sel) { ctx.fillStyle = 'rgba(255,213,79,.18)'; roundRect(ctx, CFG.W / 2 - 230, y - 19, 460, 38, 8); ctx.fill(); }
-    txt(ctx, o, CFG.W / 2, y, { font: FONT_DISPLAY, size: 24, color: sel ? '#ffd54f' : '#cfd8dc', stroke: 'rgba(0,0,0,.9)' });
+    const y = 282 + i * 36;
+    if (sel) { ctx.fillStyle = 'rgba(255,213,79,.18)'; roundRect(ctx, CFG.W / 2 - 230, y - 16, 460, 32, 8); ctx.fill(); }
+    txt(ctx, o, CFG.W / 2, y, { font: FONT_DISPLAY, size: 22, color: sel ? '#ffd54f' : '#cfd8dc', stroke: 'rgba(0,0,0,.9)' });
   });
-  txt(ctx, T('W/S ou ↑/↓ para navegar · Enter para confirmar'), CFG.W / 2, 290 + opts.length * 42 + 2, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  txt(ctx, T('W/S ou ↑/↓ para navegar · Enter para confirmar'), CFG.W / 2, 282 + opts.length * 36 + 2, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
   if (!game.r3d) txt(ctx, T('Modo 3D indisponível neste navegador (WebGL ou Three.js não carregou)'), CFG.W / 2, CFG.H - 24, { size: 13, color: '#8a93a3', stroke: 'rgba(0,0,0,.8)' });
 }
 
@@ -91,7 +91,9 @@ function drawSelect(ctx, game) {
     if (!game.is3D) { ctx.fillStyle = 'rgba(0,0,0,.5)'; roundRect(ctx, px, 120, pw, 470, 12); ctx.fill(); }
     ctx.strokeStyle = done ? col : 'rgba(255,255,255,.25)'; ctx.lineWidth = 3; roundRect(ctx, px, 120, pw, 470, 12); ctx.stroke();
     txt(ctx, label, px + pw / 2, 148, { size: 16, color: col, stroke: 'rgba(0,0,0,.8)' });
-    if (!game.is3D) drawFigureAt(ctx, ch, px + pw / 2, 420, 1.15, done ? 'win' : 'idle', game.t, side === 0 ? 1 : -1, { staff: false });
+    const skinIdx = side === 0 ? s.skin1 : s.skin2;
+    drawSkinLabel(ctx, ch, skinIdx, px + pw / 2, 170, side === 0 || game.p1PicksBoth ? KEYMAPS.p1.labels.special : KEYMAPS.p2.labels.special);
+    if (!game.is3D) drawFigureAt(ctx, skinnedChar(ch, skinIdx), px + pw / 2, 420, 1.15, done ? 'win' : 'idle', game.t, side === 0 ? 1 : -1, { staff: false });
     ctx.fillStyle = 'rgba(0,0,0,.45)'; roundRect(ctx, px + 8, 436, pw - 16, 146, 10); ctx.fill();
     txt(ctx, ch.name.toUpperCase(), px + pw / 2, 460, { font: FONT_DISPLAY, size: 30, color: '#fff', stroke: 'rgba(0,0,0,.9)' });
     txt(ctx, T(ch.title), px + pw / 2, 486, { size: 15, color: ELEMENT_COLORS[ch.element], weight: 400 });
@@ -117,6 +119,7 @@ function drawSelect(ctx, game) {
     : game.soloMode ? T('{0} move · {1} confirma · Esc volta', L1.move, L1.punch)
     : T('P1: {0} move, {1} confirma  ·  P2: {2} move, {3} confirma  ·  Esc volta', L1.move, L1.punch, L2.move, L2.punch);
   txt(ctx, hint, CFG.W / 2, 650, { size: 16, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  if (s.msg) txt(ctx, s.msg, CFG.W / 2, 676, { size: 15, color: '#ff8a65', stroke: 'rgba(0,0,0,.9)' });
   if (s.p1Done && s.p2Done) txt(ctx, T('LUTADORES ESCOLHIDOS!'), CFG.W / 2, 118, { font: FONT_DISPLAY, size: 22, color: '#fff', stroke: 'rgba(0,0,0,.9)' });
 }
 
@@ -169,5 +172,6 @@ function drawResult(ctx, game) {
     txt(ctx, n, tx, y, { size: 15, color: '#cfd8dc', weight: 400 });
     txt(ctx, String(va), tx - 150, y, { size: 17, color: va >= vb ? '#fff' : '#aaa' }); txt(ctx, String(vb), tx + 150, y, { size: 17, color: vb >= va ? '#fff' : '#aaa' });
   });
+  if (game.newUnlocks && game.newUnlocks.length) txt(ctx, T('Novo traje desbloqueado: {0}', game.newUnlocks.map((u) => `${u.char.name} · ${T(u.skin.name)}`).join(', ')), CFG.W / 2, 655, { size: 18, color: '#80deea', stroke: 'rgba(0,0,0,.9)' });
   txt(ctx, T('Enter = Revanche   ·   Esc = Escolher lutadores'), CFG.W / 2, 690, { size: 18, color: '#dfe7f2', stroke: 'rgba(0,0,0,.8)' });
 }

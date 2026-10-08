@@ -31,6 +31,7 @@ class Projectile {
       this.x = owner.x + (spec.x || 0) * this.facing;
       this.y = owner.y + (spec.y || 0);
     }
+    if (spec.absX !== undefined) this.x = spec.absX;
     this.startX = this.x;
   }
 
@@ -89,6 +90,7 @@ class Projectile {
       case 'beam': if (f % 1 === 0) Particles.element('raio', this.x + rand(-this.w / 2, this.w / 2) * 0.9, this.y + rand(-10, 10), 2, { maxSpeed: 6, minLife: 6, maxLife: 14 }); break;
       case 'boomerang': if (f % 4 === 0) Particles.element('nao', this.x, this.y, 1, { maxSpeed: 1 }); break;
       case 'ice': if (f % 5 === 0) Particles.element('gelo', this.x, this.y, 1, { maxSpeed: 1 }); break;
+      case 'bolt': if (this.delay <= 0) Particles.element('raio', this.x + rand(-20, 20), CFG.GROUND - rand(0, 600), 3, { maxSpeed: 6 }); break;
       case 'breath': Particles.element('fogo', this.x + rand(-this.w / 2, this.w / 2), this.y + rand(-this.h / 3, this.h / 3), 2, { maxSpeed: 3, minLife: 6, maxLife: 14 }); break;
       case 'firewave': if (f % 2 === 0) Particles.element('fogo', this.x + rand(-30, 30), CFG.GROUND - rand(0, 40), 2, { maxSpeed: 2 }); break;
       case 'fan': case 'fanspin': if (f % 4 === 0) Particles.burst(this.x, this.y, 1, { color: ['#e3b23c', '#fff'], maxSpeed: 2, shape: 'spark' }); break;
@@ -165,6 +167,20 @@ class Projectile {
         ctx.strokeStyle = '#cfd8dc'; ctx.lineWidth = 9; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(-w / 2, h / 3); ctx.lineTo(0, -h / 2); ctx.lineTo(w / 2, h / 3); ctx.stroke();
         ctx.strokeStyle = '#546e7a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-w / 2, h / 3); ctx.lineTo(0, -h / 2); ctx.lineTo(w / 2, h / 3); ctx.stroke();
+        break;
+      }
+      case 'bolt': {
+        if (this.delay > 0) {
+          ctx.fillStyle = `rgba(155,231,255,${0.25 + 0.5 * ((this.frame % 10) / 10)})`; ctx.beginPath(); ctx.ellipse(x, CFG.GROUND, w * 1.2, 10, 0, 0, Math.PI * 2); ctx.fill();
+        } else {
+          ctx.lineCap = 'round';
+          for (const [lw, col] of [[26, 'rgba(79,213,255,.3)'], [10, '#9be7ff'], [4, '#ffffff']]) {
+            ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x, 0);
+            for (let i = 1; i <= 12; i++) ctx.lineTo(x + (i < 12 ? rand(-22, 22) : 0), (CFG.GROUND * i) / 12);
+            ctx.stroke();
+          }
+          ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.ellipse(x, CFG.GROUND, w, 12, 0, 0, Math.PI * 2); ctx.fill();
+        }
         break;
       }
       case 'breath': {

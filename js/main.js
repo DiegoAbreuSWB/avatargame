@@ -2,7 +2,7 @@
 (function boot() {
   const canvas = document.getElementById('game');
   const overlay = document.getElementById('overlay');
-  Settings.load();
+  Settings.load(); Save.load();
   const game = new Game(canvas);
   window.game = game;
 

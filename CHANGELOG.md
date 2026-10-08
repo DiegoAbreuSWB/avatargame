@@ -2,6 +2,14 @@
 
 Todas as versões são de 2026-10-08. Decisões por trás de cada item em `docs/DECISOES.md`.
 
+## 0.7.0 — Regras e progressão (v0.7 do roadmap de expansão)
+- Regras especiais antes da luta: Eclipse Solar, Lua Cheia, Cometa de Sozin, Tempestade (raios e vento), vida contínua, round de 30 s, super infinito; valem no Versus, CPU e Online.
+- Salvamento versionado (estatísticas, desbloqueios, desafio diário, torneios) com migração e recuperação de dados corrompidos.
+- Trajes: um traje temático por personagem (terminar o Arcade com ele) e roupa de treino (5 vitórias); troca na seleção com a tecla de especial.
+- Desafio diário: luta fixa por data, com regras, CPU difícil e melhor placar salvo.
+- Torneio local de 4 ou 8 participantes (humanos ou CPU), chave sorteada, lutas CPU x CPU simuladas na hora.
+- Testes: 14 verificações novas (regras, save, trajes, diário, torneio); ADR-032 a 036.
+
 ## 0.6.0 — Fase 5: online experimental
 - Lockstep com atraso de 3 frames sobre WebRTC DataChannel, sem servidor (troca de código de sala).
 - Cena "Online (experimental)": criar sala / entrar na sala; anfitrião escolhe lutadores e cenário; revanche pelo anfitrião.

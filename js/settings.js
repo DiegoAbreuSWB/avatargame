@@ -8,7 +8,7 @@ const Settings = (() => {
   };
   const DEFAULTS = {
     graphics: '3d', sound: true, music: true, difficulty: 'normal', roundTime: 99, roundsToWin: 2,
-    lang: 'pt', touch: 'auto', debug: false, keys: DEFAULT_KEYS,
+    lang: 'pt', touch: 'auto', debug: false, rules: [], keys: DEFAULT_KEYS,
   };
   const KEY = 'avatarArena.settings';
   const clone = (o) => JSON.parse(JSON.stringify(o));

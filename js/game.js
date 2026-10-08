@@ -1,0 +1,527 @@
+/* Gerenciador do jogo: cenas (título, seleção, cenário, luta, resultado, configurações), rounds e resolução de golpes.
+   Modos de jogo: '2p' (dois jogadores), 'cpu' (contra a IA), 'training' (treino com boneco). */
+const DUMMY_MODES = ['Parado', 'Bloqueando', 'Agachado', 'Pulando', 'CPU'];
+
+class Game {
+  constructor(canvas) {
+    this.canvas = canvas; this.ctx = canvas.getContext('2d');
+    this.scene = 'title'; this.t = 0;
+    this.menuIndex = 0; this.mode = '2p';
+    this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0 };
+    this.stageIndex = 0;
+    this.fighters = []; this.projectiles = [];
+    this.hitstop = 0; this.shake = 0; this.shakeX = 0; this.shakeY = 0;
+    this.announce = null; this.paused = false; this.pauseIndex = 0;
+    this.superFlash = 0; this.superUser = null; this.superName = '';
+    this.round = 1; this.timer = CFG.ROUND_TIME; this.timerFrames = 0; this.infiniteTime = false;
+    this.roundsToWin = CFG.ROUNDS_TO_WIN;
+    this.phase = 'intro'; this.phaseT = 0; this.winner = null;
+    this.r3d = null; this.use3D = false;
+    this.seed = null; this.matchSeed = 0;           // seed fixa (testes/replays) ou sorteada por partida
+    this.debug = false;                              // overlay de hitboxes (F1)
+    this.training = { dummy: 0, chiInf: true, history: [], lastCombo: 0 };
+    this.settingsIndex = 0; this.remap = null;
+    this.prevPadA = Input.emptyPad();
+    this.modifiers = []; this.roundFrame = 0; this.newUnlocks = [];
+    // "dono" fictício dos perigos de cenário (raios da tempestade): tem os campos que receiveHit lê
+    this.hazardOwner = { isHazard: true, x: CFG.W / 2, y: CFG.GROUND, facing: 1, char: { id: 'hazard', element: 'nao', name: '' }, stats: { hits: 0, damage: 0, maxCombo: 0, throws: 0 }, combo: 0, comboTimer: 0, chi: 0, hitsLeft: 0, opponent: null, game: this };
+  }
+  get is3D() { return !!(this.r3d && this.use3D); }
+  get p1PicksBoth() { return this.mode === 'cpu' || this.mode === 'training' || this.mode === 'online'; }
+  get soloMode() { return this.mode === 'arcade' || this.mode === 'survival'; }
+  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'DESAFIO DIÁRIO', 'TORNEIO', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'CONTROLES', 'CONFIGURAÇÕES']; }
+
+  /* ---------- utilidades ---------- */
+  get stage() { return STAGES[this.stageIndex]; }
+  anyPad(key) { return Input.pressed(KEYMAPS.p1[key]) || Input.pressed(KEYMAPS.p2[key]); }
+  extMenu() { const g = typeof Gamepad_ !== 'undefined' ? Gamepad_.menu() : {}; const t = (typeof Touch !== 'undefined' && Touch.menu()) || {}; return { up: g.up || t.up, down: g.down || t.down, left: g.left || t.left, right: g.right || t.right, confirm: g.confirm || t.confirm, back: g.back || t.back, start: g.start || t.start }; }
+  menuUp() { return this.anyPad('up') || Input.pressed('ArrowUp') || !!this.extMenu().up; }
+  menuDown() { return this.anyPad('down') || Input.pressed('ArrowDown') || !!this.extMenu().down; }
+  menuLeft() { return this.anyPad('left') || Input.pressed('ArrowLeft') || !!this.extMenu().left; }
+  menuRight() { return this.anyPad('right') || Input.pressed('ArrowRight') || !!this.extMenu().right; }
+  confirmPressed() { return Input.pressed('Enter') || Input.pressed('Space') || this.anyPad('punch') || !!this.extMenu().confirm; }
+  backPressed() { return Input.pressed('Escape') || !!this.extMenu().back; }
+  pausePressed() { return Input.pressed('Escape') || !!this.extMenu().start; }
+  setAnnounce(text, frames, extra = {}) { this.announce = Object.assign({ text, timer: frames, max: frames }, extra); }
+  shakeScreen(n) { this.shake = Math.max(this.shake, n); }
+  spawnHazard(spec) {
+    const p = new Projectile(this.hazardOwner, null, spec);
+    p.hitSet = new Set();
+    this.projectiles.push(p);
+    Audio_.play('lightning');
+  }
+  spawnProjectile(owner, spec) {
+    spec = Modifiers.projectileSpec(this, owner, spec);
+    if (spec.exclusive !== false && this.projectiles.some((p) => p.owner === owner && p.exclusive && !p.dead)) return;
+    const p = new Projectile(owner, owner.opponent, spec);
+    this.projectiles.push(p);
+    if (spec.type !== 'beam') Audio_.element(owner.char.element);
+  }
+  onSuper(f, m) {
+    this.superFlash = 40; this.superUser = f; this.superName = m.name; this.hitstop = 14;
+    Audio_.play('super'); Particles.element(f.char.element === 'nao' ? 'hit' : f.char.element, f.x, f.y - 90, 30, { maxSpeed: 9 });
+  }
+  onKO(loser, winner) {
+    if (this.phase !== 'play') return;
+    if (!winner || winner.isHazard) winner = loser.opponent;
+    if (this.mode === 'training') { loser.hp = CFG.MAX_HP; loser.hpGhost = CFG.MAX_HP; return; }
+    this.phase = 'ko'; this.phaseT = 0; this.winner = winner;
+    loser.setKO();
+    this.setAnnounce(T('K.O.'), 130, { color: '#ff5252', size: 120 });
+    Audio_.play('ko'); this.shakeScreen(12);
+  }
+  isThreatened(f) {
+    const o = f.opponent;
+    if (o.state === 'attack' && o.attack && o.attackFrame <= o.attack.startup + o.attack.active + 2 && Math.abs(o.x - f.x) < 280) return true;
+    return this.projectiles.some((p) => p.owner !== f && p.active && Math.abs(p.x - f.x) < 320);
+  }
+
+  /* ---------- loop ---------- */
+  update() {
+    Input.beginFrame(); this.t++;
+    if (typeof Gamepad_ !== 'undefined') Gamepad_.poll();
+    if (typeof Touch !== 'undefined') Touch.poll();
+    if (Input.pressed('KeyM')) { Settings.data.sound = !Audio_.toggleMute(); Settings.save(); }
+    if (Input.pressed('F1')) { this.debug = !this.debug; Settings.data.debug = this.debug; Settings.save(); }
+    if (this.net && this.scene === 'fight') {
+      this.net.sample(this.netLocalPad ? this.netLocalPad() : Input.readPad(KEYMAPS.p1, 0));
+      if (this.pausePressed()) { this.netLeave(false); return; }
+      if (!this.net.tick()) { this.netStalled = this.net.stalled; return; }
+      this.netStalled = 0;
+    }
+    switch (this.scene) {
+      case 'title': this.updateTitle(); break;
+      case 'online': this.updateOnline(); break;
+      case 'rules': this.updateRules(); break;
+      case 'daily': this.updateDaily(); break;
+      case 'tournamentSetup': this.updateTournamentSetup(); break;
+      case 'bracket': this.updateBracket(); break;
+      case 'controls': if (this.backPressed() || this.confirmPressed()) { Audio_.play('back'); this.scene = 'title'; } break;
+      case 'settings': this.updateSettings(); break;
+      case 'remap': this.updateRemap(); break;
+      case 'select': this.updateSelect(); break;
+      case 'stage': this.updateStage(); break;
+      case 'ladder': this.updateLadder(); break;
+      case 'continue': this.updateContinue(); break;
+      case 'ending': case 'survivalEnd': this.updateEnding(); break;
+      case 'fight': this.updateFight(); if (this.net) this.net.advance(); break;
+      case 'result': this.updateResult(); break;
+    }
+    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'rules', 'daily', 'tournamentSetup', 'bracket', 'ladder', 'continue', 'ending', 'survivalEnd', 'result'].includes(this.scene) ? 'menu' : null;
+    if (typeof Music !== 'undefined') Music.ensure(theme, Settings.data.music);
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, CFG.W, CFG.H);
+    if (this.is3D) {
+      try { this.r3d.render(this); }
+      catch (e) { console.error('Falha no modo 3D, voltando ao 2D:', e); this.use3D = false; }
+    }
+    switch (this.scene) {
+      case 'title': drawTitle(ctx, this); break;
+      case 'online': drawOnline(ctx, this); break;
+      case 'rules': drawRules(ctx, this); break;
+      case 'daily': drawDaily(ctx, this); break;
+      case 'tournamentSetup': drawTournamentSetup(ctx, this); break;
+      case 'bracket': drawBracket(ctx, this); break;
+      case 'controls': drawControls(ctx, this); break;
+      case 'settings': drawSettings(ctx, this); break;
+      case 'remap': drawRemap(ctx, this); break;
+      case 'select': drawSelect(ctx, this); break;
+      case 'stage': drawStageSelect(ctx, this); break;
+      case 'ladder': drawLadder(ctx, this); break;
+      case 'continue': drawContinue(ctx, this); break;
+      case 'ending': drawEnding(ctx, this); break;
+      case 'survivalEnd': drawSurvivalEnd(ctx, this); break;
+      case 'fight': this.drawFight(ctx); break;
+      case 'result': drawResult(ctx, this); break;
+    }
+    if (typeof Touch !== 'undefined') Touch.draw(ctx, this);
+    ctx.restore();
+  }
+
+  /* ---------- título ---------- */
+  updateTitle() {
+    const n = this.titleOptions().length;
+    if (this.menuUp()) { this.menuIndex = (this.menuIndex + n - 1) % n; Audio_.play('menu'); }
+    if (this.menuDown()) { this.menuIndex = (this.menuIndex + 1) % n; Audio_.play('menu'); }
+    if (this.confirmPressed()) {
+      Audio_.play('confirm');
+      switch (this.menuIndex) {
+        case 0: this.mode = '2p'; this.gotoSelect(); break;
+        case 1: this.mode = 'cpu'; this.gotoSelect(); break;
+        case 2: this.mode = 'arcade'; this.gotoSelect(); break;
+        case 3: this.mode = 'survival'; this.gotoSelect(); break;
+        case 4: this.dailyResult = null; this.dailyT = 0; this.scene = 'daily'; break;
+        case 5: this.startTournamentSetup(); break;
+        case 6: this.mode = 'training'; this.gotoSelect(); break;
+        case 7: this.online = { step: 'menu', index: 0, msg: '' }; this.scene = 'online'; break;
+        case 8: this.scene = 'controls'; break;
+        case 9: this.scene = 'settings'; this.settingsIndex = 0; break;
+      }
+    }
+  }
+  gotoSelect() {
+    this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0, skin1: 0, skin2: 0, msg: '' };
+    this.scene = 'select';
+  }
+  cycleSkin(which) {
+    const s = this.select, ch = CHARACTERS[which === 1 ? s.p1 : s.p2], n = skinList(ch).length;
+    s['skin' + which] = (s['skin' + which] + 1) % n; s.msg = ''; Audio_.play('menu');
+  }
+  skinAllowed(which) {
+    const s = this.select, ch = CHARACTERS[which === 1 ? s.p1 : s.p2], skin = skinList(ch)[s['skin' + which] || 0];
+    if (skinUnlocked(ch, skin)) return true;
+    s.msg = T('Traje bloqueado: {0}', skinUnlockText(skin)); Audio_.play('back'); return false;
+  }
+
+  /* ---------- seleção de personagem ---------- */
+  moveCursor(key, map) {
+    const cols = SELECT_COLS, n = CHARACTERS.length, rows = Math.ceil(n / cols);
+    let i = this.select[key];
+    if (Input.pressed(map.left)) i = i % cols === 0 ? Math.min(i + cols - 1, n - 1) : i - 1;
+    if (Input.pressed(map.right)) i = (i % cols === cols - 1 || i === n - 1) ? i - (i % cols) : i + 1;
+    if (Input.pressed(map.up)) i = i - cols < 0 ? Math.min(i + cols * (rows - 1), n - 1) : i - cols;
+    if (Input.pressed(map.down)) i = i + cols >= n ? i % cols : i + cols;
+    if (i !== this.select[key]) { this.select[key] = clamp(i, 0, n - 1); this.select[key === 'p1' ? 'skin1' : 'skin2'] = 0; this.select.msg = ''; Audio_.play('menu'); }
+  }
+  updateSelect() {
+    const s = this.select;
+    if (this.backPressed()) {
+      Audio_.play('back');
+      if (s.p2Done) s.p2Done = false;
+      else if (s.p1Done) s.p1Done = false;
+      else if (this.net) this.netLeave(false);
+      else this.scene = 'title';
+      return;
+    }
+    if (s.p1Done && s.p2Done) { if (++s.timer > 40) this.scene = 'stage'; return; }
+    if (s.p1Done && this.soloMode) { if (++s.timer > 30) { if (this.mode === 'arcade') this.startArcade(); else this.startSurvival(); } return; }
+    if (!s.p1Done) {
+      this.moveCursor('p1', KEYMAPS.p1);
+      if (Input.pressed(KEYMAPS.p1.special)) this.cycleSkin(1);
+      if ((Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter')) && this.skinAllowed(1)) { s.p1Done = true; Audio_.play('confirm'); }
+    } else if (this.p1PicksBoth && !s.p2Done) {
+      this.moveCursor('p2', KEYMAPS.p1);
+      if (Input.pressed(KEYMAPS.p1.special)) this.cycleSkin(2);
+      if (Input.pressed(KEYMAPS.p1.kick)) { s.p2 = Rng.int(0, CHARACTERS.length - 1); s.skin2 = 0; }
+      if ((Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter') || Input.pressed(KEYMAPS.p1.kick)) && this.skinAllowed(2)) { s.p2Done = true; Audio_.play('confirm'); }
+    }
+    if (!this.p1PicksBoth && !s.p2Done) {
+      this.moveCursor('p2', KEYMAPS.p2);
+      if (Input.pressed(KEYMAPS.p2.special)) this.cycleSkin(2);
+      if ((Input.pressed(KEYMAPS.p2.punch) || (s.p1Done && Input.pressed('Enter') && !Input.pressed(KEYMAPS.p1.punch))) && this.skinAllowed(2)) { s.p2Done = true; Audio_.play('confirm'); }
+    }
+  }
+
+  /* ---------- seleção de cenário ---------- */
+  updateStage() {
+    if (this.backPressed()) { Audio_.play('back'); this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; return; }
+    const n = STAGES.length;
+    if (this.menuLeft()) { this.stageIndex = (this.stageIndex + n - 1) % n; Audio_.play('menu'); }
+    if (this.menuRight()) { this.stageIndex = (this.stageIndex + 1) % n; Audio_.play('menu'); }
+    if (this.confirmPressed()) { Audio_.play('confirm'); if (this.mode === 'training') return this.startMatch(); this.gotoRules(); }
+  }
+
+  /* ---------- luta ---------- */
+  startMatch() {
+    const c1 = skinnedChar(CHARACTERS[this.select.p1], this.select.skin1), c2 = skinnedChar(CHARACTERS[this.select.p2], this.select.skin2);
+    this.modifiers = this.modifiers || [];
+    this.matchSeed = this.seed != null ? this.seed : ((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
+    Rng.set(this.matchSeed);
+    this.fighters = [new Fighter(c1, 0, this), new Fighter(c2, 1, this)];
+    const cpu = this.fighters[1];
+    cpu.isCPU = this.mode !== '2p' && this.mode !== 'online';
+    this.fighters.forEach((f) => { f.maxHp = CFG.MAX_HP; f.hp = CFG.MAX_HP; });
+    cpu.aiLevel = this.aiLevelOverride || Settings.data.difficulty;
+    this.fighters[0].aiLevel = cpu.aiLevel;
+    this.fighters.forEach((f) => { f.rounds = 0; f.chi = 0; f.hpGhost = CFG.MAX_HP; });
+    this.roundsToWin = this.mode === 'training' ? 99 : this.mode === 'survival' ? 1 : Settings.data.roundsToWin;
+    this.infiniteTime = this.mode === 'training' || Settings.data.roundTime === 0;
+    this.round = 1; this.winner = null; this.paused = false;
+    this.training.history = []; this.training.lastCombo = 0;
+    this.quotes = this.fighters.map((f) => { const q = (typeof QUOTES !== 'undefined' && QUOTES[f.char.id]) || { intro: [''], win: [''] }; return { intro: Rng.pick(q.intro), win: Rng.pick(q.win) }; });
+    this.cam2d = null; this.newUnlocks = [];
+    Modifiers.onMatchStart(this);
+    this.scene = 'fight';
+    this.startRound();
+  }
+  startRound() {
+    const [a, b] = this.fighters;
+    a.reset(380, 1); b.reset(CFG.W - 380, -1);
+    a.hpGhost = a.hp; b.hpGhost = b.hp;
+    a.state = b.state = 'intro';
+    this.projectiles = []; Particles.clear();
+    this.timer = this.infiniteTime ? 0 : (this.roundTimeOverride || Settings.data.roundTime); this.timerFrames = 0;
+    this.roundFrame = 0; Modifiers.onRoundStart(this);
+    this.phase = 'intro'; this.phaseT = 0; this.hitstop = 0; this.shake = 0; this.superFlash = 0;
+    const final = a.rounds === this.roundsToWin - 1 && b.rounds === this.roundsToWin - 1;
+    const label = this.mode === 'training' ? T('TREINO') : final ? T('ROUND FINAL') : T('ROUND {0}', this.round);
+    this.setAnnounce(label, 50, { sub: T(this.stage.name), y: 200 });
+    Audio_.play('round');
+  }
+
+  dummyPad(dummy, me) {
+    const pad = Input.emptyPad();
+    const opp = me.opponent, back = opp.x >= me.x ? 'left' : 'right';
+    switch (DUMMY_MODES[this.training.dummy]) {
+      case 'Bloqueando': pad[back] = true; break;
+      case 'Agachado': pad.down = true; pad[back] = true; break;
+      case 'Pulando': if (me.grounded && this.t % 40 === 0) { pad.upPressed = true; pad.up = true; } break;
+      case 'CPU': return AI.update(dummy, me, this);
+    }
+    return pad;
+  }
+  recordInput(pad) {
+    const prev = this.prevPadA, h = this.training.history;
+    const push = (sym) => { h.push({ sym, t: this.t }); if (h.length > 16) h.shift(); };
+    for (const [k, sym] of [['left', '←'], ['right', '→'], ['up', '↑'], ['down', '↓']]) if (pad[k] && !prev[k]) push(sym);
+    for (const [k, sym] of [['punch', 'S'], ['kick', 'C'], ['special', 'E'], ['super', 'U']]) if (pad[k]) push(sym);
+    this.prevPadA = pad;
+  }
+
+  updateFight() {
+    if (this.paused) return this.updatePause();
+    if (this.pausePressed() && this.phase === 'play') { this.paused = true; this.pauseIndex = 0; Audio_.play('menu'); return; }
+    const training = this.mode === 'training';
+    if (training) {
+      if (Input.pressed('F2')) { this.training.dummy = (this.training.dummy + 1) % DUMMY_MODES.length; Audio_.play('menu'); }
+      if (Input.pressed('F3')) { const [a, b] = this.fighters; a.reset(380, 1); b.reset(CFG.W - 380, -1); a.hp = b.hp = a.hpGhost = b.hpGhost = CFG.MAX_HP; this.projectiles = []; Audio_.play('menu'); }
+      if (Input.pressed('F4')) { this.training.chiInf = !this.training.chiInf; Audio_.play('menu'); }
+    }
+
+    if (this.announce && --this.announce.timer <= 0) this.announce = null;
+    if (this.superFlash > 0) this.superFlash--;
+    if (this.shake > 0) { this.shake *= 0.85; if (this.shake < 0.5) this.shake = 0; }
+    this.shakeX = rand(-this.shake, this.shake); this.shakeY = rand(-this.shake, this.shake);
+    for (const f of this.fighters) f.hpGhost = f.hpGhost > f.hp ? Math.max(f.hp, f.hpGhost - 0.6) : f.hp;
+
+    // fases do round
+    this.phaseT++;
+    if (this.phase === 'intro') {
+      if (this.phaseT === 70) this.setAnnounce(T('LUTEM!'), 45, { color: '#ff7043', y: 360 });
+      if (this.phaseT >= 100) { this.phase = 'play'; this.fighters.forEach((f) => { f.state = 'idle'; }); }
+    } else if (this.phase === 'play') {
+      if (!this.infiniteTime && ++this.timerFrames >= CFG.FPS) { this.timerFrames = 0; this.timer--; if (this.timer <= 0) this.onTimeout(); }
+    } else if (this.phase === 'ko' || this.phase === 'timeout') {
+      if (this.phaseT === 80 && this.winner) { this.winner.setWin(); Audio_.play('win'); }
+      if (this.phaseT === 81 && this.winner) this.winner.rounds++;
+      if (this.phaseT >= 190) this.nextRound();
+    }
+
+    if (this.hitstop > 0) { this.hitstop--; Particles.update(); return; }
+    const slow = this.phase === 'ko' && this.phaseT < 60 && this.phaseT % 3 !== 0;   // phaseT, não t: determinístico entre clientes online
+    if (slow) { Particles.update(); return; }
+
+    const [a, b] = this.fighters;
+    const control = this.phase === 'play';
+    // fontes de entrada: teclado por padrão; padSourceA/B permitem injetar entradas (testes, toque, online)
+    const padA = !control ? Input.emptyPad() : this.net ? this.net.padFor(0) : a.isCPU ? AI.update(a, b, this) : this.padSourceA ? this.padSourceA() : Input.readPad(KEYMAPS.p1, 0);
+    let padB;
+    if (!control) padB = Input.emptyPad();
+    else if (this.net) padB = this.net.padFor(1);
+    else if (training) padB = this.dummyPad(b, a);
+    else padB = b.isCPU ? AI.update(b, a, this) : this.padSourceB ? this.padSourceB() : Input.readPad(KEYMAPS.p2, 1);
+    if (training && control) {
+      this.recordInput(padA);
+      if (this.training.chiInf) a.chi = CFG.MAX_CHI;
+      for (const f of this.fighters) if (f.hp < f.maxHp && this.t - (f.lastHitAt || 0) > 100 && f.canAct) { f.hp = f.maxHp; f.hpGhost = f.maxHp; }
+      if (a.combo > this.training.lastCombo) this.training.lastCombo = a.combo;
+      if (a.combo === 0 && b.canAct) this.training.lastCombo = this.training.lastCombo; // mantém o último até o próximo combo
+    }
+    this.roundFrame++;
+    if (control) Modifiers.onFrame(this);   // antes dos lutadores lerem o input (flags como 'sem dobra')
+    a.update(padA, control); b.update(padB, control);
+    this.separate(a, b);
+
+    for (const p of this.projectiles) p.update();
+    if (control || this.phase === 'ko') this.resolveHits();
+    this.projectiles = this.projectiles.filter((p) => !p.dead);
+    Particles.update();
+  }
+
+  separate(a, b) {
+    if (['knockdown', 'ko'].includes(a.state) || ['knockdown', 'ko'].includes(b.state)) return;
+    if (!rectsOverlap(a.pushbox, b.pushbox)) return;
+    const left = a.x <= b.x ? a : b, right = left === a ? b : a;
+    const d = 56 - (right.x - left.x);
+    if (d <= 0) return;
+    left.x -= d / 2; right.x += d / 2;
+    if (left.x < CFG.WALL_PAD) { right.x += CFG.WALL_PAD - left.x; left.x = CFG.WALL_PAD; }
+    if (right.x > CFG.W - CFG.WALL_PAD) { left.x -= right.x - (CFG.W - CFG.WALL_PAD); right.x = CFG.W - CFG.WALL_PAD; }
+  }
+
+  resolveHits() {
+    // golpes corpo a corpo
+    for (const f of this.fighters) {
+      const hb = f.hitbox; if (!hb) continue;
+      const o = f.opponent;
+      if (o.isInvulnerable || o.state === 'ko') continue;
+      const ob = o.hurtbox;
+      if (!rectsOverlap(hb, ob)) continue;
+      const cx = (Math.max(hb.x, ob.x) + Math.min(hb.x + hb.w, ob.x + ob.w)) / 2;
+      const cy = (Math.max(hb.y, ob.y) + Math.min(hb.y + hb.h, ob.y + ob.h)) / 2;
+      const isLast = f.hitsLeft <= 1;
+      f.hitsLeft--; f.hitCooldown = f.attack.hitInterval || 8;
+      // postura de contra-ataque (parry): o defensor devolve o golpe
+      if (o.counterStance === 'melee') {
+        f.hitsLeft = 0;
+        f.receiveHit(o, { damage: o.attack.counterDamage || 10, hitstun: 30, knockback: 9, knockdown: true, chi: 10 }, cx, cy, {});
+        o.endAttack(); this.setAnnounce(T('CONTRA-ATAQUE!'), 45, { size: 44, color: '#ffd54f', y: 240 });
+        continue;
+      }
+      const res = o.receiveHit(f, f.attack, cx, cy, { isLast });
+      if (res === 'hit' || res === 'block') f.attackConnected = true;
+    }
+    // perigos de cenário atingem os dois lutadores
+    for (const p of this.projectiles) {
+      if (!p.hazard || !p.active) continue;
+      for (const f of this.fighters) {
+        if (p.hitSet.has(f) || f.isInvulnerable || f.state === 'ko') continue;
+        const pb = p.box, ob = f.hurtbox; if (!rectsOverlap(pb, ob)) continue;
+        p.hitSet.add(f); this.hazardOwner.x = p.x;
+        f.receiveHit(this.hazardOwner, p, f.x, f.y - 100, { fromProjectile: true, isLast: true });
+        Particles.element('raio', f.x, f.y - 100, 12);
+      }
+    }
+    // projéteis contra lutadores
+    for (const p of this.projectiles) {
+      if (p.hazard) continue;
+      if (!p.active || p.hitsLeft <= 0 || p.hitCooldown > 0) continue;
+      const o = p.target;
+      if (o.isInvulnerable || o.state === 'ko') continue;
+      if (p.groundOnly && o.airborne) continue;
+      const pb = p.box, ob = o.hurtbox;
+      if (!rectsOverlap(pb, ob)) continue;
+      const cx = (Math.max(pb.x, ob.x) + Math.min(pb.x + pb.w, ob.x + ob.w)) / 2;
+      const cy = (Math.max(pb.y, ob.y) + Math.min(pb.y + pb.h, ob.y + ob.h)) / 2;
+      // postura de redirecionamento: o projétil volta contra quem o lançou
+      if (o.counterStance === 'projectile' && !GROUND_TYPES.has(p.type) && p.type !== 'vortex' && p.type !== 'beam') {
+        const old = p.owner; p.owner = o; p.target = old; p.facing = -p.facing; p.vx = -p.vx * 1.15; p.damage = Math.round(p.damage * 1.5);
+        p.hitsLeft = 1; p.hitCooldown = 6; p.life = Math.max(p.life, 90); p.returning = false;
+        Particles.element('raio', p.x, p.y, 14); Audio_.play('lightning');
+        this.setAnnounce(T('REDIRECIONADO!'), 45, { size: 44, color: '#9be7ff', y: 240 });
+        continue;
+      }
+      const isLast = p.hitsLeft <= 1;
+      p.hitsLeft--; p.hitCooldown = p.multi ? 8 : 9999;
+      const res = o.receiveHit(p.owner, p, cx, cy, { fromProjectile: true, isLast });
+      if (p.owner.state === 'attack') p.owner.attackConnected = true;
+      Particles.element(p.type === 'ice' ? 'gelo' : p.type === 'beam' ? 'raio' : p.owner.char.element, cx, cy, res === 'hit' ? 12 : 6);
+      if (!p.pierce && !p.multi) p.dead = true;
+      if (p.returning && !p.returnPhase) { p.returnPhase = true; p.hitsLeft = 1; p.hitCooldown = 20; }
+    }
+    // golpes corpo a corpo destroem projéteis que podem ser cancelados
+    for (const f of this.fighters) {
+      const hb = f.hitbox; if (!hb) continue;
+      for (const p of this.projectiles) {
+        if (p.owner === f || !p.active || !p.cancels || p.dead) continue;
+        if (rectsOverlap(hb, p.box)) { p.dead = true; Particles.element('hit', p.x, p.y, 10); Audio_.play('block'); }
+      }
+    }
+    // projétil contra projétil
+    for (let i = 0; i < this.projectiles.length; i++) for (let j = i + 1; j < this.projectiles.length; j++) {
+      const p = this.projectiles[i], q = this.projectiles[j];
+      if (p.owner === q.owner || !p.active || !q.active || p.dead || q.dead) continue;
+      if (!p.cancels && !q.cancels) continue;
+      if (rectsOverlap(p.box, q.box)) {
+        if (p.cancels) p.dead = true; if (q.cancels) q.dead = true;
+        Particles.element('hit', (p.x + q.x) / 2, (p.y + q.y) / 2, 16); Audio_.play('hitHeavy');
+      }
+    }
+  }
+
+  onTimeout() {
+    if (this.phase !== 'play') return;
+    const [a, b] = this.fighters;
+    this.phase = 'timeout'; this.phaseT = 0;
+    this.winner = a.hp > b.hp ? a : b.hp > a.hp ? b : null;
+    this.setAnnounce(T('TEMPO!'), 120, { color: '#ffd54f' });
+    if (this.winner) { const l = this.fighters[1 - this.winner.side]; l.state = 'knockdown'; l.stun = 9999; l.airborne = false; l.y = CFG.GROUND; }
+    Audio_.play('ko');
+  }
+
+  nextRound() {
+    const w = this.fighters.find((f) => f.rounds >= this.roundsToWin);
+    if (w) {
+      this.winner = w; this.onMatchFinished(w);
+      if (this.mode === 'daily') return this.onDailyEnd(w);
+      if (this.mode === 'tournament') return this.onTournamentEnd(w);
+      if (this.soloMode) return this.onMatchEnd(w);
+      this.scene = 'result'; this.resultT = 0; Audio_.play('win'); return;
+    }
+    Modifiers.onRoundEnd(this);
+    this.round++;
+    this.startRound();
+  }
+
+  /* estatísticas e desbloqueios ao fim de qualquer partida (menos treino) */
+  onMatchFinished(w) {
+    if (this.mode === 'training') return;
+    const l = this.fighters[1 - w.side];
+    Save.recordMatch(w.isCPU ? null : w.char.id, l.char.id, this.mode);
+    this.newUnlocks = checkUnlocks();
+  }
+
+  updatePause() {
+    if (this.menuUp()) { this.pauseIndex = (this.pauseIndex + 2) % 3; Audio_.play('menu'); }
+    if (this.menuDown()) { this.pauseIndex = (this.pauseIndex + 1) % 3; Audio_.play('menu'); }
+    if (this.pausePressed()) { this.paused = false; return; }
+    if (Input.pressed('Enter') || this.anyPad('punch')) {
+      Audio_.play('confirm');
+      if (this.pauseIndex === 0) this.paused = false;
+      else if (this.pauseIndex === 1) this.startMatch();
+      else { this.paused = false; this.aiLevelOverride = null; this.scene = 'title'; }
+    }
+  }
+
+  updateResult() {
+    this.resultT = (this.resultT || 0) + 1;
+    if (this.resultT < 30) return;
+    if (this.net) { if (this.backPressed()) this.netLeave(false); else if (this.confirmPressed() && this.net.role === 'host') { Audio_.play('confirm'); this.netHostStart(); } return; }
+    if (Input.pressed('Enter') || this.anyPad('punch')) { Audio_.play('confirm'); this.startMatch(); }
+    if (this.backPressed()) { Audio_.play('back'); this.select.p1Done = this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; }
+  }
+
+  /* câmera do modo 2D: acompanha o meio dos lutadores e aproxima quando estão perto */
+  updateCam2d() {
+    const [a, b] = this.fighters;
+    const mid = (a.x + b.x) / 2, spread = Math.abs(a.x - b.x);
+    let zoom = clamp(1.32 - spread / 1000, 1.05, 1.25);
+    if (this.phase === 'ko' && this.winner) zoom = 1.3;
+    const vw = CFG.W / zoom, vh = CFG.H / zoom;
+    const tx = clamp(mid, vw / 2, CFG.W - vw / 2), ty = CFG.H - vh / 2;
+    const c = this.cam2d || { x: tx, y: ty, zoom };
+    c.x = lerp(c.x, tx, 0.08); c.y = lerp(c.y, ty, 0.08); c.zoom = lerp(c.zoom, zoom, 0.06);
+    this.cam2d = c; return c;
+  }
+
+  drawFight(ctx) {
+    const st = this.stage;
+    if (!this.is3D) {
+      const cam = this.updateCam2d();
+      ctx.save();
+      ctx.translate(this.shakeX, this.shakeY);
+      ctx.translate(CFG.W / 2, CFG.H / 2); ctx.scale(cam.zoom, cam.zoom); ctx.translate(-cam.x, -cam.y);
+      const pdx = (cam.x - CFG.W / 2) * 0.7, pdy = (cam.y - CFG.H / 2) * 0.7;
+      ctx.save(); ctx.translate(pdx, pdy); st.draw(ctx, this.t); ctx.restore();   // fundo com parallax (fator 0,3)
+      st.drawFloor(ctx);
+      for (const p of this.projectiles) if (GROUND_TYPES.has(p.type) || p.type === 'wave') p.draw(ctx);
+      const order = this.fighters.slice().sort((a, b) => (a.state === 'attack' ? 1 : 0) - (b.state === 'attack' ? 1 : 0));
+      for (const f of order) drawFighter(ctx, f, st);
+      for (const p of this.projectiles) if (!GROUND_TYPES.has(p.type) && p.type !== 'wave') p.draw(ctx);
+      Particles.draw(ctx);
+      ctx.restore();
+    } else this.cam2d = null;
+    if (this.debug) drawDebug(ctx, this);
+    drawSuperFlash(ctx, this);
+    drawHUD(ctx, this);
+    if (this.mode === 'training') drawTraining(ctx, this);
+    drawAnnouncement(ctx, this);
+    if (this.net) drawNetStatus(ctx, this);
+    if (this.paused) drawPauseMenu(ctx, this);
+  }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Avatar Arena</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans:wght@400;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0b0d12">
+<meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+<div id="app">
+  <div id="frame">
+    <canvas id="gl" width="1280" height="720"></canvas>
+    <canvas id="game" width="1280" height="720"></canvas>
+    <div id="overlay" class="overlay" hidden>
+      <div class="overlay-card">
+        <h2>Avatar Arena</h2>
+        <p>Pressione <b>Enter</b> ou toque para iniciar.</p>
+      </div>
+    </div>
+  </div>
+  <p id="hint">Enter = confirmar · Esc = pausar/voltar · M = som · F11 = tela cheia</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="js/config.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/save.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/music.js"></script>
+<script src="js/input.js"></script>
+<script src="js/gamepad.js"></script>
+<script src="js/touch.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/skins.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/projectiles.js"></script>
+<script src="js/fighter.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/menus.js"></script>
+<script src="js/rig3d.js"></script>
+<script src="js/render3d.js"></script>
+<script src="js/game.js"></script>
+<script src="js/settings-ui.js"></script>
+<script src="js/modes.js"></script>
+<script src="js/content.js"></script>
+<script src="js/netplay.js"></script>
+<script src="js/online.js"></script>
+<script src="js/modifiers.js"></script>
+<script src="js/daily.js"></script>
+<script src="js/tournament.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

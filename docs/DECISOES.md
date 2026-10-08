@@ -194,3 +194,17 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 ## ADR-028 · Publicação por zip e documentação, sem conta de terceiros
 
 **Escolha.** `tools/package.ps1` gera o zip pronto para itch.io; `docs/PUBLICACAO.md` descreve itch.io, GitHub Pages e servidor próprio. A publicação em si fica com o dono do projeto (exige contas e credenciais).
+
+## ADR-029 · Online experimental: lockstep com atraso fixo sobre WebRTC, sem servidor
+
+**Contexto.** Fase 5 do plano: prova de conceito de jogo online.
+**Opções.** (a) lockstep com atraso fixo; (b) rollback (snapshots + re-simulação); (c) servidor autoritativo.
+**Escolha.** (a), com `NetSession` (protocolo de inputs por frame, independente do transporte) e `Netplay` (WebRTC DataChannel com troca manual de códigos de sala = SDP em base64, STUN público do Google, sem TURN). Atraso de 3 frames. O anfitrião é o Jogador 1, escolhe lutadores e cenário e envia `{start, seed}`; o convidado só espera. Esc encerra a sessão.
+**Por quê.** Não exige servidor nem conta; o determinismo já existia (ADR-003, ADR-014). Rollback exigiria serializar `Fighter`/`Projectile`/`Game` e ainda é desproporcional para um PoC.
+**Consequências.** Em redes com NAT simétrico a conexão pode falhar (sem TURN). O código de sala tem ~2 KB; copiar e colar é aceitável para um experimento. Pausa é desativada online. O teste `netplay` do harness roda duas instâncias de `Game` em loopback com inputs roteirizados e compara posição, vida, estado e chi frame a frame.
+
+## ADR-030 · Determinismo: nada de lógica dependente do contador de tela
+
+**Contexto.** O teste de lockstep acusou dessincronia no frame 1993: o "câmera lenta" do K.O. usava `game.t` (contador de quadros de tela, que difere entre dois clientes que passaram tempos diferentes nos menus).
+**Escolha.** Lógica da luta só pode depender de contadores reiniciados por round (`phaseT`, `frame` do lutador) e de `Rng` com semente; `game.t` fica restrito a visual, treino e HUD.
+**Consequências.** Regra registrada aqui e verificada pelo teste `netplay` a cada execução da suíte.

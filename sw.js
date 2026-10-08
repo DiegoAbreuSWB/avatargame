@@ -1,12 +1,12 @@
 /* Service worker (PWA): guarda os arquivos do jogo para jogar offline.
    Estratégia: arquivos locais em cache primeiro (cache-first); CDN (Three.js, fontes) em rede primeiro com cache de reserva.
    Só é registrado quando a página é servida por http(s); em file:// o navegador não permite. */
-const VERSION = 'avatar-arena-v0.5.0';
+const VERSION = 'avatar-arena-v0.6.0';
 const LOCAL = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './js/config.js', './js/settings.js', './js/i18n.js', './js/audio.js', './js/music.js', './js/input.js', './js/gamepad.js', './js/touch.js',
   './js/particles.js', './js/characters.js', './js/draw.js', './js/stages.js', './js/projectiles.js', './js/fighter.js', './js/ai.js',
-  './js/hud.js', './js/menus.js', './js/rig3d.js', './js/render3d.js', './js/game.js', './js/settings-ui.js', './js/modes.js', './js/content.js', './js/netplay.js', './js/main.js',
+  './js/hud.js', './js/menus.js', './js/rig3d.js', './js/render3d.js', './js/game.js', './js/settings-ui.js', './js/modes.js', './js/content.js', './js/netplay.js', './js/online.js', './js/main.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 

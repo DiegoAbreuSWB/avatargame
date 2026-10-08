@@ -3,12 +3,14 @@
 Estado atual (v0.1, 2026-10-08): protótipo jogável com 6 lutadores, 5 cenários, 2 jogadores ou CPU,
 arte e som 100% procedurais, harness de testes em Chrome headless. Nenhum asset externo, nenhum build.
 
+**Status em 2026-10-08:** todas as fases foram implementadas na mesma data (v0.6.0). O que ficou de fora e por quê está marcado nos títulos das fases; o histórico está em `CHANGELOG.md` e cada decisão em `docs/DECISOES.md`. O plano continua valendo como lista do que vem depois (itens não marcados).
+
 Esforço estimado por item: **P** (horas), **M** (1 a 2 dias), **G** (3 dias ou mais).
 Cada fase termina com um "pronto quando" verificável e um release numerado.
 
 ---
 
-## Fase 0 — Fundações (antes de qualquer feature nova)
+## Fase 0 — Fundações ✔ feito (v0.1.3)
 
 Objetivo: tornar o projeto seguro de evoluir.
 
@@ -26,7 +28,7 @@ Objetivo: tornar o projeto seguro de evoluir.
 
 ---
 
-## Fase 1 — Sensação de jogo e balanceamento
+## Fase 1 — Sensação de jogo e balanceamento ✔ feito (v0.2.0)
 
 Objetivo: fazer a luta "parecer Street Fighter" nas mãos, não só na aparência.
 
@@ -48,7 +50,7 @@ Objetivo: fazer a luta "parecer Street Fighter" nas mãos, não só na aparênci
 
 ---
 
-## Fase 2 — Conteúdo
+## Fase 2 — Conteúdo ✔ feito (v0.3.0; 6 lutadores, 3 cenários, Arcade e Sobrevivência; torneio local não implementado)
 
 Objetivo: elenco e cenários que justifiquem voltar a jogar.
 
@@ -82,7 +84,7 @@ Deserto Si Wong (tempestade de areia reduz visibilidade), Pântano, Omashu (plat
 
 ---
 
-## Fase 3 — Apresentação
+## Fase 3 — Apresentação ✔ feito (v0.4.0; rig procedural mantido, sprites descartados)
 
 **Feito em 2026-10-08 (v0.1.2):** modo 2.5D com Three.js (opção C abaixo). A lógica continua 2D; `rig3d.js` monta bonecos low-poly com cel shading a partir das poses de `draw.js`, e `render3d.js` cuida de cenários 3D (pano de fundo 2D como textura + adereços), projéteis, partículas, câmera dinâmica, sombras e bloom. O 2D clássico ficou como alternativa no menu e como fallback sem WebGL.
 
@@ -114,7 +116,7 @@ Independente da opção:
 
 ---
 
-## Fase 4 — Plataformas e distribuição
+## Fase 4 — Plataformas e distribuição ✔ feito (v0.5.0; publicação em itch.io/GitHub Pages fica com o dono do projeto)
 
 | # | Tarefa | Esforço | Detalhes |
 |---|--------|---------|----------|
@@ -129,7 +131,7 @@ Independente da opção:
 
 ---
 
-## Fase 5 — Online (opcional, só depois da Fase 4)
+## Fase 5 — Online ✔ prova de conceito feita (v0.6.0; lockstep, sem rollback)
 
 Exige simulação determinística (0.4) e passo fixo (já existe).
 

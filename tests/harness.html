@@ -41,6 +41,8 @@ if (PARAMS.r === '3d') {
 <script src="../js/settings-ui.js"></script>
 <script src="../js/modes.js"></script>
 <script src="../js/content.js"></script>
+<script src="../js/netplay.js"></script>
+<script src="../js/online.js"></script>
 <script>
 (function () {
   const out = { errors: window.__errors, warns: window.__warns, mode: PARAMS.mode || 'all', r: PARAMS.r || '2d', scenes: {}, moves: [], cpuFight: null, matchups: null, shot: null };
@@ -61,6 +63,7 @@ if (PARAMS.r === '3d') {
     safe('scene remap', () => { game.remap = { player: 'p1', index: 0, listening: false, message: '' }; game.scene = 'remap'; game.update(); game.draw(); out.scenes.remap = 'ok'; });
     safe('scenes en', () => { Settings.data.lang = 'en'; for (const sc of ['title', 'controls', 'settings', 'select', 'stage']) { game.scene = sc; game.update(); game.draw(); } Settings.data.lang = 'pt'; out.scenes.en = 'ok'; });
     safe('scene result', () => { game.mode = '2p'; game.select.p1 = 0; game.select.p2 = 1; game.seed = seed; game.startMatch(); game.winner = game.fighters[0]; game.scene = 'result'; game.resultT = 0; game.update(); game.draw(); out.scenes.result = 'ok'; });
+    safe('scene online', () => { game.online = { step: 'menu', index: 0, msg: '' }; game.scene = 'online'; game.update(); game.draw(); out.scenes.online = 'ok'; });
     safe('scene training', () => {
       game.mode = 'training'; game.select.p1 = 0; game.select.p2 = 1; game.seed = seed; game.startMatch(); game.phase = 'play'; game.fighters.forEach((f) => { f.state = 'idle'; });
       game.debug = true; for (let i = 0; i < 90; i++) { game.update(); draw(i, 30); } game.draw(); game.debug = false; out.scenes.training = 'ok';
@@ -262,6 +265,33 @@ if (PARAMS.r === '3d') {
       game.draw();
     });
     game.aiLevelOverride = null;
+  }
+
+  if (mode === 'all' || mode === 'netplay') {
+    safe('netplay', () => {
+      const cv2 = document.createElement('canvas'); cv2.width = 1280; cv2.height = 720;
+      const g1 = game, g2 = new Game(cv2);
+      const lb = loopbackPair(2);
+      const s1 = new NetSession('host', lb.a), s2 = new NetSession('guest', lb.b);
+      g1.net = s1; g2.net = s2; g1.netStalled = g2.netStalled = 0;
+      s2.onStart = (cfg) => g2.netStartMatch(cfg);
+      const cfg = { p1: 2, p2: 3, stage: 0, seed: 4242 };
+      s1.send({ t: 'start', cfg }); g1.netStartMatch(cfg);
+      lb.pump(); lb.pump(); lb.pump();
+      const mk = (seed) => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+      const script = (r) => () => { const p = r(); const pad = Input.emptyPad(); pad.right = p < 0.35; pad.left = p > 0.85; pad.punch = p > 0.35 && p < 0.42; pad.kick = p >= 0.42 && p < 0.48; pad.special = p >= 0.48 && p < 0.52; pad.down = p >= 0.6 && p < 0.7; pad.upPressed = p >= 0.7 && p < 0.72; pad.up = pad.upPressed; return pad; };
+      g1.netLocalPad = script(mk(7)); g2.netLocalPad = script(mk(99));
+      let mismatch = null, stalls = 0, lastHit = 0;
+      for (let i = 0; i < 2000; i++) {
+        g1.update(); g2.update(); lb.pump();
+        if (g1.scene !== 'fight' || g2.scene !== 'fight') break;
+        if (s1.frame !== s2.frame) stalls++;
+        else if (!mismatch) for (let k = 0; k < 2; k++) { const a = g1.fighters[k], b = g2.fighters[k]; if (a.x !== b.x || a.y !== b.y || a.hp !== b.hp || a.state !== b.state || a.chi !== b.chi) mismatch = { frame: s1.frame, k, a: [a.x, a.y, a.hp, a.state], b: [b.x, b.y, b.hp, b.state] }; }
+        if (g1.fighters[1].hp < 100 || g1.fighters[0].hp < 100) lastHit = s1.frame;
+      }
+      g1.netLocalPad = g2.netLocalPad = null; g1.net = null; g2.net = null; g1.mode = '2p';
+      out.netplay = { frames: [s1.frame, s2.frame], stalls, mismatch, hpG1: [g1.fighters[0].hp, g1.fighters[1].hp], hpG2: [g2.fighters[0].hp, g2.fighters[1].hp], damageHappened: lastHit > 0, ok: !mismatch && s1.frame >= 1500 && lastHit > 0 };
+    });
   }
 
   if (mode === 'matchups') {

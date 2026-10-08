@@ -102,7 +102,7 @@ function drawBubble(ctx, text, x, y, color) {
 function drawQuotes(ctx, game) {
   if (!game.quotes) return;
   const show = [];
-  if (game.phase === 'intro' && game.round === 1 && game.phaseT > 8 && game.phaseT < 66) game.fighters.forEach((f, i) => show.push([f, game.quotes[i].intro]));
+  if (game.phase === 'intro' && game.round === 1 && game.phaseT > 52 && game.phaseT < 100) game.fighters.forEach((f, i) => show.push([f, game.quotes[i].intro]));
   else if ((game.phase === 'ko' || game.phase === 'timeout') && game.phaseT > 85 && game.phaseT < 185 && game.winner) show.push([game.winner, game.quotes[game.winner.side].win]);
   for (const [f, q] of show) {
     if (!q) continue;

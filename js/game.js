@@ -24,9 +24,9 @@ class Game {
     this.prevPadA = Input.emptyPad();
   }
   get is3D() { return !!(this.r3d && this.use3D); }
-  get p1PicksBoth() { return this.mode === 'cpu' || this.mode === 'training'; }
+  get p1PicksBoth() { return this.mode === 'cpu' || this.mode === 'training' || this.mode === 'online'; }
   get soloMode() { return this.mode === 'arcade' || this.mode === 'survival'; }
-  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'TREINO', 'CONTROLES', 'CONFIGURAÇÕES']; }
+  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'CONTROLES', 'CONFIGURAÇÕES']; }
 
   /* ---------- utilidades ---------- */
   get stage() { return STAGES[this.stageIndex]; }
@@ -72,8 +72,15 @@ class Game {
     if (typeof Touch !== 'undefined') Touch.poll();
     if (Input.pressed('KeyM')) { Settings.data.sound = !Audio_.toggleMute(); Settings.save(); }
     if (Input.pressed('F1')) { this.debug = !this.debug; Settings.data.debug = this.debug; Settings.save(); }
+    if (this.net && this.scene === 'fight') {
+      this.net.sample(this.netLocalPad ? this.netLocalPad() : Input.readPad(KEYMAPS.p1, 0));
+      if (this.pausePressed()) { this.netLeave(false); return; }
+      if (!this.net.tick()) { this.netStalled = this.net.stalled; return; }
+      this.netStalled = 0;
+    }
     switch (this.scene) {
       case 'title': this.updateTitle(); break;
+      case 'online': this.updateOnline(); break;
       case 'controls': if (this.backPressed() || this.confirmPressed()) { Audio_.play('back'); this.scene = 'title'; } break;
       case 'settings': this.updateSettings(); break;
       case 'remap': this.updateRemap(); break;
@@ -82,7 +89,7 @@ class Game {
       case 'ladder': this.updateLadder(); break;
       case 'continue': this.updateContinue(); break;
       case 'ending': case 'survivalEnd': this.updateEnding(); break;
-      case 'fight': this.updateFight(); break;
+      case 'fight': this.updateFight(); if (this.net) this.net.advance(); break;
       case 'result': this.updateResult(); break;
     }
     const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'ladder', 'continue', 'ending', 'survivalEnd', 'result'].includes(this.scene) ? 'menu' : null;
@@ -100,6 +107,7 @@ class Game {
     }
     switch (this.scene) {
       case 'title': drawTitle(ctx, this); break;
+      case 'online': drawOnline(ctx, this); break;
       case 'controls': drawControls(ctx, this); break;
       case 'settings': drawSettings(ctx, this); break;
       case 'remap': drawRemap(ctx, this); break;
@@ -129,8 +137,9 @@ class Game {
         case 2: this.mode = 'arcade'; this.gotoSelect(); break;
         case 3: this.mode = 'survival'; this.gotoSelect(); break;
         case 4: this.mode = 'training'; this.gotoSelect(); break;
-        case 5: this.scene = 'controls'; break;
-        case 6: this.scene = 'settings'; this.settingsIndex = 0; break;
+        case 5: this.online = { step: 'menu', index: 0, msg: '' }; this.scene = 'online'; break;
+        case 6: this.scene = 'controls'; break;
+        case 7: this.scene = 'settings'; this.settingsIndex = 0; break;
       }
     }
   }
@@ -155,6 +164,7 @@ class Game {
       Audio_.play('back');
       if (s.p2Done) s.p2Done = false;
       else if (s.p1Done) s.p1Done = false;
+      else if (this.net) this.netLeave(false);
       else this.scene = 'title';
       return;
     }
@@ -180,7 +190,7 @@ class Game {
     const n = STAGES.length;
     if (this.menuLeft()) { this.stageIndex = (this.stageIndex + n - 1) % n; Audio_.play('menu'); }
     if (this.menuRight()) { this.stageIndex = (this.stageIndex + 1) % n; Audio_.play('menu'); }
-    if (this.confirmPressed()) { Audio_.play('confirm'); this.startMatch(); }
+    if (this.confirmPressed()) { Audio_.play('confirm'); if (this.mode === 'online' && this.net) return this.netHostStart(); this.startMatch(); }
   }
 
   /* ---------- luta ---------- */
@@ -190,7 +200,7 @@ class Game {
     Rng.set(this.matchSeed);
     this.fighters = [new Fighter(c1, 0, this), new Fighter(c2, 1, this)];
     const cpu = this.fighters[1];
-    cpu.isCPU = this.mode !== '2p';
+    cpu.isCPU = this.mode !== '2p' && this.mode !== 'online';
     this.fighters.forEach((f) => { f.maxHp = CFG.MAX_HP; f.hp = CFG.MAX_HP; });
     cpu.aiLevel = this.aiLevelOverride || Settings.data.difficulty;
     this.fighters[0].aiLevel = cpu.aiLevel;
@@ -214,7 +224,7 @@ class Game {
     this.phase = 'intro'; this.phaseT = 0; this.hitstop = 0; this.shake = 0; this.superFlash = 0;
     const final = a.rounds === this.roundsToWin - 1 && b.rounds === this.roundsToWin - 1;
     const label = this.mode === 'training' ? T('TREINO') : final ? T('ROUND FINAL') : T('ROUND {0}', this.round);
-    this.setAnnounce(label, 70, { sub: T(this.stage.name) });
+    this.setAnnounce(label, 50, { sub: T(this.stage.name), y: 200 });
     Audio_.play('round');
   }
 
@@ -256,7 +266,7 @@ class Game {
     // fases do round
     this.phaseT++;
     if (this.phase === 'intro') {
-      if (this.phaseT === 70) this.setAnnounce(T('LUTEM!'), 45, { color: '#ff7043' });
+      if (this.phaseT === 70) this.setAnnounce(T('LUTEM!'), 45, { color: '#ff7043', y: 360 });
       if (this.phaseT >= 100) { this.phase = 'play'; this.fighters.forEach((f) => { f.state = 'idle'; }); }
     } else if (this.phase === 'play') {
       if (!this.infiniteTime && ++this.timerFrames >= CFG.FPS) { this.timerFrames = 0; this.timer--; if (this.timer <= 0) this.onTimeout(); }
@@ -267,15 +277,16 @@ class Game {
     }
 
     if (this.hitstop > 0) { this.hitstop--; Particles.update(); return; }
-    const slow = this.phase === 'ko' && this.phaseT < 60 && this.t % 3 !== 0;
+    const slow = this.phase === 'ko' && this.phaseT < 60 && this.phaseT % 3 !== 0;   // phaseT, não t: determinístico entre clientes online
     if (slow) { Particles.update(); return; }
 
     const [a, b] = this.fighters;
     const control = this.phase === 'play';
     // fontes de entrada: teclado por padrão; padSourceA/B permitem injetar entradas (testes, toque, online)
-    const padA = control ? (a.isCPU ? AI.update(a, b, this) : this.padSourceA ? this.padSourceA() : Input.readPad(KEYMAPS.p1, 0)) : Input.emptyPad();
+    const padA = !control ? Input.emptyPad() : this.net ? this.net.padFor(0) : a.isCPU ? AI.update(a, b, this) : this.padSourceA ? this.padSourceA() : Input.readPad(KEYMAPS.p1, 0);
     let padB;
     if (!control) padB = Input.emptyPad();
+    else if (this.net) padB = this.net.padFor(1);
     else if (training) padB = this.dummyPad(b, a);
     else padB = b.isCPU ? AI.update(b, a, this) : this.padSourceB ? this.padSourceB() : Input.readPad(KEYMAPS.p2, 1);
     if (training && control) {
@@ -406,6 +417,7 @@ class Game {
   updateResult() {
     this.resultT = (this.resultT || 0) + 1;
     if (this.resultT < 30) return;
+    if (this.net) { if (this.backPressed()) this.netLeave(false); else if (this.confirmPressed() && this.net.role === 'host') { Audio_.play('confirm'); this.netHostStart(); } return; }
     if (Input.pressed('Enter') || this.anyPad('punch')) { Audio_.play('confirm'); this.startMatch(); }
     if (this.backPressed()) { Audio_.play('back'); this.select.p1Done = this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; }
   }
@@ -445,6 +457,7 @@ class Game {
     drawHUD(ctx, this);
     if (this.mode === 'training') drawTraining(ctx, this);
     drawAnnouncement(ctx, this);
+    if (this.net) drawNetStatus(ctx, this);
     if (this.paused) drawPauseMenu(ctx, this);
   }
 }

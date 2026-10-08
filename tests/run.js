@@ -67,6 +67,7 @@ if (j.mechanics) {
   if (bad.length) { failed = true; console.log('  FALHARAM: ' + bad.join(', ')); }
 }
 if (j.modes) { console.log('modos:', JSON.stringify(j.modes)); if (j.modes.arcade && !j.modes.arcade.reachedEnding) { failed = true; console.log('  FALHOU: arcade não chegou ao final'); } if (j.modes.survival && !j.modes.survival.ended) { failed = true; console.log('  FALHOU: sobrevivência não terminou'); } }
+if (j.netplay) { console.log('netplay:', JSON.stringify(j.netplay)); if (!j.netplay.ok) { failed = true; console.log('  FALHOU: lockstep dessincronizou ou não avançou'); } }
 if (j.cpuFight) console.log('luta CPU:', JSON.stringify(j.cpuFight));
 if (j.matchups) {
   console.log(`matchups (${j.matchups.per} lutas por par):`);

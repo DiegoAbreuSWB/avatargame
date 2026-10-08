@@ -1,4 +1,7 @@
-/* Gerenciador do jogo: cenas (título, seleção, cenário, luta, resultado), rounds e resolução de golpes. */
+/* Gerenciador do jogo: cenas (título, seleção, cenário, luta, resultado, configurações), rounds e resolução de golpes.
+   Modos de jogo: '2p' (dois jogadores), 'cpu' (contra a IA), 'training' (treino com boneco). */
+const DUMMY_MODES = ['Parado', 'Bloqueando', 'Agachado', 'Pulando', 'CPU'];
+
 class Game {
   constructor(canvas) {
     this.canvas = canvas; this.ctx = canvas.getContext('2d');
@@ -10,20 +13,27 @@ class Game {
     this.hitstop = 0; this.shake = 0; this.shakeX = 0; this.shakeY = 0;
     this.announce = null; this.paused = false; this.pauseIndex = 0;
     this.superFlash = 0; this.superUser = null; this.superName = '';
-    this.round = 1; this.timer = CFG.ROUND_TIME; this.timerFrames = 0;
+    this.round = 1; this.timer = CFG.ROUND_TIME; this.timerFrames = 0; this.infiniteTime = false;
+    this.roundsToWin = CFG.ROUNDS_TO_WIN;
     this.phase = 'intro'; this.phaseT = 0; this.winner = null;
     this.r3d = null; this.use3D = false;
+    this.seed = null; this.matchSeed = 0;           // seed fixa (testes/replays) ou sorteada por partida
+    this.debug = false;                              // overlay de hitboxes (F1)
+    this.training = { dummy: 0, chiInf: true, history: [], lastCombo: 0 };
+    this.settingsIndex = 0; this.remap = null;
+    this.prevPadA = Input.emptyPad();
   }
   get is3D() { return !!(this.r3d && this.use3D); }
-  titleOptions() {
-    const o = ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'CONTROLES'];
-    if (this.r3d) o.push('GRÁFICOS:  ' + (this.use3D ? '3D' : '2D CLÁSSICO'));
-    return o;
-  }
+  get p1PicksBoth() { return this.mode !== '2p'; }
+  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'TREINO', 'CONTROLES', 'CONFIGURAÇÕES']; }
 
   /* ---------- utilidades ---------- */
   get stage() { return STAGES[this.stageIndex]; }
   anyPad(key) { return Input.pressed(KEYMAPS.p1[key]) || Input.pressed(KEYMAPS.p2[key]); }
+  menuUp() { return this.anyPad('up') || Input.pressed('ArrowUp'); }
+  menuDown() { return this.anyPad('down') || Input.pressed('ArrowDown'); }
+  menuLeft() { return this.anyPad('left') || Input.pressed('ArrowLeft'); }
+  menuRight() { return this.anyPad('right') || Input.pressed('ArrowRight'); }
   confirmPressed() { return Input.pressed('Enter') || Input.pressed('Space') || this.anyPad('punch'); }
   setAnnounce(text, frames, extra = {}) { this.announce = Object.assign({ text, timer: frames, max: frames }, extra); }
   shakeScreen(n) { this.shake = Math.max(this.shake, n); }
@@ -39,6 +49,7 @@ class Game {
   }
   onKO(loser, winner) {
     if (this.phase !== 'play') return;
+    if (this.mode === 'training') { loser.hp = CFG.MAX_HP; loser.hpGhost = CFG.MAX_HP; return; }
     this.phase = 'ko'; this.phaseT = 0; this.winner = winner;
     loser.setKO();
     this.setAnnounce('K.O.', 130, { color: '#ff5252', size: 120 });
@@ -53,10 +64,13 @@ class Game {
   /* ---------- loop ---------- */
   update() {
     Input.beginFrame(); this.t++;
-    if (Input.pressed('KeyM')) Audio_.toggleMute();
+    if (Input.pressed('KeyM')) { Settings.data.sound = !Audio_.toggleMute(); Settings.save(); }
+    if (Input.pressed('F1')) { this.debug = !this.debug; Settings.data.debug = this.debug; Settings.save(); }
     switch (this.scene) {
       case 'title': this.updateTitle(); break;
       case 'controls': if (Input.pressed('Escape') || Input.pressed('Enter')) { Audio_.play('back'); this.scene = 'title'; } break;
+      case 'settings': this.updateSettings(); break;
+      case 'remap': this.updateRemap(); break;
       case 'select': this.updateSelect(); break;
       case 'stage': this.updateStage(); break;
       case 'fight': this.updateFight(); break;
@@ -76,6 +90,8 @@ class Game {
     switch (this.scene) {
       case 'title': drawTitle(ctx, this); break;
       case 'controls': drawControls(ctx, this); break;
+      case 'settings': drawSettings(ctx, this); break;
+      case 'remap': drawRemap(ctx, this); break;
       case 'select': drawSelect(ctx, this); break;
       case 'stage': drawStageSelect(ctx, this); break;
       case 'fight': this.drawFight(ctx); break;
@@ -86,52 +102,54 @@ class Game {
 
   /* ---------- título ---------- */
   updateTitle() {
-    const up = this.anyPad('up') || Input.pressed('ArrowUp'), down = this.anyPad('down') || Input.pressed('ArrowDown');
     const n = this.titleOptions().length;
-    if (up) { this.menuIndex = (this.menuIndex + n - 1) % n; Audio_.play('menu'); }
-    if (down) { this.menuIndex = (this.menuIndex + 1) % n; Audio_.play('menu'); }
+    if (this.menuUp()) { this.menuIndex = (this.menuIndex + n - 1) % n; Audio_.play('menu'); }
+    if (this.menuDown()) { this.menuIndex = (this.menuIndex + 1) % n; Audio_.play('menu'); }
     if (this.confirmPressed()) {
       Audio_.play('confirm');
-      if (this.menuIndex === 3) { this.use3D = !this.use3D; saveSetting('graphics', this.use3D ? '3d' : '2d'); return; }
-      if (this.menuIndex === 2) { this.scene = 'controls'; return; }
-      this.mode = this.menuIndex === 0 ? '2p' : 'cpu';
-      this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0 };
-      this.scene = 'select';
+      switch (this.menuIndex) {
+        case 0: this.mode = '2p'; this.gotoSelect(); break;
+        case 1: this.mode = 'cpu'; this.gotoSelect(); break;
+        case 2: this.mode = 'training'; this.gotoSelect(); break;
+        case 3: this.scene = 'controls'; break;
+        case 4: this.scene = 'settings'; this.settingsIndex = 0; break;
+      }
     }
+  }
+  gotoSelect() {
+    this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0 };
+    this.scene = 'select';
   }
 
   /* ---------- seleção de personagem ---------- */
   moveCursor(key, map) {
-    const cols = 3, n = CHARACTERS.length;
+    const cols = 3, n = CHARACTERS.length, rows = Math.ceil(n / cols);
     let i = this.select[key];
-    if (Input.pressed(map.left)) i = i % cols === 0 ? i + cols - 1 : i - 1;
-    if (Input.pressed(map.right)) i = i % cols === cols - 1 ? i - cols + 1 : i + 1;
-    if (Input.pressed(map.up) || Input.pressed(map.down)) i = (i + cols) % n;
+    if (Input.pressed(map.left)) i = i % cols === 0 ? Math.min(i + cols - 1, n - 1) : i - 1;
+    if (Input.pressed(map.right)) i = (i % cols === cols - 1 || i === n - 1) ? i - (i % cols) : i + 1;
+    if (Input.pressed(map.up)) i = i - cols < 0 ? Math.min(i + cols * (rows - 1), n - 1) : i - cols;
+    if (Input.pressed(map.down)) i = i + cols >= n ? i % cols : i + cols;
     if (i !== this.select[key]) { this.select[key] = clamp(i, 0, n - 1); Audio_.play('menu'); }
   }
   updateSelect() {
     const s = this.select;
     if (Input.pressed('Escape')) {
       Audio_.play('back');
-      if (s.p2Done && this.mode !== 'cpu') s.p2Done = false;
-      else if (s.p2Done && this.mode === 'cpu') s.p2Done = false;
+      if (s.p2Done) s.p2Done = false;
       else if (s.p1Done) s.p1Done = false;
       else this.scene = 'title';
       return;
     }
-    if (s.p1Done && s.p2Done) {
-      if (++s.timer > 40) { this.scene = 'stage'; }
-      return;
-    }
+    if (s.p1Done && s.p2Done) { if (++s.timer > 40) this.scene = 'stage'; return; }
     if (!s.p1Done) {
       this.moveCursor('p1', KEYMAPS.p1);
       if (Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter')) { s.p1Done = true; Audio_.play('confirm'); }
-    } else if (this.mode === 'cpu' && !s.p2Done) {
+    } else if (this.p1PicksBoth && !s.p2Done) {
       this.moveCursor('p2', KEYMAPS.p1);
-      if (Input.pressed(KEYMAPS.p1.kick)) { s.p2 = randInt(0, CHARACTERS.length - 1); }
+      if (Input.pressed(KEYMAPS.p1.kick)) s.p2 = Rng.int(0, CHARACTERS.length - 1);
       if (Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter') || Input.pressed(KEYMAPS.p1.kick)) { s.p2Done = true; Audio_.play('confirm'); }
     }
-    if (this.mode === '2p' && !s.p2Done) {
+    if (!this.p1PicksBoth && !s.p2Done) {
       this.moveCursor('p2', KEYMAPS.p2);
       if (Input.pressed(KEYMAPS.p2.punch) || (s.p1Done && Input.pressed('Enter') && !Input.pressed(KEYMAPS.p1.punch))) { s.p2Done = true; Audio_.play('confirm'); }
     }
@@ -141,18 +159,26 @@ class Game {
   updateStage() {
     if (Input.pressed('Escape')) { Audio_.play('back'); this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; return; }
     const n = STAGES.length;
-    if (this.anyPad('left')) { this.stageIndex = (this.stageIndex + n - 1) % n; Audio_.play('menu'); }
-    if (this.anyPad('right')) { this.stageIndex = (this.stageIndex + 1) % n; Audio_.play('menu'); }
+    if (this.menuLeft()) { this.stageIndex = (this.stageIndex + n - 1) % n; Audio_.play('menu'); }
+    if (this.menuRight()) { this.stageIndex = (this.stageIndex + 1) % n; Audio_.play('menu'); }
     if (this.confirmPressed()) { Audio_.play('confirm'); this.startMatch(); }
   }
 
   /* ---------- luta ---------- */
   startMatch() {
     const c1 = CHARACTERS[this.select.p1], c2 = CHARACTERS[this.select.p2];
+    this.matchSeed = this.seed != null ? this.seed : ((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
+    Rng.set(this.matchSeed);
     this.fighters = [new Fighter(c1, 0, this), new Fighter(c2, 1, this)];
-    this.fighters[1].isCPU = this.mode === 'cpu';
+    const cpu = this.fighters[1];
+    cpu.isCPU = this.mode !== '2p';
+    cpu.aiLevel = this.aiLevelOverride || Settings.data.difficulty;
+    this.fighters[0].aiLevel = cpu.aiLevel;
     this.fighters.forEach((f) => { f.rounds = 0; f.chi = 0; f.hpGhost = CFG.MAX_HP; });
+    this.roundsToWin = this.mode === 'training' ? 99 : Settings.data.roundsToWin;
+    this.infiniteTime = this.mode === 'training' || Settings.data.roundTime === 0;
     this.round = 1; this.winner = null; this.paused = false;
+    this.training.history = []; this.training.lastCombo = 0;
     this.scene = 'fight';
     this.startRound();
   }
@@ -162,16 +188,42 @@ class Game {
     a.hpGhost = b.hpGhost = CFG.MAX_HP;
     a.state = b.state = 'intro';
     this.projectiles = []; Particles.clear();
-    this.timer = CFG.ROUND_TIME; this.timerFrames = 0;
+    this.timer = this.infiniteTime ? 0 : Settings.data.roundTime; this.timerFrames = 0;
     this.phase = 'intro'; this.phaseT = 0; this.hitstop = 0; this.shake = 0; this.superFlash = 0;
-    const final = a.rounds === CFG.ROUNDS_TO_WIN - 1 && b.rounds === CFG.ROUNDS_TO_WIN - 1;
-    this.setAnnounce(final ? 'ROUND FINAL' : `ROUND ${this.round}`, 70, { sub: this.stage.name });
+    const final = a.rounds === this.roundsToWin - 1 && b.rounds === this.roundsToWin - 1;
+    const label = this.mode === 'training' ? 'TREINO' : final ? 'ROUND FINAL' : `ROUND ${this.round}`;
+    this.setAnnounce(label, 70, { sub: this.stage.name });
     Audio_.play('round');
+  }
+
+  dummyPad(dummy, me) {
+    const pad = Input.emptyPad();
+    const opp = me.opponent, back = opp.x >= me.x ? 'left' : 'right';
+    switch (DUMMY_MODES[this.training.dummy]) {
+      case 'Bloqueando': pad[back] = true; break;
+      case 'Agachado': pad.down = true; pad[back] = true; break;
+      case 'Pulando': if (me.grounded && this.t % 40 === 0) { pad.upPressed = true; pad.up = true; } break;
+      case 'CPU': return AI.update(dummy, me, this);
+    }
+    return pad;
+  }
+  recordInput(pad) {
+    const prev = this.prevPadA, h = this.training.history;
+    const push = (sym) => { h.push({ sym, t: this.t }); if (h.length > 16) h.shift(); };
+    for (const [k, sym] of [['left', '←'], ['right', '→'], ['up', '↑'], ['down', '↓']]) if (pad[k] && !prev[k]) push(sym);
+    for (const [k, sym] of [['punch', 'S'], ['kick', 'C'], ['special', 'E'], ['super', 'U']]) if (pad[k]) push(sym);
+    this.prevPadA = pad;
   }
 
   updateFight() {
     if (this.paused) return this.updatePause();
     if (Input.pressed('Escape') && this.phase === 'play') { this.paused = true; this.pauseIndex = 0; Audio_.play('menu'); return; }
+    const training = this.mode === 'training';
+    if (training) {
+      if (Input.pressed('F2')) { this.training.dummy = (this.training.dummy + 1) % DUMMY_MODES.length; Audio_.play('menu'); }
+      if (Input.pressed('F3')) { const [a, b] = this.fighters; a.reset(380, 1); b.reset(CFG.W - 380, -1); a.hp = b.hp = a.hpGhost = b.hpGhost = CFG.MAX_HP; this.projectiles = []; Audio_.play('menu'); }
+      if (Input.pressed('F4')) { this.training.chiInf = !this.training.chiInf; Audio_.play('menu'); }
+    }
 
     if (this.announce && --this.announce.timer <= 0) this.announce = null;
     if (this.superFlash > 0) this.superFlash--;
@@ -182,10 +234,10 @@ class Game {
     // fases do round
     this.phaseT++;
     if (this.phase === 'intro') {
-      if (this.phaseT === 70) { this.setAnnounce('LUTEM!', 45, { color: '#ff7043' }); }
+      if (this.phaseT === 70) this.setAnnounce('LUTEM!', 45, { color: '#ff7043' });
       if (this.phaseT >= 100) { this.phase = 'play'; this.fighters.forEach((f) => { f.state = 'idle'; }); }
     } else if (this.phase === 'play') {
-      if (++this.timerFrames >= CFG.FPS) { this.timerFrames = 0; this.timer--; if (this.timer <= 0) this.onTimeout(); }
+      if (!this.infiniteTime && ++this.timerFrames >= CFG.FPS) { this.timerFrames = 0; this.timer--; if (this.timer <= 0) this.onTimeout(); }
     } else if (this.phase === 'ko' || this.phase === 'timeout') {
       if (this.phaseT === 80 && this.winner) { this.winner.setWin(); Audio_.play('win'); }
       if (this.phaseT === 81 && this.winner) this.winner.rounds++;
@@ -199,7 +251,17 @@ class Game {
     const [a, b] = this.fighters;
     const control = this.phase === 'play';
     const padA = control ? (a.isCPU ? AI.update(a, b, this) : Input.readPad(KEYMAPS.p1)) : Input.emptyPad();
-    const padB = control ? (b.isCPU ? AI.update(b, a, this) : Input.readPad(KEYMAPS.p2)) : Input.emptyPad();
+    let padB;
+    if (!control) padB = Input.emptyPad();
+    else if (training) padB = this.dummyPad(b, a);
+    else padB = b.isCPU ? AI.update(b, a, this) : Input.readPad(KEYMAPS.p2);
+    if (training && control) {
+      this.recordInput(padA);
+      if (this.training.chiInf) a.chi = CFG.MAX_CHI;
+      for (const f of this.fighters) if (f.hp < CFG.MAX_HP && this.t - (f.lastHitAt || 0) > 100 && f.canAct) { f.hp = CFG.MAX_HP; f.hpGhost = CFG.MAX_HP; }
+      if (a.combo > this.training.lastCombo) this.training.lastCombo = a.combo;
+      if (a.combo === 0 && b.canAct) this.training.lastCombo = this.training.lastCombo; // mantém o último até o próximo combo
+    }
     a.update(padA, control); b.update(padB, control);
     this.separate(a, b);
 
@@ -282,16 +344,15 @@ class Game {
   }
 
   nextRound() {
-    const w = this.fighters.find((f) => f.rounds >= CFG.ROUNDS_TO_WIN);
+    const w = this.fighters.find((f) => f.rounds >= this.roundsToWin);
     if (w) { this.winner = w; this.scene = 'result'; this.resultT = 0; Audio_.play('win'); return; }
     this.round++;
     this.startRound();
   }
 
   updatePause() {
-    const up = this.anyPad('up') || Input.pressed('ArrowUp'), down = this.anyPad('down') || Input.pressed('ArrowDown');
-    if (up) { this.pauseIndex = (this.pauseIndex + 2) % 3; Audio_.play('menu'); }
-    if (down) { this.pauseIndex = (this.pauseIndex + 1) % 3; Audio_.play('menu'); }
+    if (this.menuUp()) { this.pauseIndex = (this.pauseIndex + 2) % 3; Audio_.play('menu'); }
+    if (this.menuDown()) { this.pauseIndex = (this.pauseIndex + 1) % 3; Audio_.play('menu'); }
     if (Input.pressed('Escape')) { this.paused = false; return; }
     if (Input.pressed('Enter') || this.anyPad('punch')) {
       Audio_.play('confirm');
@@ -314,7 +375,6 @@ class Game {
       ctx.save();
       ctx.translate(this.shakeX, this.shakeY);
       st.draw(ctx, this.t); st.drawFloor(ctx);
-      // projéteis de chão ficam atrás dos lutadores
       for (const p of this.projectiles) if (GROUND_TYPES.has(p.type) || p.type === 'wave') p.draw(ctx);
       const order = this.fighters.slice().sort((a, b) => (a.state === 'attack' ? 1 : 0) - (b.state === 'attack' ? 1 : 0));
       for (const f of order) drawFighter(ctx, f, st);
@@ -322,8 +382,10 @@ class Game {
       Particles.draw(ctx);
       ctx.restore();
     }
+    if (this.debug) drawDebug(ctx, this);
     drawSuperFlash(ctx, this);
     drawHUD(ctx, this);
+    if (this.mode === 'training') drawTraining(ctx, this);
     drawAnnouncement(ctx, this);
     if (this.paused) drawPauseMenu(ctx, this);
   }

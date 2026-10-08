@@ -183,6 +183,12 @@ class Renderer3D {
     this.updateCamera(new THREE.Vector3(tx, ty + 90, dist), new THREE.Vector3(tx, ty, 0), k, [game.shakeX, game.shakeY]);
   }
 
+  /* projeta um ponto do plano lógico (x, y com y para baixo) para a tela (usado pelo overlay de hitboxes) */
+  project(x, y) {
+    const v = new THREE.Vector3(x, CFG.GROUND - y, 0).project(this.camera);
+    return [((v.x + 1) / 2) * CFG.W, ((1 - v.y) / 2) * CFG.H];
+  }
+
   /* ---------- render ---------- */
   draw() {
     if (this.composer) this.composer.render(); else this.renderer.render(this.scene, this.camera);
@@ -195,7 +201,7 @@ class Renderer3D {
         return this.renderShowcase(game, STAGES[0],
           CHARACTERS.map((ch, i) => ({ key: 't' + i, char: ch, x: xs[i], pose: 'idle', t: game.t + i * 17, facing: i < 3 ? 1 : -1 })),
           [640, 330, 1500], [640, 230, 0]); }
-      case 'controls': return this.renderShowcase(game, STAGES[3], [], [640, 330, 1500], [640, 230, 0]);
+      case 'controls': case 'settings': case 'remap': return this.renderShowcase(game, STAGES[3], [], [640, 330, 1500], [640, 230, 0]);
       case 'select': { const s = game.select;
         return this.renderShowcase(game, STAGES[1], [
           { key: 'L', char: CHARACTERS[s.p1], x: 250, pose: s.p1Done ? 'win' : 'idle', t: game.t, facing: 1 },

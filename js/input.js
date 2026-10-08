@@ -21,6 +21,7 @@ const Input = (() => {
   const held = (code) => down.has(code);
   const pressed = (code) => pressedThisFrame.has(code);
   const anyPressed = () => pressedThisFrame.size > 0;
+  const pressedCodes = () => [...pressedThisFrame];
 
   // Estado de controle de um lutador a partir de um keymap
   function readPad(map) {
@@ -31,7 +32,7 @@ const Input = (() => {
       special: pressed(map.special), super: pressed(map.super),
     };
   }
-  const emptyPad = () => ({ left: false, right: false, up: false, down: false, upPressed: false, punch: false, kick: false, special: false, super: false });
+  const emptyPad = () => ({ left: false, right: false, up: false, down: false, upPressed: false, punch: false, kick: false, special: false, super: false, dashF: false, dashB: false });
 
-  return { beginFrame, held, pressed, anyPressed, readPad, emptyPad };
+  return { beginFrame, held, pressed, anyPressed, pressedCodes, readPad, emptyPad };
 })();

@@ -2,14 +2,16 @@
 (function boot() {
   const canvas = document.getElementById('game');
   const overlay = document.getElementById('overlay');
+  Settings.load();
   const game = new Game(canvas);
   window.game = game;
 
   // Modo 3D (Three.js); se a biblioteca não carregar ou não houver WebGL, fica no 2D clássico
   try {
     const gl = document.getElementById('gl');
-    if (window.THREE && gl) { game.r3d = new Renderer3D(gl); game.use3D = loadSetting('graphics') !== '2d'; }
-  } catch (e) { console.warn('Modo 3D indisponível:', e); game.r3d = null; game.use3D = false; }
+    if (window.THREE && gl) game.r3d = new Renderer3D(gl);
+  } catch (e) { console.warn('Modo 3D indisponível:', e); game.r3d = null; }
+  game.applySettingsSideEffects();
 
   let started = false;
   function start() {

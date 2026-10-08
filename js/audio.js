@@ -17,7 +17,8 @@ const Audio_ = (() => {
     return true;
   }
   function resume() { if (ensure() && ctx.state === 'suspended') ctx.resume(); }
-  function toggleMute() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.35; return muted; }
+  function toggleMute() { return setMuted(!muted); }
+  function setMuted(m) { muted = !!m; if (master) master.gain.value = muted ? 0 : 0.35; return muted; }
   function isMuted() { return muted; }
 
   function noise(duration, { freq = 1200, q = 1, type = 'lowpass', vol = 0.6, decay = duration } = {}) {
@@ -74,5 +75,5 @@ const Audio_ = (() => {
     play({ ar: 'air', agua: 'water', fogo: 'fire', terra: 'earth', nao: 'boomerang' }[el] || 'whoosh');
   }
 
-  return { resume, toggleMute, isMuted, play, element };
+  return { resume, toggleMute, setMuted, isMuted, play, element, context: () => (ensure() ? ctx : null), master: () => master };
 })();

@@ -39,9 +39,8 @@ function drawControls(ctx, game) {
   for (const [m, title, col, cx] of cols) {
     ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, cx - 260, 120, 520, 420, 12); ctx.fill();
     txt(ctx, title, cx, 155, { font: FONT_DISPLAY, size: 28, color: col });
-    const arrows = m.labels.move === 'SETAS';
     const rows = [
-      ['Mover', m.labels.move], ['Pular', arrows ? '↑' : 'W'], ['Agachar', arrows ? '↓' : 'S'],
+      ['Mover', `${m.labels.left} / ${m.labels.right}`], ['Pular', m.labels.up], ['Agachar', m.labels.down],
       ['Bloquear', 'segurar para trás'], ['Soco', m.labels.punch], ['Chute', m.labels.kick],
       ['Especial (dobra)', m.labels.special], ['Especial 2', '↓ + ' + m.labels.special], ['Super (chi cheio)', m.labels.super],
       ['Rasteira', '↓ + ' + m.labels.kick], ['Golpes aéreos', 'pulo + soco/chute'],
@@ -53,7 +52,7 @@ function drawControls(ctx, game) {
     });
   }
   txt(ctx, 'Melhor de 3 rounds · 99 segundos · Golpes acertados enchem o CHI para o Super', CFG.W / 2, 575, { size: 16, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
-  txt(ctx, 'Esc ou Enter para voltar', CFG.W / 2, 610, { size: 16, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  txt(ctx, 'Esc ou Enter para voltar · As teclas podem ser alteradas em Configurações', CFG.W / 2, 610, { size: 16, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
 }
 
 function drawSelect(ctx, game) {
@@ -81,11 +80,12 @@ function drawSelect(ctx, game) {
     txt(ctx, ch.name.toUpperCase(), x + cw / 2, y + 24, { font: FONT_DISPLAY, size: 16, color: ELEMENT_COLORS[ch.element], stroke: 'rgba(0,0,0,.9)' });
     const p1Here = s.p1 === i, p2Here = s.p2 === i;
     if (p1Here) { ctx.strokeStyle = '#f2a93b'; ctx.lineWidth = 4; roundRect(ctx, x + 4, y + 4, cw - 8, chh - 8, 10); ctx.stroke(); txt(ctx, 'P1', x + 24, y + 20, { size: 14, color: '#f2a93b', stroke: '#000' }); }
-    if (p2Here) { ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 4; roundRect(ctx, x + (p1Here ? 10 : 4), y + (p1Here ? 10 : 4), cw - (p1Here ? 20 : 8), chh - (p1Here ? 20 : 8), 10); ctx.stroke(); txt(ctx, game.mode === 'cpu' ? 'CPU' : 'P2', x + cw - 26, y + 20, { size: 14, color: '#4fc3f7', stroke: '#000' }); }
+    if (p2Here) { ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 4; roundRect(ctx, x + (p1Here ? 10 : 4), y + (p1Here ? 10 : 4), cw - (p1Here ? 20 : 8), chh - (p1Here ? 20 : 8), 10); ctx.stroke(); txt(ctx, game.mode === 'cpu' ? 'CPU' : game.mode === 'training' ? 'BON' : 'P2', x + cw - 26, y + 20, { size: 14, color: '#4fc3f7', stroke: '#000' }); }
   });
 
   // painéis laterais com o lutador escolhido
-  const panels = [[CHARACTERS[s.p1], 0, '#f2a93b', s.p1Done, 'JOGADOR 1'], [CHARACTERS[s.p2], 1, '#4fc3f7', s.p2Done, game.mode === 'cpu' ? 'CPU' : 'JOGADOR 2']];
+  const p2Label = game.mode === 'cpu' ? 'CPU' : game.mode === 'training' ? 'BONECO' : 'JOGADOR 2';
+  const panels = [[CHARACTERS[s.p1], 0, '#f2a93b', s.p1Done, 'JOGADOR 1'], [CHARACTERS[s.p2], 1, '#4fc3f7', s.p2Done, p2Label]];
   for (const [ch, side, col, done, label] of panels) {
     const px = side === 0 ? 40 : CFG.W - 360, pw = 320;
     if (!game.is3D) { ctx.fillStyle = 'rgba(0,0,0,.5)'; roundRect(ctx, px, 120, pw, 470, 12); ctx.fill(); }
@@ -103,9 +103,10 @@ function drawSelect(ctx, game) {
     });
     if (done) txt(ctx, 'PRONTO!', px + pw / 2, 600, { font: FONT_DISPLAY, size: 18, color: col, stroke: 'rgba(0,0,0,.9)' });
   }
-  const hint = game.mode === 'cpu'
-    ? (s.p1Done ? 'Escolha o adversário: W A S D move · F confirma · G aleatório · Esc volta' : 'W A S D move · F confirma · Esc volta')
-    : 'P1: W A S D move, F confirma  ·  P2: setas movem, J confirma  ·  Esc volta';
+  const L1 = KEYMAPS.p1.labels, L2 = KEYMAPS.p2.labels;
+  const hint = game.p1PicksBoth
+    ? (s.p1Done ? `Escolha o ${game.mode === 'training' ? 'boneco de treino' : 'adversário'}: ${L1.move} move · ${L1.punch} confirma · ${L1.kick} aleatório · Esc volta` : `${L1.move} move · ${L1.punch} confirma · Esc volta`)
+    : `P1: ${L1.move} move, ${L1.punch} confirma  ·  P2: ${L2.move} move, ${L2.punch} confirma  ·  Esc volta`;
   txt(ctx, hint, CFG.W / 2, 650, { size: 16, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
   if (s.p1Done && s.p2Done) txt(ctx, 'LUTADORES ESCOLHIDOS!', CFG.W / 2, 118, { font: FONT_DISPLAY, size: 22, color: '#fff', stroke: 'rgba(0,0,0,.9)' });
 }

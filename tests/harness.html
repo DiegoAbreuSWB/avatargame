@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Avatar Arena - harness de testes</title>
+<style>body{margin:0;background:#111}#frame{position:relative;width:1280px;height:720px}canvas{position:absolute;inset:0;display:block}#game{background:transparent}pre{color:#0f0;font:12px monospace;white-space:pre-wrap}</style>
+</head><body>
+<div id="frame"><canvas id="gl" width="1280" height="720"></canvas><canvas id="game" width="1280" height="720"></canvas></div>
+<pre id="log">(sem saída)</pre>
+<script>
+/* Harness: carrega o jogo de verdade (../js), dirige a classe Game sem requestAnimationFrame e escreve um JSON em #log.
+   Parâmetros no hash: mode=scenes|moves|cpu|shot|matchups|all  r=2d|3d  n=frames  p1,p2=índices  stage=índice  seed=número
+   scene=cena final para captura  move=golpe  frame=frame da captura  ax,bx=posições  level=easy|normal|hard  pairs=n (matchups) */
+window.__errors = []; window.__warns = [];
+window.onerror = function (m, s, l, c, e) { window.__errors.push(String(m) + ' @ ' + (s || '').split('/').pop() + ':' + l + ':' + c + (e && e.stack ? '\n' + e.stack : '')); };
+const _warn = console.warn; console.warn = function () { window.__warns.push([...arguments].map(String).join(' ')); _warn.apply(console, arguments); };
+const _err = console.error; console.error = function () { window.__errors.push('console.error: ' + [...arguments].map((a) => a && a.stack ? a.stack : String(a)).join(' ')); _err.apply(console, arguments); };
+const PARAMS = {}; (location.hash || '').slice(1).split('&').forEach((kv) => { const [k, v] = kv.split('='); if (k) PARAMS[k] = decodeURIComponent(v || ''); });
+if (PARAMS.r === '3d') {
+  for (const s of ['build/three.min.js', 'examples/js/shaders/CopyShader.js', 'examples/js/shaders/LuminosityHighPassShader.js', 'examples/js/postprocessing/EffectComposer.js', 'examples/js/postprocessing/RenderPass.js', 'examples/js/postprocessing/ShaderPass.js', 'examples/js/postprocessing/UnrealBloomPass.js'])
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/' + s + '"><\/script>');
+}
+</script>
+<script src="../js/config.js"></script>
+<script src="../js/settings.js"></script>
+<script src="../js/audio.js"></script>
+<script src="../js/input.js"></script>
+<script src="../js/particles.js"></script>
+<script src="../js/characters.js"></script>
+<script src="../js/draw.js"></script>
+<script src="../js/stages.js"></script>
+<script src="../js/projectiles.js"></script>
+<script src="../js/fighter.js"></script>
+<script src="../js/ai.js"></script>
+<script src="../js/hud.js"></script>
+<script src="../js/menus.js"></script>
+<script src="../js/rig3d.js"></script>
+<script src="../js/render3d.js"></script>
+<script src="../js/game.js"></script>
+<script src="../js/settings-ui.js"></script>
+<script>
+(function () {
+  const out = { errors: window.__errors, warns: window.__warns, mode: PARAMS.mode || 'all', r: PARAMS.r || '2d', scenes: {}, moves: [], cpuFight: null, matchups: null, shot: null };
+  const mode = PARAMS.mode || 'all';
+  Settings.load();
+  Settings.data.difficulty = PARAMS.level || 'normal';
+  const game = new Game(document.getElementById('game'));
+  window.game = game;
+  const safe = (label, fn) => { try { fn(); } catch (e) { out.errors.push(label + ': ' + (e.stack || e)); } };
+  if (PARAMS.r === '3d') safe('renderer', () => { game.r3d = new Renderer3D(document.getElementById('gl')); game.use3D = true; out.composer = !!game.r3d.composer; });
+  const seed = parseInt(PARAMS.seed || '12345', 10);
+  const draw = (i, every) => { if (i % every === 0) game.draw(); };
+
+  if (mode === 'all' || mode === 'scenes') {
+    for (const sc of ['title', 'controls', 'settings', 'select', 'stage']) {
+      safe('scene ' + sc, () => { game.scene = sc; if (sc === 'settings') game.settingsIndex = 0; for (let i = 0; i < 5; i++) game.update(); game.draw(); out.scenes[sc] = 'ok'; });
+    }
+    safe('scene remap', () => { game.remap = { player: 'p1', index: 0, listening: false, message: '' }; game.scene = 'remap'; game.update(); game.draw(); out.scenes.remap = 'ok'; });
+    safe('scene training', () => {
+      game.mode = 'training'; game.select.p1 = 0; game.select.p2 = 1; game.seed = seed; game.startMatch(); game.phase = 'play'; game.fighters.forEach((f) => { f.state = 'idle'; });
+      game.debug = true; for (let i = 0; i < 90; i++) { game.update(); draw(i, 30); } game.draw(); game.debug = false; out.scenes.training = 'ok';
+    });
+  }
+
+  if (mode === 'all' || mode === 'moves') {
+    const keys = ['punch', 'kick', 'cpunch', 'sweep', 'jpunch', 'jkick', 'special', 'special2', 'super'];
+    CHARACTERS.forEach((ch, i) => {
+      keys.forEach((key) => {
+        safe(`move ${ch.id}.${key}`, () => {
+          game.mode = '2p'; game.select.p1 = i; game.select.p2 = (i + 1) % CHARACTERS.length; game.stageIndex = i % STAGES.length; game.seed = seed;
+          game.startMatch(); game.phase = 'play'; game.fighters.forEach((f) => { f.state = 'idle'; });
+          const a = game.fighters[0], b = game.fighters[1];
+          a.x = 500; b.x = 500 + (key === 'special' || key === 'super' ? 300 : 90); a.chi = 100;
+          const m = a.moves[key]; if (!m) { out.moves.push({ ch: ch.id, move: key, dmg: -1, missing: true }); return; }
+          if (m.air) { a.airborne = true; a.vy = -14; a.y = CFG.GROUND - 1; a.state = 'jump'; }
+          const hpBefore = b.hp;
+          a.startAttack(m);
+          let frames = 0;
+          while (frames < 200 && game.phase === 'play') { game.update(); if (PARAMS.r === '3d') draw(frames, 20); frames++; }
+          out.moves.push({ ch: ch.id, move: key, name: m.name, dmg: hpBefore - b.hp, aState: a.state, bState: b.state });
+        });
+      });
+    });
+  }
+
+  if (mode === 'all' || mode === 'cpu') {
+    safe('cpu fight', () => {
+      const n = parseInt(PARAMS.n || '12000', 10);
+      game.mode = 'cpu'; game.select.p1 = parseInt(PARAMS.p1 || '0', 10); game.select.p2 = parseInt(PARAMS.p2 || '2', 10); game.stageIndex = parseInt(PARAMS.stage || '0', 10); game.seed = seed;
+      game.startMatch(); game.fighters[0].isCPU = true;
+      let hits = 0, blocks = 0;
+      const orig = Fighter.prototype.receiveHit;
+      Fighter.prototype.receiveHit = function () { const r = orig.apply(this, arguments); if (r === 'hit') hits++; else blocks++; return r; };
+      const seen = new Set();
+      for (let i = 0; i < n; i++) { game.update(); if (PARAMS.r === '3d') draw(i, 10); seen.add(game.scene + ':' + game.phase); if (game.scene !== 'fight') break; }
+      Fighter.prototype.receiveHit = orig;
+      const [a, b] = game.fighters;
+      out.cpuFight = { hits, blocks, scene: game.scene, phase: game.phase, round: game.round, hp: [a.hp, b.hp], rounds: [a.rounds, b.rounds], seen: [...seen], winner: game.winner ? game.winner.char.id : null, seed: game.matchSeed };
+      game.draw();
+    });
+  }
+
+  if (mode === 'shot') {
+    safe('shot', () => {
+      game.mode = '2p'; game.select.p1 = parseInt(PARAMS.p1 || '2', 10); game.select.p2 = parseInt(PARAMS.p2 || '3', 10); game.stageIndex = parseInt(PARAMS.stage || '0', 10); game.seed = seed;
+      game.startMatch(); game.phase = 'play'; game.announce = null; game.fighters.forEach((f) => { f.state = 'idle'; });
+      const a = game.fighters[0], b = game.fighters[1];
+      a.x = parseInt(PARAMS.ax || '420', 10); b.x = parseInt(PARAMS.bx || '820', 10); a.chi = 100;
+      if (PARAMS.move) a.startAttack(a.moves[PARAMS.move]);
+      const n = parseInt(PARAMS.frame || '24', 10);
+      for (let i = 0; i < n; i++) { game.update(); draw(i, 4); }
+      if (PARAMS.debug) game.debug = true;
+      game.draw();
+      out.shot = { proj: game.projectiles.map((p) => p.type), aState: a.state, bState: b.state, bHp: b.hp };
+    });
+  }
+
+  if (mode === 'matchups') {
+    safe('matchups', () => {
+      const per = parseInt(PARAMS.pairs || '6', 10), maxFrames = 30000;
+      const ids = CHARACTERS.map((c) => c.id), n = ids.length;
+      const wins = {}; ids.forEach((id) => { wins[id] = { w: 0, l: 0 }; });
+      const table = [];
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+        let wi = 0, wj = 0;
+        for (let k = 0; k < per; k++) {
+          game.mode = 'cpu'; game.select.p1 = k % 2 ? j : i; game.select.p2 = k % 2 ? i : j; game.stageIndex = k % STAGES.length; game.seed = seed + i * 1000 + j * 31 + k;
+          game.startMatch(); game.fighters[0].isCPU = true;
+          for (let f = 0; f < maxFrames && game.scene === 'fight'; f++) game.update();
+          const w = game.winner ? game.winner.char.id : null;
+          if (w === ids[i]) wi++; else if (w === ids[j]) wj++;
+        }
+        wins[ids[i]].w += wi; wins[ids[i]].l += wj; wins[ids[j]].w += wj; wins[ids[j]].l += wi;
+        table.push({ a: ids[i], b: ids[j], aWins: wi, bWins: wj });
+      }
+      out.matchups = { per, table, rates: Object.fromEntries(ids.map((id) => [id, { games: wins[id].w + wins[id].l, rate: wins[id].w / Math.max(1, wins[id].w + wins[id].l) }])) };
+    });
+  }
+
+  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
+  document.getElementById('log').textContent = JSON.stringify(out);
+})();
+</script>
+</body></html>

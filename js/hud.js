@@ -1,4 +1,4 @@
-/* HUD da luta: barras de vida, chi, cronômetro, rounds, anúncios e menu de pausa. */
+/* HUD da luta: barras de vida, chi, cronômetro, rounds, anúncios, pausa, overlay de depuração e painel de treino. */
 const FONT_DISPLAY = '"Cinzel", Georgia, serif';
 const FONT_BODY = '"Noto Sans", "Segoe UI", system-ui, sans-serif';
 
@@ -29,26 +29,24 @@ function drawHUD(ctx, game) {
 
   for (const [f, side] of [[a, 0], [b, 1]]) {
     const x0 = side === 0 ? 60 : W - 60 - barW;
-    // fundo
     ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x0 - 3, y - 3, barW + 6, barH + 6, 6); ctx.fill();
     ctx.fillStyle = '#3a0f0f'; ctx.fillRect(x0, y, barW, barH);
-    // barra "fantasma" (dano recente)
     const ghostW = barW * (f.hpGhost / CFG.MAX_HP);
     ctx.fillStyle = '#e53935';
     if (side === 0) ctx.fillRect(x0, y, ghostW, barH); else ctx.fillRect(x0 + barW - ghostW, y, ghostW, barH);
-    // vida atual
     const hpW = barW * (f.hp / CFG.MAX_HP);
     const g = ctx.createLinearGradient(0, y, 0, y + barH);
     g.addColorStop(0, f.hp > 30 ? '#ffe36b' : '#ff8a65'); g.addColorStop(1, f.hp > 30 ? '#f2a93b' : '#e53935');
     ctx.fillStyle = g;
     if (side === 0) ctx.fillRect(x0, y, hpW, barH); else ctx.fillRect(x0 + barW - hpW, y, hpW, barH);
     ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.strokeRect(x0, y, barW, barH);
-    // nome
     const nameX = side === 0 ? x0 : x0 + barW;
-    txt(ctx, f.char.name.toUpperCase() + (f.isCPU ? '  (CPU)' : ''), nameX, y + barH + 18, { font: FONT_DISPLAY, size: 20, align: side === 0 ? 'left' : 'right', color: '#fff', stroke: 'rgba(0,0,0,.8)' });
+    const tag = f.isCPU ? (game.mode === 'training' ? '  (BONECO)' : '  (CPU)') : '';
+    txt(ctx, f.char.name.toUpperCase() + tag, nameX, y + barH + 18, { font: FONT_DISPLAY, size: 20, align: side === 0 ? 'left' : 'right', color: '#fff', stroke: 'rgba(0,0,0,.8)' });
     txt(ctx, ELEMENT_NAMES[f.char.element].toUpperCase(), nameX, y + barH + 38, { size: 12, align: side === 0 ? 'left' : 'right', color: ELEMENT_COLORS[f.char.element], stroke: 'rgba(0,0,0,.8)' });
-    // rounds vencidos
-    for (let i = 0; i < CFG.ROUNDS_TO_WIN; i++) {
+    if (f.chiBlocked > 0) txt(ctx, 'CHI BLOQUEADO ' + Math.ceil(f.chiBlocked / 60) + 's', nameX, y + barH + 58, { size: 13, align: side === 0 ? 'left' : 'right', color: '#f48fb1', stroke: 'rgba(0,0,0,.9)' });
+    const rtw = Math.min(game.roundsToWin, 5);
+    for (let i = 0; i < rtw; i++) {
       const dx = side === 0 ? x0 + barW - 16 - i * 26 : x0 + 16 + i * 26;
       ctx.beginPath(); ctx.arc(dx, y + barH + 22, 8, 0, Math.PI * 2);
       ctx.fillStyle = i < f.rounds ? '#ffd54f' : 'rgba(0,0,0,.5)'; ctx.fill();
@@ -63,8 +61,8 @@ function drawHUD(ctx, game) {
     const chiW = cw * (f.chi / CFG.MAX_CHI);
     if (side === 0) ctx.fillRect(cx, cy, chiW, ch); else ctx.fillRect(cx + cw - chiW, cy, chiW, ch);
     ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.strokeRect(cx, cy, cw, ch);
-    txt(ctx, full ? 'SUPER PRONTO  (' + (side === 0 ? KEYMAPS.p1.labels.super : KEYMAPS.p2.labels.super) + ')' : 'CHI', side === 0 ? cx : cx + cw, cy - 12, { size: 12, align: side === 0 ? 'left' : 'right', color: full ? '#bfe9ff' : '#ddd', stroke: 'rgba(0,0,0,.8)' });
-    // combo
+    const superKey = side === 0 ? KEYMAPS.p1.labels.super : KEYMAPS.p2.labels.super;
+    txt(ctx, full ? 'SUPER PRONTO  (' + superKey + ')' : 'CHI', side === 0 ? cx : cx + cw, cy - 12, { size: 12, align: side === 0 ? 'left' : 'right', color: full ? '#bfe9ff' : '#ddd', stroke: 'rgba(0,0,0,.8)' });
     if (f.combo >= 2 && f.comboTimer > 0) {
       txt(ctx, `${f.combo} HITS!`, side === 0 ? 120 : W - 120, 150, { font: FONT_DISPLAY, size: 34, color: '#ffd54f', stroke: '#5a2d00', strokeWidth: 5 });
     }
@@ -72,14 +70,13 @@ function drawHUD(ctx, game) {
   // cronômetro
   ctx.fillStyle = 'rgba(0,0,0,.6)'; roundRect(ctx, W / 2 - 52, 18, 104, 62, 8); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; roundRect(ctx, W / 2 - 52, 18, 104, 62, 8); ctx.stroke();
-  txt(ctx, String(game.timer).padStart(2, '0'), W / 2, 50, { font: FONT_DISPLAY, size: 44, color: game.timer <= 10 ? '#ff5252' : '#fff' });
-  // mudo
+  const tstr = game.infiniteTime ? '∞' : String(game.timer).padStart(2, '0');
+  txt(ctx, tstr, W / 2, 50, { font: FONT_DISPLAY, size: 44, color: !game.infiniteTime && game.timer <= 10 ? '#ff5252' : '#fff' });
   if (Audio_.isMuted()) txt(ctx, 'MUDO (M)', W / 2, 96, { size: 12, color: '#bbb', stroke: 'rgba(0,0,0,.8)' });
 }
 
 function drawAnnouncement(ctx, game) {
   const an = game.announce; if (!an) return;
-  const p = 1 - an.timer / an.max;
   const scale = an.timer > an.max - 10 ? lerp(2.2, 1, (an.max - an.timer) / 10) : 1;
   const alpha = an.timer < 12 ? an.timer / 12 : 1;
   ctx.save(); ctx.translate(CFG.W / 2, an.y || 300); ctx.scale(scale, scale); ctx.globalAlpha = alpha;
@@ -108,4 +105,46 @@ function drawSuperFlash(ctx, game) {
     const col = f.char.id === 'azula' ? '#4fb3ff' : ELEMENT_COLORS[f.char.element];
     txt(ctx, game.superName.toUpperCase(), f.side === 0 ? 330 : CFG.W - 330, 200, { font: FONT_DISPLAY, size: 40, color: col, stroke: '#000', strokeWidth: 6 });
   }
+}
+
+/* ----- Overlay de depuração (F1): hurtbox azul, pushbox verde, hitbox vermelha, projéteis magenta ----- */
+function projectPoint(game, x, y) {
+  if (game.is3D && game.r3d.project) return game.r3d.project(x, y);
+  if (game.cam2d) { const c = game.cam2d; return [(x - c.x) * c.zoom + CFG.W / 2, (y - c.y) * c.zoom + CFG.H / 2]; }
+  return [x, y];
+}
+function drawDebugBox(ctx, game, b, stroke, fill) {
+  const pts = [[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h]].map(([x, y]) => projectPoint(game, x, y));
+  ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+}
+function drawDebug(ctx, game) {
+  for (const f of game.fighters) {
+    drawDebugBox(ctx, game, f.pushbox, 'rgba(80,220,120,.9)', 'rgba(80,220,120,.08)');
+    drawDebugBox(ctx, game, f.hurtbox, 'rgba(80,160,255,.9)', 'rgba(80,160,255,.12)');
+    const hb = f.hitbox; if (hb) drawDebugBox(ctx, game, hb, 'rgba(255,60,60,1)', 'rgba(255,60,60,.25)');
+    const [sx, sy] = projectPoint(game, f.x, f.y - 190);
+    const m = f.attack ? `${f.attack.name} f${f.attackFrame}/${f.attack.startup}+${f.attack.active}+${f.attack.recovery}` : '';
+    const lines = [`${f.state}${f.pose !== f.state ? ' (' + f.pose + ')' : ''}`, m, `x ${Math.round(f.x)}  y ${Math.round(CFG.GROUND - f.y)}  vx ${f.vx.toFixed(1)}`, `hp ${f.hp}  chi ${f.chi}  stun ${f.stun}${f.invulnFrames > 0 ? '  inv ' + f.invulnFrames : ''}`].filter(Boolean);
+    lines.forEach((l, i) => txt(ctx, l, sx, sy - 14 * (lines.length - i), { size: 12, color: '#fff', stroke: 'rgba(0,0,0,.9)', weight: 400 }));
+  }
+  for (const p of game.projectiles) if (p.active) drawDebugBox(ctx, game, p.box, 'rgba(255,80,255,.9)', 'rgba(255,80,255,.12)');
+  txt(ctx, `F1 hitboxes · frame ${game.t} · seed ${game.matchSeed} · fase ${game.phase}`, CFG.W / 2, CFG.H - 14, { size: 12, color: '#ddd', stroke: 'rgba(0,0,0,.9)', weight: 400 });
+}
+
+/* ----- Painel do modo Treino ----- */
+function drawTraining(ctx, game) {
+  const tr = game.training;
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, CFG.W / 2 - 330, 104, 660, 30, 8); ctx.fill();
+  txt(ctx, `TREINO  ·  Boneco: ${DUMMY_MODES[tr.dummy]} (F2)  ·  Reposicionar (F3)  ·  Chi infinito: ${tr.chiInf ? 'sim' : 'não'} (F4)  ·  Hitboxes (F1)`, CFG.W / 2, 119, { size: 14, color: '#dfe7f2', weight: 400 });
+  // histórico de entradas do Jogador 1
+  const x0 = 60, y0 = CFG.H - 80;
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; roundRect(ctx, x0 - 6, y0 - 16, 16 * 24 + 12, 32, 6); ctx.fill();
+  tr.history.forEach((h, i) => {
+    const age = game.t - h.t, alpha = clamp(1 - age / 240, 0.25, 1);
+    const isBtn = 'SCEU'.includes(h.sym);
+    txt(ctx, h.sym, x0 + i * 24 + 8, y0, { size: 16, color: isBtn ? '#ffd54f' : '#fff', alpha, weight: 700 });
+  });
+  const a = game.fighters[0];
+  txt(ctx, `Último combo: ${tr.lastCombo} hit${tr.lastCombo === 1 ? '' : 's'}`, x0 + 16 * 24 + 30, y0, { size: 14, align: 'left', color: '#dfe7f2', weight: 400, stroke: 'rgba(0,0,0,.8)' });
 }

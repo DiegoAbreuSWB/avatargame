@@ -36,6 +36,24 @@ const rectsOverlap = (a, b) =>
   a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-// Preferências salvas no navegador (podem falhar em janelas privadas; por isso o try/catch)
-function saveSetting(key, value) { try { localStorage.setItem('avatarArena.' + key, String(value)); } catch (e) { /* ignora */ } }
-function loadSetting(key) { try { return localStorage.getItem('avatarArena.' + key); } catch (e) { return null; } }
+// Gerador pseudoaleatório com semente (mulberry32) para TUDO que afeta a lógica da luta (IA, sorteios).
+// Decisão: visuais (partículas, tremor de tela) continuam com Math.random, porque o número de chamadas
+// varia entre o modo 2D e o 3D e isso dessincronizaria replays e partidas online.
+const Rng = (() => {
+  let s = 1;
+  function set(seed) { s = (seed >>> 0) || 1; }
+  function next() {
+    s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  return {
+    set, next,
+    range: (a, b) => a + next() * (b - a),
+    int: (a, b) => Math.floor(a + next() * (b - a + 1)),
+    pick: (arr) => arr[Math.floor(next() * arr.length)],
+    chance: (p) => next() < p,
+    get seed() { return s; },
+  };
+})();

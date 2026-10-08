@@ -7,6 +7,7 @@ const Rig3D = (() => {
 
   function init() {
     if (G) return;
+    _a = new THREE.Vector3(); _b = new THREE.Vector3(); _d = new THREE.Vector3(); _up = new THREE.Vector3(0, 1, 0);
     G = {
       cyl: new THREE.CylinderGeometry(1, 1, 1, 12, 1),
       torso: new THREE.CylinderGeometry(1, 0.78, 1, 14, 1),
@@ -23,7 +24,7 @@ const Rig3D = (() => {
     outlineMat = new THREE.MeshBasicMaterial({ color: 0x15120f, side: THREE.BackSide });
   }
 
-  const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+  let _a, _b, _d, _up;   // vetores temporários (criados em init, quando o THREE já existe)
 
   function create(ch) {
     init();

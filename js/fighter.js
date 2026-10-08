@@ -223,6 +223,7 @@ class Fighter {
     }
     const dmg = data.damage || 0;
     this.hp = Math.max(0, this.hp - dmg);
+    this.lastHitAt = this.game.t;
     this.flash = 5; this.stun = data.hitstun || 14; this.state = 'hit'; this.attack = null; this.superActive = false; this.blocking = false;
     const kb = (data.knockback || 4) / this.char.weight;
     this.vx = dir * kb * 0.9;

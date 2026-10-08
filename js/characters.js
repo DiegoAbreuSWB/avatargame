@@ -27,13 +27,14 @@ const CHARACTERS = [
   {
     id: 'aang', name: 'Aang', title: 'O Último Mestre do Ar', element: 'ar', nation: 'Nômades do Ar',
     colors: { skin: '#f3cfae', primary: '#f2a93b', secondary: '#d9742b', accent: '#2f6fc4', hair: null },
-    speed: 6.2, jump: 21, weight: 0.9,
+    speed: 6.2, jump: 21, weight: 0.95,
     stats: { forca: 2, velocidade: 5, alcance: 4 },
     desc: 'Rápido e evasivo. Suas rajadas de ar empurram o oponente para longe.',
     moves: {
+      kick: Object.assign({}, BASE_MOVES.kick, { damage: 10, startup: 7 }),
       special: { name: 'Rajada de Ar', startup: 10, active: 2, recovery: 18, chi: 5, pose: 'cast', sound: 'air',
-        projectile: { type: 'air', x: 60, y: -115, vx: 13, w: 70, h: 50, damage: 8, chip: 1, knockback: 16, hitstun: 18, life: 100 } },
-      special2: { name: 'Patinete de Ar', startup: 6, active: 22, recovery: 12, damage: 10, chi: 8, pose: 'dash', sound: 'air',
+        projectile: { type: 'air', x: 60, y: -115, vx: 13, w: 70, h: 50, damage: 10, chip: 1, knockback: 16, hitstun: 18, life: 100 } },
+      special2: { name: 'Patinete de Ar', startup: 6, active: 22, recovery: 12, damage: 12, chi: 8, pose: 'dash', sound: 'air',
         hitbox: { x: -10, y: -120, w: 90, h: 110 }, hitstun: 22, blockstun: 12, knockback: 10, height: 'mid', knockdown: true,
         dash: { vx: 13 }, invuln: [0, 8], trail: 'ar' },
       super: { name: 'Estado Avatar', startup: 14, active: 70, recovery: 24, chi: 0, cost: 100, pose: 'super', sound: 'super',
@@ -53,9 +54,9 @@ const CHARACTERS = [
         projectile: { type: 'water', x: 55, y: -110, vx: 9, w: 80, h: 44, damage: 11, chip: 2, knockback: 8, hitstun: 22, life: 110 } },
       special2: { name: 'Estilhaços de Gelo', startup: 12, active: 2, recovery: 22, chi: 6, pose: 'castLow', sound: 'water',
         projectiles: [
-          { type: 'ice', x: 40, y: -90, vx: 10, vy: -7, w: 30, h: 30, damage: 5, chip: 1, knockback: 6, hitstun: 18, gravity: 0.35, life: 90, exclusive: false, cancels: false },
-          { type: 'ice', x: 40, y: -90, vx: 11, vy: -3, w: 30, h: 30, damage: 5, chip: 1, knockback: 6, hitstun: 18, gravity: 0.35, life: 90, exclusive: false, cancels: false },
-          { type: 'ice', x: 40, y: -90, vx: 12, vy: 1, w: 30, h: 30, damage: 5, chip: 1, knockback: 6, hitstun: 18, gravity: 0.35, life: 90, exclusive: false, cancels: false },
+          { type: 'ice', x: 40, y: -90, vx: 10, vy: -7, w: 30, h: 30, damage: 4, chip: 1, knockback: 6, hitstun: 18, gravity: 0.35, life: 90, exclusive: false, cancels: false },
+          { type: 'ice', x: 40, y: -90, vx: 11, vy: -3, w: 30, h: 30, damage: 4, chip: 1, knockback: 6, hitstun: 18, gravity: 0.35, life: 90, exclusive: false, cancels: false },
+          { type: 'ice', x: 40, y: -90, vx: 12, vy: 1, w: 30, h: 30, damage: 4, chip: 1, knockback: 6, hitstun: 18, gravity: 0.35, life: 90, exclusive: false, cancels: false },
         ] },
       super: { name: 'Onda Gigante', startup: 22, active: 2, recovery: 30, chi: 0, cost: 100, pose: 'super', sound: 'super',
         projectile: { type: 'wave', x: 40, y: -120, vx: 8, w: 150, h: 240, damage: 28, chip: 6, knockback: 14, hitstun: 30, blockstun: 20,
@@ -87,9 +88,9 @@ const CHARACTERS = [
     desc: 'Pesada e poderosa. Rochas lentas, mas devastadoras, e pilares que surgem sob o inimigo.',
     moves: {
       punch: Object.assign({}, BASE_MOVES.punch, { damage: 6 }),
-      kick: Object.assign({}, BASE_MOVES.kick, { damage: 12, startup: 10, knockback: 10 }),
+      kick: Object.assign({}, BASE_MOVES.kick, { damage: 10, startup: 10, knockback: 10 }),
       special: { name: 'Arremesso de Rocha', startup: 14, active: 2, recovery: 22, chi: 6, pose: 'cast', sound: 'earth',
-        projectile: { type: 'rock', x: 50, y: -125, vx: 7.5, w: 56, h: 52, damage: 14, chip: 3, knockback: 9, hitstun: 26, life: 130, knockdown: true } },
+        projectile: { type: 'rock', x: 50, y: -125, vx: 7.5, w: 56, h: 52, damage: 13, chip: 3, knockback: 9, hitstun: 26, life: 130, knockdown: true } },
       special2: { name: 'Pilar de Terra', startup: 16, active: 2, recovery: 26, chi: 8, pose: 'castLow', sound: 'earth',
         projectile: { type: 'pillar', atTarget: true, y: 0, vx: 0, w: 70, h: 150, damage: 12, chip: 3, knockback: 4, hitstun: 26, blockstun: 14,
           delay: 10, life: 30, launcher: true, exclusive: false, cancels: false, groundOnly: false, pierce: true } },
@@ -105,10 +106,10 @@ const CHARACTERS = [
     stats: { forca: 4, velocidade: 5, alcance: 5 },
     desc: 'Precisa e letal. Fogo azul veloz e um raio que atravessa a arena inteira.',
     moves: {
-      punch: Object.assign({}, BASE_MOVES.punch, { startup: 3 }),
+      punch: Object.assign({}, BASE_MOVES.punch, { startup: 3, damage: 6 }),
       special: { name: 'Fogo Azul', startup: 8, active: 2, recovery: 16, chi: 5, pose: 'cast', sound: 'fire',
-        projectile: { type: 'bluefire', x: 55, y: -115, vx: 13, w: 54, h: 40, damage: 10, chip: 2, knockback: 6, hitstun: 18, life: 100 } },
-      special2: { name: 'Relâmpago', startup: 30, active: 2, recovery: 30, chi: 8, pose: 'charge', sound: 'lightning', chargeFx: 'raio',
+        projectile: { type: 'bluefire', x: 55, y: -115, vx: 13, w: 54, h: 40, damage: 11, chip: 2, knockback: 6, hitstun: 18, life: 100 } },
+      special2: { name: 'Relâmpago', startup: 24, active: 2, recovery: 26, chi: 8, pose: 'charge', sound: 'lightning', chargeFx: 'raio',
         projectile: { type: 'beam', x: 40, y: -125, vx: 0, w: 1300, h: 36, damage: 18, chip: 4, knockback: 14, hitstun: 30, blockstun: 18,
           life: 12, knockdown: true, exclusive: false, cancels: false, pierce: true } },
       super: { name: 'Dança do Fogo Azul', startup: 16, active: 2, recovery: 30, chi: 0, cost: 100, pose: 'super', sound: 'super',
@@ -141,10 +142,12 @@ const CHARACTERS = [
 
 function getCharacter(id) { return CHARACTERS.find((c) => c.id === id); }
 
-// Monta a lista completa de golpes de um personagem (base + específicos)
+// Monta a lista completa de golpes de um personagem (base + específicos).
+// Regras de cancelamento padrão: socos e chutes em pé/agachados cancelam em especial; especiais cancelam em super.
+const CANCEL_DEFAULTS = { punch: 'special', kick: 'special', cpunch: 'special', special: 'super', special2: 'super' };
 function buildMoveset(ch) {
   const m = Object.assign({}, BASE_MOVES, ch.moves);
-  for (const k in m) m[k] = Object.assign({ key: k }, m[k]);
+  for (const k in m) m[k] = Object.assign({ key: k, cancel: CANCEL_DEFAULTS[k] || '' }, m[k]);
   return m;
 }
 

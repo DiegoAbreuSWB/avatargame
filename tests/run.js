@@ -61,6 +61,11 @@ if (j.moves.length) {
   if (zero.length) failed = true;
   if (flag('verbose')) for (const x of j.moves) console.log(`  ${x.ch.padEnd(7)} ${x.move.padEnd(9)} ${String(x.dmg).padStart(3)}`);
 }
+if (j.mechanics) {
+  const bad = Object.entries(j.mechanics).filter(([k, v]) => typeof v === 'boolean' && !v).map(([k]) => k);
+  console.log('mecânicas:', Object.entries(j.mechanics).map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('/') : v}`).join(' '));
+  if (bad.length) { failed = true; console.log('  FALHARAM: ' + bad.join(', ')); }
+}
 if (j.cpuFight) console.log('luta CPU:', JSON.stringify(j.cpuFight));
 if (j.matchups) {
   console.log(`matchups (${j.matchups.per} lutas por par):`);

@@ -250,11 +250,12 @@ class Game {
 
     const [a, b] = this.fighters;
     const control = this.phase === 'play';
-    const padA = control ? (a.isCPU ? AI.update(a, b, this) : Input.readPad(KEYMAPS.p1)) : Input.emptyPad();
+    // fontes de entrada: teclado por padrão; padSourceA/B permitem injetar entradas (testes, toque, online)
+    const padA = control ? (a.isCPU ? AI.update(a, b, this) : this.padSourceA ? this.padSourceA() : Input.readPad(KEYMAPS.p1)) : Input.emptyPad();
     let padB;
     if (!control) padB = Input.emptyPad();
     else if (training) padB = this.dummyPad(b, a);
-    else padB = b.isCPU ? AI.update(b, a, this) : Input.readPad(KEYMAPS.p2);
+    else padB = b.isCPU ? AI.update(b, a, this) : this.padSourceB ? this.padSourceB() : Input.readPad(KEYMAPS.p2);
     if (training && control) {
       this.recordInput(padA);
       if (this.training.chiInf) a.chi = CFG.MAX_CHI;
@@ -294,7 +295,15 @@ class Game {
       const cy = (Math.max(hb.y, ob.y) + Math.min(hb.y + hb.h, ob.y + ob.h)) / 2;
       const isLast = f.hitsLeft <= 1;
       f.hitsLeft--; f.hitCooldown = f.attack.hitInterval || 8;
-      o.receiveHit(f, f.attack, cx, cy, { isLast });
+      // postura de contra-ataque (parry): o defensor devolve o golpe
+      if (o.counterStance === 'melee') {
+        f.hitsLeft = 0;
+        f.receiveHit(o, { damage: o.attack.counterDamage || 10, hitstun: 30, knockback: 9, knockdown: true, chi: 10 }, cx, cy, {});
+        o.endAttack(); this.setAnnounce('CONTRA-ATAQUE!', 45, { size: 44, color: '#ffd54f', y: 240 });
+        continue;
+      }
+      const res = o.receiveHit(f, f.attack, cx, cy, { isLast });
+      if (res === 'hit' || res === 'block') f.attackConnected = true;
     }
     // projéteis contra lutadores
     for (const p of this.projectiles) {
@@ -306,9 +315,18 @@ class Game {
       if (!rectsOverlap(pb, ob)) continue;
       const cx = (Math.max(pb.x, ob.x) + Math.min(pb.x + pb.w, ob.x + ob.w)) / 2;
       const cy = (Math.max(pb.y, ob.y) + Math.min(pb.y + pb.h, ob.y + ob.h)) / 2;
+      // postura de redirecionamento: o projétil volta contra quem o lançou
+      if (o.counterStance === 'projectile' && !GROUND_TYPES.has(p.type) && p.type !== 'vortex' && p.type !== 'beam') {
+        const old = p.owner; p.owner = o; p.target = old; p.facing = -p.facing; p.vx = -p.vx * 1.15; p.damage = Math.round(p.damage * 1.5);
+        p.hitsLeft = 1; p.hitCooldown = 6; p.life = Math.max(p.life, 90); p.returning = false;
+        Particles.element('raio', p.x, p.y, 14); Audio_.play('lightning');
+        this.setAnnounce('REDIRECIONADO!', 45, { size: 44, color: '#9be7ff', y: 240 });
+        continue;
+      }
       const isLast = p.hitsLeft <= 1;
       p.hitsLeft--; p.hitCooldown = p.multi ? 8 : 9999;
       const res = o.receiveHit(p.owner, p, cx, cy, { fromProjectile: true, isLast });
+      if (p.owner.state === 'attack') p.owner.attackConnected = true;
       Particles.element(p.type === 'ice' ? 'gelo' : p.type === 'beam' ? 'raio' : p.owner.char.element, cx, cy, res === 'hit' ? 12 : 6);
       if (!p.pierce && !p.multi) p.dead = true;
       if (p.returning && !p.returnPhase) { p.returnPhase = true; p.hitsLeft = 1; p.hitCooldown = 20; }

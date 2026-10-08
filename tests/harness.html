@@ -112,6 +112,109 @@ if (PARAMS.r === '3d') {
     });
   }
 
+  if (mode === 'all' || mode === 'mechanics') {
+    const mech = out.mechanics = {};
+    const setup = (ax, bx, p1 = 2, p2 = 3) => {
+      game.mode = '2p'; game.select.p1 = p1; game.select.p2 = p2; game.stageIndex = 0; game.seed = seed;
+      game.startMatch(); game.phase = 'play'; game.announce = null; game.fighters.forEach((f) => { f.state = 'idle'; });
+      const [a, b] = game.fighters; a.x = ax; b.x = bx; a.chi = 100;
+      return [a, b];
+    };
+    let queue = []; game.padSourceA = () => queue.shift() || Input.emptyPad();
+    const press = (keys) => Object.assign(Input.emptyPad(), keys);
+    const run = (n) => { for (let i = 0; i < n; i++) game.update(); };
+
+    safe('mech buffer', () => {
+      const [a] = setup(500, 900);
+      a.startAttack(a.moves.punch);            // soco: 4+4+9 = 17 frames
+      run(10);                                 // em recuperação
+      queue = [press({ kick: true })];         // chute apertado durante a recuperação
+      run(11);                                 // o soco termina no frame 17; o chute deve sair sozinho
+      mech.buffer = a.state === 'attack' && a.attack.key === 'kick';
+    });
+    safe('mech cancel', () => {
+      const [a, b] = setup(500, 580);
+      a.startAttack(a.moves.punch);
+      run(5);                                  // frame 5 = primeiro frame ativo: acerta
+      queue = [press({ special: true })];
+      run(2 + 4);                              // 4 frames de hitstop congelam a luta após o acerto
+      mech.cancel = a.state === 'attack' && a.attack.key === 'special' && b.state === 'hit';
+    });
+    safe('mech dash', () => {
+      const [a] = setup(400, 900);
+      queue = [press({ right: true }), press({}), press({}), press({ right: true })];
+      run(4);
+      mech.dash = a.state === 'dash' && a.dashVx > 0;
+      const [c] = setup(400, 900);
+      queue = [press({ left: true }), press({}), press({}), press({ left: true })];
+      run(4);
+      mech.backdash = c.state === 'dash' && c.dashVx < 0 && c.invulnFrames > 0;
+    });
+    safe('mech throw', () => {
+      const [a, b] = setup(500, 570);
+      const hp = b.hp;
+      queue = [press({ punch: true, kick: true })];
+      run(1);
+      const grabbed = a.state === 'throw' && b.state === 'thrown';
+      run(40);
+      mech.throw = grabbed && hp - b.hp === THROW_DAMAGE && (b.state === 'knockdown' || b.launched || b.airborne);
+    });
+    safe('mech throwEscape', () => {
+      const [a, b] = setup(500, 570);
+      const hp = b.hp;
+      const qb = [press({}), press({}), press({ punch: true, kick: true })];
+      game.padSourceB = () => qb.shift() || Input.emptyPad();
+      queue = [press({ punch: true, kick: true })];
+      run(6);
+      mech.throwEscape = b.hp === hp && a.state !== 'throw' && b.state !== 'thrown';
+      game.padSourceB = null;
+    });
+    safe('mech throwBeatsBlock', () => {
+      const [a, b] = setup(500, 570);
+      game.padSourceB = () => press({ right: true });   // b segura para trás (bloqueando)
+      const hp = b.hp;
+      queue = [press({ punch: true, kick: true })];
+      run(30);
+      mech.throwBeatsBlock = hp - b.hp === THROW_DAMAGE;
+      game.padSourceB = null;
+    });
+    safe('mech scaling', () => {
+      const [a, b] = setup(500, 580);
+      const dmgs = [];
+      for (let i = 0; i < 3; i++) {
+        b.x = 580; b.state = 'hit'; b.stun = 40; b.vx = 0; game.hitstop = 0; const hp = b.hp;
+        a.state = 'idle'; a.attack = null; a.startAttack(a.moves.kick); run(10); dmgs.push(hp - b.hp);
+      }
+      mech.scaling = dmgs[0] === a.moves.kick.damage && dmgs[1] < dmgs[0] && dmgs[2] < dmgs[1];
+      mech.scalingValues = dmgs;
+    });
+    safe('mech quickRise', () => {
+      const [a, b] = setup(500, 580);
+      a.startAttack(a.moves.sweep); run(60);
+      const [c, d] = setup(500, 580);
+      game.padSourceB = () => (d.state === 'knockdown' ? press({ up: true }) : Input.emptyPad());
+      c.startAttack(c.moves.sweep); run(60);
+      mech.quickRise = d.state !== 'knockdown' && (b.state === 'knockdown' || b.state === 'getup');
+      mech.quickRiseStates = [b.state, d.state];
+      game.padSourceB = null;
+    });
+    safe('mech cornerPush', () => {
+      const [a, b] = setup(1140, 1240);   // b encostado na parede direita
+      const ax = a.x;
+      a.startAttack(a.moves.kick); run(20);
+      mech.cornerPush = a.x < ax - 2;
+    });
+    safe('mech chiBlock', () => {
+      const [a, b] = setup(500, 580, 0, 2);
+      b.chiBlocked = 300; b.chi = 100;
+      const qb = [press({ special: true })]; game.padSourceB = () => qb.shift() || Input.emptyPad();
+      run(3);
+      mech.chiBlock = b.state !== 'attack';
+      game.padSourceB = null;
+    });
+    game.padSourceA = null; game.padSourceB = null;
+  }
+
   if (mode === 'matchups') {
     safe('matchups', () => {
       const per = parseInt(PARAMS.pairs || '6', 10), maxFrames = 30000;
@@ -134,7 +237,7 @@ if (PARAMS.r === '3d') {
     });
   }
 
-  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
+  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { if (PARAMS.scene === 'remap') game.remap = { player: 'p1', index: 4, listening: true, message: '' }; game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
   document.getElementById('log').textContent = JSON.stringify(out);
 })();
 </script>

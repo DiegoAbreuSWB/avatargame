@@ -47,6 +47,7 @@ const AI = (() => {
       else { action = 'back'; hold = 10; }
     } else if (dist < 115) {
       if (r < 0.3) action = 'punch';
+      else if (r < 0.42 && opp.blocking && L.punish > 0) action = 'throw';
       else if (r < 0.55) action = 'kick';
       else if (r < 0.68) action = 'sweep';
       else if (r < 0.8 && Rng.chance(L.special)) action = 'special2';
@@ -87,6 +88,7 @@ const AI = (() => {
       case 'super': pad.super = true; break;
       case 'jumpFwd': pad.upPressed = true; pad.up = true; pad[fwd] = true; break;
       case 'dashFwd': pad.dashF = true; pad[fwd] = true; break;
+      case 'throw': pad.throw = true; break;
       case 'wait': default: break;
     }
   }

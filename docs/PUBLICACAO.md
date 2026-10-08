@@ -24,10 +24,11 @@ Observação: dentro do iframe do itch o teclado só responde depois de um cliqu
 
 ## GitHub Pages
 
-1. Crie um repositório no GitHub e envie o conteúdo (`git remote add origin ...` e `git push -u origin main`).
-2. Em **Settings → Pages**, escolha *Deploy from a branch*, branch `main`, pasta `/ (root)`.
-3. O jogo fica em `https://<usuario>.github.io/<repositorio>/`. Todos os caminhos são relativos, então funciona em subpasta.
-4. O `sw.js` tem escopo da pasta do repositório; se publicar em outro caminho, nada precisa mudar.
+O repositório é https://github.com/DiegoAbreuSWB/avatargame e já tem o workflow `.github/workflows/pages.yml`, que publica a cada push na `main`.
+
+1. Uma única vez, em **Settings → Pages → Build and deployment → Source**, escolha **GitHub Actions** (o token padrão do workflow não tem permissão para ativar o Pages sozinho; por isso a primeira execução falhou no passo `configure-pages`).
+2. Em **Actions → Publicar no GitHub Pages → Run workflow** (ou faça qualquer push na `main`).
+3. O jogo fica em https://diegoabreuswb.github.io/avatargame/ . Todos os caminhos são relativos, então funciona em subpasta; o `sw.js` tem escopo da pasta do repositório.
 
 ## Qualquer servidor próprio
 

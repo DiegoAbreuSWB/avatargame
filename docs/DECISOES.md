@@ -173,3 +173,24 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 **Escolha.** (b): `T('ESCOLHA SEU LUTADOR')` devolve a tradução quando `Settings.data.lang === 'en'`, senão o texto original. Placeholders `{0}`.
 **Por quê.** Permitiu traduzir a interface inteira envolvendo literais existentes, sem criar um catálogo paralelo; um texto sem tradução simplesmente aparece em português (nunca uma chave crua).
 **Consequências.** Finais do Arcade, falas e descrições longas continuam só em português (conteúdo narrativo); nomes de golpes são traduzidos apenas onde aparecem na tela (Super). A troca de idioma é imediata porque T() lê a configuração a cada quadro.
+
+## ADR-025 · Gamepad no layout "standard", sem remapeamento
+
+**Escolha.** Até dois controles pela Gamepad API: slot 0 = Jogador 1, slot 1 = Jogador 2. X = soco, A = chute, B = especial, Y = super, RB = agarrão, LB = dash, Start = pausa, direcional ou analógico = mover. Nos menus, A confirma e B volta.
+**Por quê.** O layout padrão cobre Xbox, PlayStation e genéricos; remapear gamepad duplicaria a tela de teclas por pouco ganho. O gamepad é a resposta ao ghosting do teclado (ADR-004): com um controle para cada jogador, não há limite de teclas simultâneas.
+**Consequências.** `Input.readPad(map, slot)` mescla teclado + gamepad + toque com OR lógico; os menus passaram a usar `menuUp()`, `confirmPressed()`, `backPressed()` e `pausePressed()` em vez de ler `Escape`/`Enter` diretamente.
+
+## ADR-026 · Controles de toque só para o Jogador 1
+
+**Escolha.** Direcional de quatro botões à esquerda e quatro botões (S, C, E, U) à direita, desenhados sobre o canvas 2D; multitoque permite agarrão (S+C) e dash (dois toques na direção). Modo "Automático" mostra em qualquer aparelho com tela sensível ao toque.
+**Por quê.** Dois jogadores em uma tela de celular não cabem; o toque serve ao modo CPU, Arcade, Sobrevivência e Treino.
+
+## ADR-027 · PWA com service worker cache-first
+
+**Escolha.** `manifest.webmanifest` + `sw.js` registrados apenas em http(s). Arquivos locais: cache primeiro; CDN (Three.js, fontes): rede primeiro com cache de reserva. Ícones gerados a partir de `icons/icon.svg` com o Chrome headless (`tools/icon.html`).
+**Por quê.** Jogar offline e instalar como aplicativo sem build.
+**Consequências.** A constante `VERSION` em `sw.js` precisa mudar a cada publicação (checklist em `docs/PUBLICACAO.md`). Em file:// nada disso roda, e o jogo continua funcionando.
+
+## ADR-028 · Publicação por zip e documentação, sem conta de terceiros
+
+**Escolha.** `tools/package.ps1` gera o zip pronto para itch.io; `docs/PUBLICACAO.md` descreve itch.io, GitHub Pages e servidor próprio. A publicação em si fica com o dono do projeto (exige contas e credenciais).

@@ -12,6 +12,12 @@
     if (window.THREE && gl) game.r3d = new Renderer3D(gl);
   } catch (e) { console.warn('Modo 3D indisponível:', e); game.r3d = null; }
   game.applySettingsSideEffects();
+  if (typeof Touch !== 'undefined') Touch.attach(canvas);
+
+  // PWA: só funciona servido por http(s); em file:// o navegador recusa o service worker
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Service worker não registrado:', e));
+  }
 
   let started = false;
   function start() {

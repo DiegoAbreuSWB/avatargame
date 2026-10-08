@@ -31,11 +31,14 @@ class Game {
   /* ---------- utilidades ---------- */
   get stage() { return STAGES[this.stageIndex]; }
   anyPad(key) { return Input.pressed(KEYMAPS.p1[key]) || Input.pressed(KEYMAPS.p2[key]); }
-  menuUp() { return this.anyPad('up') || Input.pressed('ArrowUp'); }
-  menuDown() { return this.anyPad('down') || Input.pressed('ArrowDown'); }
-  menuLeft() { return this.anyPad('left') || Input.pressed('ArrowLeft'); }
-  menuRight() { return this.anyPad('right') || Input.pressed('ArrowRight'); }
-  confirmPressed() { return Input.pressed('Enter') || Input.pressed('Space') || this.anyPad('punch'); }
+  extMenu() { const g = typeof Gamepad_ !== 'undefined' ? Gamepad_.menu() : {}; const t = (typeof Touch !== 'undefined' && Touch.menu()) || {}; return { up: g.up || t.up, down: g.down || t.down, left: g.left || t.left, right: g.right || t.right, confirm: g.confirm || t.confirm, back: g.back || t.back, start: g.start || t.start }; }
+  menuUp() { return this.anyPad('up') || Input.pressed('ArrowUp') || !!this.extMenu().up; }
+  menuDown() { return this.anyPad('down') || Input.pressed('ArrowDown') || !!this.extMenu().down; }
+  menuLeft() { return this.anyPad('left') || Input.pressed('ArrowLeft') || !!this.extMenu().left; }
+  menuRight() { return this.anyPad('right') || Input.pressed('ArrowRight') || !!this.extMenu().right; }
+  confirmPressed() { return Input.pressed('Enter') || Input.pressed('Space') || this.anyPad('punch') || !!this.extMenu().confirm; }
+  backPressed() { return Input.pressed('Escape') || !!this.extMenu().back; }
+  pausePressed() { return Input.pressed('Escape') || !!this.extMenu().start; }
   setAnnounce(text, frames, extra = {}) { this.announce = Object.assign({ text, timer: frames, max: frames }, extra); }
   shakeScreen(n) { this.shake = Math.max(this.shake, n); }
   spawnProjectile(owner, spec) {
@@ -65,11 +68,13 @@ class Game {
   /* ---------- loop ---------- */
   update() {
     Input.beginFrame(); this.t++;
+    if (typeof Gamepad_ !== 'undefined') Gamepad_.poll();
+    if (typeof Touch !== 'undefined') Touch.poll();
     if (Input.pressed('KeyM')) { Settings.data.sound = !Audio_.toggleMute(); Settings.save(); }
     if (Input.pressed('F1')) { this.debug = !this.debug; Settings.data.debug = this.debug; Settings.save(); }
     switch (this.scene) {
       case 'title': this.updateTitle(); break;
-      case 'controls': if (Input.pressed('Escape') || Input.pressed('Enter')) { Audio_.play('back'); this.scene = 'title'; } break;
+      case 'controls': if (this.backPressed() || this.confirmPressed()) { Audio_.play('back'); this.scene = 'title'; } break;
       case 'settings': this.updateSettings(); break;
       case 'remap': this.updateRemap(); break;
       case 'select': this.updateSelect(); break;
@@ -107,6 +112,7 @@ class Game {
       case 'fight': this.drawFight(ctx); break;
       case 'result': drawResult(ctx, this); break;
     }
+    if (typeof Touch !== 'undefined') Touch.draw(ctx, this);
     ctx.restore();
   }
 
@@ -145,7 +151,7 @@ class Game {
   }
   updateSelect() {
     const s = this.select;
-    if (Input.pressed('Escape')) {
+    if (this.backPressed()) {
       Audio_.play('back');
       if (s.p2Done) s.p2Done = false;
       else if (s.p1Done) s.p1Done = false;
@@ -170,7 +176,7 @@ class Game {
 
   /* ---------- seleção de cenário ---------- */
   updateStage() {
-    if (Input.pressed('Escape')) { Audio_.play('back'); this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; return; }
+    if (this.backPressed()) { Audio_.play('back'); this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; return; }
     const n = STAGES.length;
     if (this.menuLeft()) { this.stageIndex = (this.stageIndex + n - 1) % n; Audio_.play('menu'); }
     if (this.menuRight()) { this.stageIndex = (this.stageIndex + 1) % n; Audio_.play('menu'); }
@@ -233,7 +239,7 @@ class Game {
 
   updateFight() {
     if (this.paused) return this.updatePause();
-    if (Input.pressed('Escape') && this.phase === 'play') { this.paused = true; this.pauseIndex = 0; Audio_.play('menu'); return; }
+    if (this.pausePressed() && this.phase === 'play') { this.paused = true; this.pauseIndex = 0; Audio_.play('menu'); return; }
     const training = this.mode === 'training';
     if (training) {
       if (Input.pressed('F2')) { this.training.dummy = (this.training.dummy + 1) % DUMMY_MODES.length; Audio_.play('menu'); }
@@ -267,11 +273,11 @@ class Game {
     const [a, b] = this.fighters;
     const control = this.phase === 'play';
     // fontes de entrada: teclado por padrão; padSourceA/B permitem injetar entradas (testes, toque, online)
-    const padA = control ? (a.isCPU ? AI.update(a, b, this) : this.padSourceA ? this.padSourceA() : Input.readPad(KEYMAPS.p1)) : Input.emptyPad();
+    const padA = control ? (a.isCPU ? AI.update(a, b, this) : this.padSourceA ? this.padSourceA() : Input.readPad(KEYMAPS.p1, 0)) : Input.emptyPad();
     let padB;
     if (!control) padB = Input.emptyPad();
     else if (training) padB = this.dummyPad(b, a);
-    else padB = b.isCPU ? AI.update(b, a, this) : this.padSourceB ? this.padSourceB() : Input.readPad(KEYMAPS.p2);
+    else padB = b.isCPU ? AI.update(b, a, this) : this.padSourceB ? this.padSourceB() : Input.readPad(KEYMAPS.p2, 1);
     if (training && control) {
       this.recordInput(padA);
       if (this.training.chiInf) a.chi = CFG.MAX_CHI;
@@ -388,7 +394,7 @@ class Game {
   updatePause() {
     if (this.menuUp()) { this.pauseIndex = (this.pauseIndex + 2) % 3; Audio_.play('menu'); }
     if (this.menuDown()) { this.pauseIndex = (this.pauseIndex + 1) % 3; Audio_.play('menu'); }
-    if (Input.pressed('Escape')) { this.paused = false; return; }
+    if (this.pausePressed()) { this.paused = false; return; }
     if (Input.pressed('Enter') || this.anyPad('punch')) {
       Audio_.play('confirm');
       if (this.pauseIndex === 0) this.paused = false;
@@ -401,7 +407,7 @@ class Game {
     this.resultT = (this.resultT || 0) + 1;
     if (this.resultT < 30) return;
     if (Input.pressed('Enter') || this.anyPad('punch')) { Audio_.play('confirm'); this.startMatch(); }
-    if (Input.pressed('Escape')) { Audio_.play('back'); this.select.p1Done = this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; }
+    if (this.backPressed()) { Audio_.play('back'); this.select.p1Done = this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; }
   }
 
   /* câmera do modo 2D: acompanha o meio dos lutadores e aproxima quando estão perto */

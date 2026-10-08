@@ -43,7 +43,7 @@ Game.prototype.gotoLadder = function () {
 
 Game.prototype.updateLadder = function () {
   this.ladderT++;
-  if (Input.pressed('Escape')) { Audio_.play('back'); this.aiLevelOverride = null; this.scene = 'title'; return; }
+  if (this.backPressed()) { Audio_.play('back'); this.aiLevelOverride = null; this.scene = 'title'; return; }
   if (this.ladderT > 20 && (this.confirmPressed() || this.ladderT > 300)) {
     Audio_.play('confirm');
     this.startMatch();
@@ -84,12 +84,12 @@ Game.prototype.updateContinue = function () {
     if (this.continueIndex === 0) { this.arcade.continues++; this.arcade.score = Math.floor(this.arcade.score * 0.5); this.gotoLadder(); }
     else { this.aiLevelOverride = null; this.scene = 'title'; }
   }
-  if (Input.pressed('Escape')) { Audio_.play('back'); this.aiLevelOverride = null; this.scene = 'title'; }
+  if (this.backPressed()) { Audio_.play('back'); this.aiLevelOverride = null; this.scene = 'title'; }
 };
 
 Game.prototype.updateEnding = function () {
   this.endingT++;
-  if (this.endingT > 40 && (this.confirmPressed() || Input.pressed('Escape'))) { Audio_.play('confirm'); this.scene = 'title'; }
+  if (this.endingT > 40 && (this.confirmPressed() || this.backPressed())) { Audio_.play('confirm'); this.scene = 'title'; }
 };
 
 /* ----- desenho ----- */

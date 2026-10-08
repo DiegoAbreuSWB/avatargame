@@ -33,7 +33,7 @@ Game.prototype.applySettingsSideEffects = function () {
 
 Game.prototype.updateSettings = function () {
   const rows = this.settingsRows(), n = rows.length;
-  if (Input.pressed('Escape')) { Audio_.play('back'); this.scene = 'title'; return; }
+  if (this.backPressed()) { Audio_.play('back'); this.scene = 'title'; return; }
   if (this.menuUp()) { this.settingsIndex = (this.settingsIndex + n - 1) % n; Audio_.play('menu'); }
   if (this.menuDown()) { this.settingsIndex = (this.settingsIndex + 1) % n; Audio_.play('menu'); }
   const row = rows[this.settingsIndex];
@@ -70,7 +70,7 @@ Game.prototype.updateRemap = function () {
     r.index = Math.min(r.index + 1, REMAP_ACTIONS.length - 1);
     return;
   }
-  if (Input.pressed('Escape')) { Audio_.play('back'); this.scene = 'settings'; return; }
+  if (this.backPressed()) { Audio_.play('back'); this.scene = 'settings'; return; }
   if (this.menuUp()) { r.index = (r.index + n - 1) % n; Audio_.play('menu'); }
   if (this.menuDown()) { r.index = (r.index + 1) % n; Audio_.play('menu'); }
   if (Input.pressed('Enter') || Input.pressed('Space')) {

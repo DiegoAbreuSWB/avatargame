@@ -29,7 +29,7 @@ fs.mkdirSync(outDir, { recursive: true });
 const profile = path.join(outDir, 'profile-' + process.pid);
 
 const params = { mode, r: flag('3d') ? '3d' : '2d' };
-for (const k of ['n', 'seed', 'pairs', 'level', 'p1', 'p2', 'stage', 'move', 'frame', 'ax', 'bx', 'scene', 'debug']) { const v = opt(k); if (v !== undefined) params[k] = v; }
+for (let i = 0; i < args.length; i++) { if (args[i].startsWith('--') && args[i + 1] && !args[i + 1].startsWith('--') && !['3d', 'out', 'budget', 'verbose'].includes(args[i].slice(2))) params[args[i].slice(2)] = args[i + 1]; }
 const url = 'file:///' + path.join(root, 'tests', 'harness.html').replace(/\\/g, '/') + '#' + Object.entries(params).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
 
 const base = ['--headless=new', '--allow-file-access-from-files', '--no-first-run', '--disable-extensions', '--hide-scrollbars',

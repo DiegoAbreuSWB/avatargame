@@ -24,6 +24,8 @@ if (PARAMS.r === '3d') {
 <script src="../js/audio.js"></script>
 <script src="../js/music.js"></script>
 <script src="../js/input.js"></script>
+<script src="../js/gamepad.js"></script>
+<script src="../js/touch.js"></script>
 <script src="../js/particles.js"></script>
 <script src="../js/characters.js"></script>
 <script src="../js/draw.js"></script>
@@ -117,7 +119,7 @@ if (PARAMS.r === '3d') {
       for (let i = 0; i < n; i++) { game.update(); draw(i, 4); }
       if (PARAMS.debug) game.debug = true;
       game.draw();
-      out.shot = { proj: game.projectiles.map((p) => p.type), aState: a.state, bState: b.state, bHp: b.hp };
+      out.shot = { proj: game.projectiles.map((p) => p.type), aState: a.state, bState: b.state, bHp: b.hp, phase: game.phase, phaseT: game.phaseT, announce: game.announce && game.announce.text, quotes: game.quotes && game.quotes.map((q) => q.intro) };
     });
   }
 

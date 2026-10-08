@@ -16,7 +16,7 @@ const Touch = (() => {
     const mode = Settings.data.touch;
     if (mode === 'off') return false;
     if (mode === 'on') return true;
-    return (navigator.maxTouchPoints || 0) > 0 && (lastTouch > 0 || !('ontouchstart' in window ? false : true));
+    return (navigator.maxTouchPoints || 0) > 0;
   }
   function toLogical(e) {
     const r = canvas.getBoundingClientRect();

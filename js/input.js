@@ -24,13 +24,16 @@ const Input = (() => {
   const pressedCodes = () => [...pressedThisFrame];
 
   // Estado de controle de um lutador a partir de um keymap
-  function readPad(map) {
-    return {
+  function readPad(map, slot) {
+    const pad = {
       left: held(map.left), right: held(map.right), up: held(map.up), down: held(map.down),
       upPressed: pressed(map.up),
       punch: pressed(map.punch), kick: pressed(map.kick),
-      special: pressed(map.special), super: pressed(map.super),
+      special: pressed(map.special), super: pressed(map.super), throw: false, dashF: false, dashB: false,
     };
+    if (slot !== undefined && typeof Gamepad_ !== 'undefined') Gamepad_.merge(pad, Gamepad_.pad(slot));
+    if (slot === 0 && typeof Touch !== 'undefined') Gamepad_.merge(pad, Touch.pad());
+    return pad;
   }
   const emptyPad = () => ({ left: false, right: false, up: false, down: false, upPressed: false, punch: false, kick: false, special: false, super: false, dashF: false, dashB: false });
 

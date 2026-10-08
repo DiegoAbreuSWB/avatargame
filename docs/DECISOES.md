@@ -208,3 +208,9 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 **Contexto.** O teste de lockstep acusou dessincronia no frame 1993: o "câmera lenta" do K.O. usava `game.t` (contador de quadros de tela, que difere entre dois clientes que passaram tempos diferentes nos menus).
 **Escolha.** Lógica da luta só pode depender de contadores reiniciados por round (`phaseT`, `frame` do lutador) e de `Rng` com semente; `game.t` fica restrito a visual, treino e HUD.
 **Consequências.** Regra registrada aqui e verificada pelo teste `netplay` a cada execução da suíte.
+
+## ADR-031 · GitHub Pages pela branch gh-pages, não pela fonte "GitHub Actions"
+
+**Contexto.** O usuário indicou o repositório https://github.com/DiegoAbreuSWB/avatargame. O primeiro workflow (fonte "GitHub Actions" com `configure-pages`) falhou duas vezes com "Resource not accessible by integration": o token padrão não pode criar o site do Pages; isso exigiria um clique em Settings → Pages.
+**Escolha.** Workflow que espelha a `main` na branch `gh-pages` (`peaceiris/actions-gh-pages`, `contents: write`). Em repositório público o GitHub ativa o Pages automaticamente ao ver essa branch; o site ficou no ar em https://diegoabreuswb.github.io/avatargame/ sem configuração manual.
+**Consequências.** A branch `gh-pages` é gerada e sobrescrita a cada push (`force_orphan`); nunca editar nela. Se um dia a fonte for trocada para "GitHub Actions" nas configurações, o workflow precisa voltar ao par `upload-pages-artifact` + `deploy-pages`.

@@ -24,11 +24,17 @@ Observação: dentro do iframe do itch o teclado só responde depois de um cliqu
 
 ## GitHub Pages
 
-O repositório é https://github.com/DiegoAbreuSWB/avatargame e já tem o workflow `.github/workflows/pages.yml`, que publica a cada push na `main`.
+Publicado em **https://diegoabreuswb.github.io/avatargame/** a partir do repositório https://github.com/DiegoAbreuSWB/avatargame.
 
-1. Uma única vez, em **Settings → Pages → Build and deployment → Source**, escolha **GitHub Actions** (o token padrão do workflow não tem permissão para ativar o Pages sozinho; por isso a primeira execução falhou no passo `configure-pages`).
-2. Em **Actions → Publicar no GitHub Pages → Run workflow** (ou faça qualquer push na `main`).
-3. O jogo fica em https://diegoabreuswb.github.io/avatargame/ . Todos os caminhos são relativos, então funciona em subpasta; o `sw.js` tem escopo da pasta do repositório.
+Como funciona: o workflow `.github/workflows/pages.yml` roda a cada push na `main` e espelha o site na branch `gh-pages`
+(ação `peaceiris/actions-gh-pages`, excluindo `.github`, `tests/out` e `dist`). Em repositório público, o GitHub ativa o Pages
+sozinho quando a branch `gh-pages` aparece; não é preciso mexer em Settings → Pages.
+
+Por que não a fonte "GitHub Actions": a ação `configure-pages` precisa criar o site pela API e o token padrão do workflow
+não tem essa permissão ("Resource not accessible by integration"); exigiria uma ativação manual nas configurações.
+
+Para publicar uma nova versão: faça push na `main` (ou Actions → "Publicar no GitHub Pages" → Run workflow). O site atualiza em um ou dois minutos.
+Todos os caminhos são relativos, então funciona na subpasta `/avatargame/`; o `sw.js` tem escopo dessa pasta.
 
 ## Qualquer servidor próprio
 

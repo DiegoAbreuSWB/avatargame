@@ -3,7 +3,7 @@
 Jogo de luta 1x1 no estilo Street Fighter com os personagens de *Avatar: A Lenda de Aang*.
 HTML5 Canvas + JavaScript puro, sem build. O modo 3D usa Three.js carregado de CDN; o modo 2D clássico não depende de nada.
 
-Repositório: https://github.com/DiegoAbreuSWB/avatargame · Jogar online (GitHub Pages, após ativar em Settings → Pages): https://diegoabreuswb.github.io/avatargame/
+Repositório: https://github.com/DiegoAbreuSWB/avatargame · Jogar no navegador: https://diegoabreuswb.github.io/avatargame/
 
 Versão atual: **0.6.0**. Histórico em [CHANGELOG.md](CHANGELOG.md); decisões em [docs/DECISOES.md](docs/DECISOES.md); plano em [PLANO-DE-DESENVOLVIMENTO.md](PLANO-DE-DESENVOLVIMENTO.md).
 

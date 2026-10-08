@@ -60,27 +60,26 @@ function drawSelect(ctx, game) {
   const s = game.select;
   txt(ctx, 'ESCOLHA SEU LUTADOR', CFG.W / 2, 56, { font: FONT_DISPLAY, size: 40, color: '#ffd54f', stroke: '#3b1d00', strokeWidth: 6 });
 
-  // grade central 3x2
-  const cols = 3, cw = 150, chh = 170, gx = CFG.W / 2 - (cols * cw) / 2, gy = 150;
+  // grade central (4 x 3)
+  const cols = SELECT_COLS, cw = 122, chh = 140, gx = CFG.W / 2 - (cols * cw) / 2, gy = 140;
   CHARACTERS.forEach((ch, i) => {
     const c = i % cols, r = Math.floor(i / cols);
     const x = gx + c * cw, y = gy + r * chh;
-    ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x + 6, y + 6, cw - 12, chh - 12, 10); ctx.fill();
-    ctx.save(); ctx.beginPath(); roundRect(ctx, x + 6, y + 6, cw - 12, chh - 12, 10); ctx.clip();
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x + 5, y + 5, cw - 10, chh - 10, 9); ctx.fill();
+    ctx.save(); ctx.beginPath(); roundRect(ctx, x + 5, y + 5, cw - 10, chh - 10, 9); ctx.clip();
     if (game.is3D) {
-      // emblema do elemento
       ctx.fillStyle = ELEMENT_COLORS[ch.element]; ctx.globalAlpha = 0.25;
-      ctx.beginPath(); ctx.arc(x + cw / 2, y + chh / 2 + 12, 46, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-      txt(ctx, ELEMENT_NAMES[ch.element].toUpperCase(), x + cw / 2, y + chh / 2 + 12, { font: FONT_DISPLAY, size: 15, color: '#fff', stroke: 'rgba(0,0,0,.8)' });
-      txt(ctx, ch.title, x + cw / 2, y + chh - 24, { size: 11, color: '#cfd8dc', weight: 400 });
+      ctx.beginPath(); ctx.arc(x + cw / 2, y + chh / 2 + 10, 36, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+      txt(ctx, ELEMENT_NAMES[ch.element].toUpperCase(), x + cw / 2, y + chh / 2 + 10, { font: FONT_DISPLAY, size: 12, color: '#fff', stroke: 'rgba(0,0,0,.8)' });
     } else {
-      drawFigureAt(ctx, ch, x + cw / 2, y + chh - 18, 0.62, 'idle', game.t + i * 13, 1, { staff: false });
+      drawFigureAt(ctx, ch, x + cw / 2, y + chh - 14, 0.5, 'idle', game.t + i * 13, 1, { staff: false });
     }
     ctx.restore();
-    txt(ctx, ch.name.toUpperCase(), x + cw / 2, y + 24, { font: FONT_DISPLAY, size: 16, color: ELEMENT_COLORS[ch.element], stroke: 'rgba(0,0,0,.9)' });
+    txt(ctx, ch.name.toUpperCase(), x + cw / 2, y + 20, { font: FONT_DISPLAY, size: 13, color: ELEMENT_COLORS[ch.element], stroke: 'rgba(0,0,0,.9)' });
+    if (ch.boss) txt(ctx, 'CHEFE', x + cw / 2, y + chh - 14, { size: 10, color: '#ff8a65', stroke: 'rgba(0,0,0,.9)' });
     const p1Here = s.p1 === i, p2Here = s.p2 === i;
-    if (p1Here) { ctx.strokeStyle = '#f2a93b'; ctx.lineWidth = 4; roundRect(ctx, x + 4, y + 4, cw - 8, chh - 8, 10); ctx.stroke(); txt(ctx, 'P1', x + 24, y + 20, { size: 14, color: '#f2a93b', stroke: '#000' }); }
-    if (p2Here) { ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 4; roundRect(ctx, x + (p1Here ? 10 : 4), y + (p1Here ? 10 : 4), cw - (p1Here ? 20 : 8), chh - (p1Here ? 20 : 8), 10); ctx.stroke(); txt(ctx, game.mode === 'cpu' ? 'CPU' : game.mode === 'training' ? 'BON' : 'P2', x + cw - 26, y + 20, { size: 14, color: '#4fc3f7', stroke: '#000' }); }
+    if (p1Here) { ctx.strokeStyle = '#f2a93b'; ctx.lineWidth = 4; roundRect(ctx, x + 3, y + 3, cw - 6, chh - 6, 9); ctx.stroke(); txt(ctx, 'P1', x + 18, y + 16, { size: 12, color: '#f2a93b', stroke: '#000' }); }
+    if (p2Here) { ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 4; roundRect(ctx, x + (p1Here ? 9 : 3), y + (p1Here ? 9 : 3), cw - (p1Here ? 18 : 6), chh - (p1Here ? 18 : 6), 9); ctx.stroke(); txt(ctx, game.mode === 'cpu' ? 'CPU' : game.mode === 'training' ? 'BON' : 'P2', x + cw - 20, y + 16, { size: 12, color: '#4fc3f7', stroke: '#000' }); }
   });
 
   // painéis laterais com o lutador escolhido

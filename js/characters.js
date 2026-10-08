@@ -138,6 +138,115 @@ const CHARACTERS = [
         dash: { vx: 5 }, lastKnockdown: true, invuln: [0, 10], trail: 'nao' },
     },
   },
+  /* ---------- Fase 2: elenco novo ---------- */
+  {
+    id: 'tylee', name: 'Ty Lee', title: 'A Acrobata', element: 'nao', nation: 'Nação do Fogo',
+    colors: { skin: '#f3cfae', primary: '#f06292', secondary: '#ad1457', accent: '#ffffff', hair: '#4e342e' },
+    speed: 6.6, jump: 22, weight: 0.85,
+    stats: { forca: 2, velocidade: 5, alcance: 2 },
+    desc: 'Rapidíssima. Seus golpes de pressão bloqueiam o chi: o oponente fica sem especiais por alguns segundos.',
+    moves: {
+      punch: Object.assign({}, BASE_MOVES.punch, { startup: 3, damage: 4, recovery: 7 }),
+      kick: Object.assign({}, BASE_MOVES.kick, { name: 'Chute Acrobático', damage: 8, startup: 7, hitbox: { x: 10, y: -150, w: 95, h: 70 } }),
+      special: { name: 'Bloqueio de Chi', startup: 6, active: 12, recovery: 14, damage: 3, chi: 4, pose: 'punch', sound: 'whoosh',
+        hitbox: { x: 15, y: -140, w: 80, h: 60 }, hitstun: 14, blockstun: 8, knockback: 2, height: 'mid', multi: 3, hitInterval: 4, applies: { chiBlock: 300 } },
+      special2: { name: 'Salto Acrobático', startup: 4, active: 26, recovery: 8, damage: 10, chi: 8, pose: 'jkick', sound: 'whoosh',
+        hitbox: { x: 0, y: -150, w: 90, h: 120 }, hitstun: 22, blockstun: 12, knockback: 8, height: 'high', knockdown: true,
+        dash: { vx: 7, vy: -17 }, invuln: [0, 4], trail: 'hit' },
+      super: { name: 'Dança das Pressões', startup: 10, active: 42, recovery: 18, damage: 4, chi: 0, cost: 100, pose: 'super', sound: 'super',
+        hitbox: { x: -20, y: -150, w: 150, h: 140 }, hitstun: 14, blockstun: 8, knockback: 1, height: 'mid', multi: 7, hitInterval: 6,
+        dash: { vx: 4 }, lastKnockdown: true, invuln: [0, 10], trail: 'hit', applies: { chiBlock: 420 } },
+    },
+  },
+  {
+    id: 'iroh', name: 'Iroh', title: 'O Dragão do Oeste', element: 'fogo', nation: 'Nação do Fogo',
+    colors: { skin: '#f0cfa8', primary: '#8d3b2f', secondary: '#4a2a22', accent: '#c99a3a', hair: '#d7ccc8' },
+    speed: 4.4, jump: 16, weight: 1.3,
+    stats: { forca: 5, velocidade: 2, alcance: 4 },
+    desc: 'Lento e sábio. Sopra fogo como um dragão e redireciona qualquer projétil de volta ao oponente.',
+    moves: {
+      punch: Object.assign({}, BASE_MOVES.punch, { damage: 7, startup: 5 }),
+      kick: Object.assign({}, BASE_MOVES.kick, { damage: 12, startup: 10, knockback: 10 }),
+      special: { name: 'Sopro do Dragão', startup: 10, active: 2, recovery: 26, chi: 5, pose: 'cast', sound: 'fire',
+        projectile: { type: 'breath', x: 125, y: -120, vx: 0, w: 230, h: 70, damage: 4, chip: 1, multi: 4, hitstun: 12, blockstun: 8, knockback: 3,
+          life: 28, follow: true, exclusive: false, cancels: false, pierce: true } },
+      special2: { name: 'Redirecionamento', startup: 4, active: 24, recovery: 14, chi: 4, pose: 'charge', sound: 'whoosh', counter: 'projectile' },
+      super: { name: 'Fogo do Dragão', startup: 14, active: 2, recovery: 32, chi: 0, cost: 100, pose: 'super', sound: 'super',
+        projectile: { type: 'breath', x: 210, y: -120, vx: 0, w: 400, h: 110, damage: 5, chip: 2, multi: 8, hitstun: 12, blockstun: 8, knockback: 2,
+          life: 58, follow: true, exclusive: false, cancels: false, pierce: true, lastKnockdown: true } },
+    },
+  },
+  {
+    id: 'mai', name: 'Mai', title: 'Lâminas Silenciosas', element: 'nao', nation: 'Nação do Fogo',
+    colors: { skin: '#f3d5b5', primary: '#5a1a1a', secondary: '#1a1a1a', accent: '#8e1b1b', hair: '#141414' },
+    speed: 5.6, jump: 19, weight: 0.95,
+    stats: { forca: 3, velocidade: 4, alcance: 5 },
+    desc: 'Zoneadora. Facas em três ângulos e agulhas que prendem o oponente no lugar.',
+    moves: {
+      punch: Object.assign({}, BASE_MOVES.punch, { name: 'Lâmina', hitbox: { x: 15, y: -145, w: 90, h: 45 } }),
+      special: { name: 'Facas', startup: 8, active: 2, recovery: 18, chi: 5, pose: 'cast', sound: 'whoosh',
+        projectiles: [
+          { type: 'knife', x: 50, y: -125, vx: 15, vy: -3, w: 36, h: 12, damage: 4, chip: 1, hitstun: 14, knockback: 4, life: 80, exclusive: false, cancels: false },
+          { type: 'knife', x: 50, y: -125, vx: 15, vy: 0, w: 36, h: 12, damage: 4, chip: 1, hitstun: 14, knockback: 4, life: 80, exclusive: false, cancels: false },
+          { type: 'knife', x: 50, y: -125, vx: 15, vy: 3, w: 36, h: 12, damage: 4, chip: 1, hitstun: 14, knockback: 4, life: 80, exclusive: false, cancels: false },
+        ] },
+      special2: { name: 'Agulhas de Fixação', startup: 11, active: 2, recovery: 20, chi: 6, pose: 'castLow', sound: 'whoosh',
+        projectile: { type: 'knife', x: 50, y: -120, vx: 14, w: 40, h: 14, damage: 6, chip: 1, hitstun: 48, blockstun: 14, knockback: 0, pin: true, life: 90, cancels: false } },
+      super: { name: 'Chuva de Lâminas', startup: 10, active: 44, recovery: 20, chi: 0, cost: 100, pose: 'super', sound: 'super',
+        volley: { every: 4, count: 10, sound: 'whoosh', projectile: { type: 'knife', x: 50, y: -130, vx: 16, w: 36, h: 12, damage: 4, chip: 1, hitstun: 14, knockback: 3, life: 80, exclusive: false, cancels: false } } },
+    },
+  },
+  {
+    id: 'ozai', name: 'Ozai', title: 'Senhor do Fogo', element: 'fogo', nation: 'Nação do Fogo', boss: true,
+    colors: { skin: '#f0cfa8', primary: '#b3261e', secondary: '#1a0a0a', accent: '#e3b23c', hair: '#141414' },
+    speed: 4.8, jump: 17, weight: 1.25,
+    stats: { forca: 5, velocidade: 2, alcance: 4 },
+    desc: 'O chefe. Fogo do cometa de dano altíssimo, ondas de fogo rasteiras e a Fênix que atravessa a arena.',
+    moves: {
+      punch: Object.assign({}, BASE_MOVES.punch, { damage: 7, startup: 5 }),
+      kick: Object.assign({}, BASE_MOVES.kick, { damage: 12, startup: 10, knockback: 11 }),
+      special: { name: 'Fogo do Cometa', startup: 12, active: 2, recovery: 22, chi: 6, pose: 'cast', sound: 'fire',
+        projectile: { type: 'fire', x: 60, y: -120, vx: 7, w: 90, h: 72, damage: 16, chip: 3, knockback: 10, hitstun: 28, life: 140, knockdown: true } },
+      special2: { name: 'Onda de Fogo', startup: 10, active: 2, recovery: 20, chi: 6, pose: 'castLow', sound: 'fire',
+        projectile: { type: 'firewave', x: 70, y: -28, vx: 9, w: 90, h: 56, damage: 12, chip: 2, hitstun: 22, knockback: 8, life: 120, height: 'low' } },
+      super: { name: 'Fênix', startup: 28, active: 2, recovery: 34, chi: 0, cost: 100, pose: 'charge', sound: 'super', chargeFx: 'fogo',
+        projectile: { type: 'beam', color: 'fire', x: 40, y: -120, vx: 0, w: 1300, h: 90, damage: 32, chip: 6, knockback: 16, hitstun: 36, blockstun: 22,
+          life: 16, knockdown: true, exclusive: false, cancels: false, pierce: true } },
+    },
+  },
+  {
+    id: 'suki', name: 'Suki', title: 'Guerreira Kyoshi', element: 'nao', nation: 'Ilha Kyoshi',
+    colors: { skin: '#f5efe8', primary: '#2e7d32', secondary: '#1b5e20', accent: '#e3b23c', hair: '#6d4c41' },
+    speed: 6.0, jump: 20, weight: 0.95,
+    stats: { forca: 3, velocidade: 4, alcance: 3 },
+    desc: 'Leques cortantes de curto alcance e a Postura Kyoshi, que devolve qualquer golpe corpo a corpo.',
+    moves: {
+      kick: Object.assign({}, BASE_MOVES.kick, { startup: 7 }),
+      special: { name: 'Leque Cortante', startup: 8, active: 2, recovery: 16, chi: 5, pose: 'cast', sound: 'whoosh',
+        projectile: { type: 'fan', x: 50, y: -125, vx: 11, w: 44, h: 30, damage: 8, chip: 1, hitstun: 18, knockback: 6, life: 60, maxDist: 480 } },
+      special2: { name: 'Postura Kyoshi', startup: 3, active: 22, recovery: 16, chi: 4, pose: 'block', sound: 'whoosh', counter: 'melee', counterDamage: 12 },
+      super: { name: 'Dança dos Leques', startup: 12, active: 2, recovery: 30, chi: 0, cost: 100, pose: 'super', sound: 'super',
+        projectile: { type: 'fanspin', x: 0, y: -90, vx: 0, w: 300, h: 220, damage: 4, chip: 1, hitstun: 10, blockstun: 6, knockback: 0,
+          life: 60, follow: true, multi: 7, pull: 2, exclusive: false, cancels: false, lastKnockdown: true } },
+    },
+  },
+  {
+    id: 'bumi', name: 'Bumi', title: 'O Rei Louco de Omashu', element: 'terra', nation: 'Reino da Terra',
+    colors: { skin: '#e8c9a8', primary: '#5b8c3a', secondary: '#e8e3c8', accent: '#c99a3a', hair: '#eceff1' },
+    speed: 4.2, jump: 15, weight: 1.4,
+    stats: { forca: 5, velocidade: 1, alcance: 3 },
+    desc: 'Grappler. Pedras enormes, um abraço de pedra que ignora bloqueio e armadura nos especiais.',
+    moves: {
+      punch: Object.assign({}, BASE_MOVES.punch, { damage: 8, startup: 6 }),
+      kick: Object.assign({}, BASE_MOVES.kick, { damage: 13, startup: 11, knockback: 11 }),
+      special: { name: 'Arremesso de Pedra', startup: 16, active: 2, recovery: 24, chi: 6, pose: 'cast', sound: 'earth', armor: true,
+        projectile: { type: 'rock', x: 50, y: -130, vx: 6, w: 70, h: 64, damage: 15, chip: 3, knockback: 10, hitstun: 28, life: 150, knockdown: true } },
+      special2: { name: 'Abraço de Pedra', startup: 8, active: 2, recovery: 26, chi: 8, pose: 'grab', sound: 'earth', armor: true, throw: { damage: 18, range: 110 } },
+      super: { name: 'Avalanche', startup: 16, active: 2, recovery: 36, chi: 0, cost: 100, pose: 'super', sound: 'super',
+        projectiles: [0, 1, 2, 3, 4, 5].map((i) => ({ type: 'rock', x: 120 + i * 130, y: -760, vx: 0, vy: 2, w: 60, h: 56, damage: 8, chip: 2, hitstun: 24, knockback: 6,
+          gravity: 0.7, delay: i * 6, life: 140, knockdown: true, exclusive: false, cancels: false })) },
+    },
+  },
 ];
 
 function getCharacter(id) { return CHARACTERS.find((c) => c.id === id); }
@@ -151,5 +260,6 @@ function buildMoveset(ch) {
   return m;
 }
 
+const SELECT_COLS = 4;   // colunas da grade de seleção (12 personagens = 4 x 3)
 const ELEMENT_NAMES = { ar: 'Ar', agua: 'Água', fogo: 'Fogo', terra: 'Terra', nao: 'Guerreiro' };
 const ELEMENT_COLORS = { ar: '#ffd36b', agua: '#4fc3f7', fogo: '#ff6a2b', terra: '#8bc34a', nao: '#b0bec5' };

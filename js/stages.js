@@ -188,6 +188,92 @@ const STAGES = [
       for (let i = 0; i < 60; i++) ctx.fillRect((i * 211) % W, G + (i * 53) % (H - G), 3, 3);
     },
   },
+  /* ---------- Fase 2: cenários novos ---------- */
+  {
+    id: 'deserto', name: 'Deserto Si Wong', floor: '#e0c18a', shadow: 'rgba(120,80,30,.35)',
+    draw(ctx, t) {
+      const W = CFG.W, G = CFG.GROUND;
+      let g = ctx.createLinearGradient(0, 0, 0, G);
+      g.addColorStop(0, '#f6b26b'); g.addColorStop(0.55, '#fbe0a6'); g.addColorStop(1, '#f1d28a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, G);
+      ctx.fillStyle = 'rgba(255,250,220,.95)'; ctx.beginPath(); ctx.arc(980, 110, 58, 0, Math.PI * 2); ctx.fill();
+      // dunas em camadas
+      for (const [y, h, col, k] of [[420, 90, '#e8c383', 0.6], [480, 80, '#d9b06a', 0.9], [540, 70, '#c99a55', 1.2]]) {
+        ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, G);
+        for (let x = 0; x <= W; x += 20) ctx.lineTo(x, y + Math.sin(x * 0.004 * k + k) * h * 0.5 + Math.sin(x * 0.011 * k) * h * 0.2);
+        ctx.lineTo(W, G); ctx.closePath(); ctx.fill();
+      }
+      // tempestade de areia ao longe
+      ctx.fillStyle = 'rgba(230,200,140,.35)';
+      for (let i = 0; i < 5; i++) { const cx = ((i * 330 + t * 1.2) % (W + 400)) - 200; ctx.beginPath(); ctx.ellipse(cx, 380 + (i % 2) * 40, 180, 50, 0, 0, Math.PI * 2); ctx.fill(); }
+      // ruínas
+      ctx.fillStyle = '#b48a52'; ctx.fillRect(160, 470, 40, 150); ctx.fillRect(240, 500, 30, 120); ctx.fillRect(1040, 480, 46, 140);
+      ctx.fillRect(150, 462, 130, 14);
+      ctx.fillStyle = '#d4b07a'; ctx.fillRect(0, G - 22, W, 22);
+    },
+    drawFloor(ctx) {
+      const W = CFG.W, H = CFG.H, G = CFG.GROUND;
+      ctx.fillStyle = '#e0c18a'; ctx.fillRect(0, G, W, H - G);
+      ctx.strokeStyle = 'rgba(120,80,30,.18)'; ctx.lineWidth = 3;
+      for (let i = 0; i < 6; i++) { ctx.beginPath(); for (let x = 0; x <= W; x += 30) { const y = G + 12 + i * 14 + Math.sin(x * 0.02 + i) * 4; if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); }
+    },
+  },
+  {
+    id: 'pantano', name: 'Pântano Nebuloso', floor: '#5a6b3a', shadow: 'rgba(10,30,10,.5)',
+    draw(ctx, t) {
+      const W = CFG.W, G = CFG.GROUND;
+      let g = ctx.createLinearGradient(0, 0, 0, G);
+      g.addColorStop(0, '#15301c'); g.addColorStop(0.6, '#2e5a33'); g.addColorStop(1, '#6b8a4a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, G);
+      // árvore gigante
+      ctx.fillStyle = '#2b1d12';
+      ctx.beginPath(); ctx.moveTo(520, G); ctx.lineTo(560, 300); ctx.lineTo(600, 120); ctx.lineTo(700, 120); ctx.lineTo(740, 300); ctx.lineTo(780, G); ctx.closePath(); ctx.fill();
+      for (const [x0, x1] of [[520, 380], [780, 920], [560, 300], [740, 1000]]) { ctx.beginPath(); ctx.moveTo(x0, G); ctx.quadraticCurveTo((x0 + x1) / 2, G - 60, x1, G); ctx.lineTo(x1 + 20, G); ctx.quadraticCurveTo((x0 + x1) / 2, G - 30, x0 + 30, G); ctx.closePath(); ctx.fill(); }
+      ctx.fillStyle = '#1f4a28';
+      for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.ellipse(380 + i * 90, 110 + (i % 2) * 40, 120, 60, 0, 0, Math.PI * 2); ctx.fill(); }
+      // cipós balançando
+      ctx.strokeStyle = '#3f6b2f'; ctx.lineWidth = 5;
+      for (let i = 0; i < 9; i++) { const x = 300 + i * 90, sway = Math.sin(t * 0.02 + i) * 14; ctx.beginPath(); ctx.moveTo(x, 150); ctx.quadraticCurveTo(x + sway, 300, x + sway * 1.5, 320 + (i % 3) * 60); ctx.stroke(); }
+      // névoa
+      ctx.fillStyle = 'rgba(180,220,170,.18)';
+      for (let i = 0; i < 6; i++) { const cx = ((i * 280 + t * 0.5) % (W + 300)) - 150; ctx.beginPath(); ctx.ellipse(cx, 560 + (i % 2) * 30, 200, 36, 0, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = '#3a5a2a'; ctx.fillRect(0, G - 24, W, 24);
+      ctx.fillStyle = 'rgba(90,140,80,.6)'; for (let i = 0; i < 12; i++) ctx.fillRect(i * 110 + 20, G - 30, 40, 6);
+    },
+    drawFloor(ctx) {
+      const W = CFG.W, H = CFG.H, G = CFG.GROUND;
+      ctx.fillStyle = '#5a6b3a'; ctx.fillRect(0, G, W, H - G);
+      ctx.fillStyle = 'rgba(30,60,30,.35)'; for (let i = 0; i < 18; i++) { ctx.beginPath(); ctx.ellipse((i * 173) % W, G + 20 + (i * 37) % 50, 40, 8, 0, 0, Math.PI * 2); ctx.fill(); }
+    },
+  },
+  {
+    id: 'omashu', name: 'Omashu', floor: '#cbb892', shadow: 'rgba(60,50,30,.35)',
+    draw(ctx, t) {
+      const W = CFG.W, G = CFG.GROUND;
+      let g = ctx.createLinearGradient(0, 0, 0, G);
+      g.addColorStop(0, '#7fb6e6'); g.addColorStop(0.7, '#cfe4f3'); g.addColorStop(1, '#e9e0c8');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, G);
+      // cidade em degraus na montanha
+      for (let i = 0; i < 7; i++) {
+        const w = 1000 - i * 120, h = 60, y = G - 30 - (i + 1) * h, x = 640 - w / 2;
+        ctx.fillStyle = i % 2 ? '#cdbb95' : '#bfa97f'; ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#3f6b3a'; for (let k = 0; k < w / 120; k++) { const bx = x + 20 + k * 120; ctx.beginPath(); ctx.moveTo(bx, y + 8); ctx.lineTo(bx + 40, y - 18); ctx.lineTo(bx + 80, y + 8); ctx.closePath(); ctx.fill(); }
+        ctx.fillStyle = 'rgba(60,40,20,.5)'; for (let k = 0; k < w / 60; k++) ctx.fillRect(x + 30 + k * 60, y + 24, 14, 20);
+      }
+      // calhas de entrega
+      ctx.strokeStyle = '#8d7a55'; ctx.lineWidth = 8;
+      for (const [x0, y0, x1, y1] of [[200, 200, 60, G - 40], [1080, 220, 1220, G - 40], [640, 150, 900, 420]]) { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); }
+      ctx.fillStyle = '#6b4a2a'; const cx = 200 + ((t * 2) % 140) * -1 + 140, cy = 200 + ((t * 2) % 140) * 2.5; ctx.fillRect(cx - 10, cy - 10, 20, 16);
+      ctx.fillStyle = '#b7a67d'; ctx.fillRect(0, G - 30, W, 30);
+    },
+    drawFloor(ctx) {
+      const W = CFG.W, H = CFG.H, G = CFG.GROUND;
+      ctx.fillStyle = '#cbb892'; ctx.fillRect(0, G, W, H - G);
+      ctx.strokeStyle = 'rgba(60,50,30,.3)'; ctx.lineWidth = 2;
+      for (let x = 0; x < W; x += 100) { ctx.beginPath(); ctx.moveTo(x, G); ctx.lineTo(x - 30, H); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(0, G + 38); ctx.lineTo(W, G + 38); ctx.stroke();
+    },
+  },
 ];
 
 function cloud(ctx, x, y, s) {

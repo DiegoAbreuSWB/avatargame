@@ -112,3 +112,32 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 **Escolha.** `node tests/run.js matchups --pairs N` roda N lutas CPU x CPU por par com sementes fixas e aponta quem está fora de 40–60% de vitórias.
 **Resultados da Fase 1.** Passada 1 (6 por par): Aang 30%, Katara/Zuko/Toph 63%. Ajustes: Aang (+dano na rajada e no patinete, chute mais rápido, peso 0,95), Toph (-1 no chute e na rocha), Katara (estilhaços 3x4). Passada 2 (8 por par, outra semente): Aang 50%, Toph 63%, Azula 33%. Ajustes: Toph -1 no chute; Azula +1 no soco e no fogo azul, relâmpago 6 frames mais rápido. Resultado final registrado no commit da Fase 1.
 **Consequências.** A IA é a mesma para todos; a simulação mede o kit, não a habilidade humana. Com 40 lutas por personagem a margem é de ±15 pontos, então só desvios grandes justificam mudança.
+
+## ADR-017 · Elenco da Fase 2: seis kits com uma mecânica nova cada
+
+**Contexto.** O plano pedia personagens "em ordem de custo e novidade".
+**Escolha.** Cada novo lutador introduz uma única flag de dados reaproveitável, em vez de código dedicado:
+
+| Lutador | Mecânica | Flag nos dados |
+|---|---|---|
+| Ty Lee | Bloqueio de chi: oponente fica sem especiais/super por 5 s (7 s no super) | `applies: { chiBlock }` |
+| Iroh | Sopro contínuo (projétil preso ao dono) e redirecionamento de projéteis | `follow`, `counter: 'projectile'` |
+| Mai | Facas em leque e agulha que prende (hitstun longo, sem knockback) | `projectiles[]`, `pin` |
+| Ozai (chefe) | Projéteis lentos e pesados; onda de fogo rasteira (bloqueio agachado); Fênix (raio de fogo) | `height: 'low'`, `color: 'fire'` |
+| Suki | Leque de curto alcance e Postura Kyoshi (devolve golpes corpo a corpo) | `maxDist`, `counter: 'melee'` |
+| Bumi | Command grab e armadura nos especiais; avalanche de rochas caindo | `throw`, `armor`, `gravity` + `delay` |
+
+**Por quê.** Flags genéricas viram ferramentas para kits futuros e são cobertas pelos testes de mecânica.
+**Consequências.** O teste de golpes precisou aprender a distância de cada tipo (corpo a corpo, projétil preso, projétil livre) e a pular posturas, que não causam dano sozinhas. Ozai é marcado `boss: true`: entra no Arcade como luta final (com 130 de vida) e fica fora da escada aleatória, mas é selecionável no Versus.
+
+## ADR-018 · Grade de seleção 4 x 3
+
+**Contexto.** 12 lutadores não cabiam na grade 3 x 2 ao lado dos painéis laterais.
+**Escolha.** `SELECT_COLS = 4` compartilhado entre a navegação (`game.js`) e o desenho (`menus.js`); células menores (122 x 140). O cursor "dá a volta" nas bordas.
+
+## ADR-019 · Arcade e Sobrevivência sem tela de resultado intermediária
+
+**Escolha.** Em modos solo, `nextRound` chama `onMatchEnd` em vez de abrir a tela de resultado: vitória leva direto à tela "Próximo oponente"; derrota no Arcade abre "Continuar?" (pontuação cai pela metade); derrota na Sobrevivência encerra com vitórias seguidas e recorde (salvo no navegador).
+**Detalhes.** Escada = 6 oponentes sorteados (sem chefe) + Ozai (Azula se o jogador for Ozai). Dificuldade: lutas 1–2 fácil, 3–4 normal, 5+ difícil. Sobrevivência: 1 round por luta, vida recupera +30 por vitória, chi mantido, oponente aleatório sem repetição imediata.
+**Por quê.** Menos telas entre lutas; a dificuldade crescente substitui a seleção de cenário, que passa a ser sorteada.
+**Consequências.** `aiLevelOverride` precisa ser limpo em todas as saídas (menu de pausa, Esc, fim), senão vaza para o Versus. Os textos de final estão em `content.js`.

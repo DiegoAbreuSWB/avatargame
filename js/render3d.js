@@ -202,6 +202,13 @@ class Renderer3D {
           CHARACTERS.map((ch, i) => ({ key: 't' + i, char: ch, x: xs[i], pose: 'idle', t: game.t + i * 17, facing: i < 3 ? 1 : -1 })),
           [640, 330, 1500], [640, 230, 0]); }
       case 'controls': case 'settings': case 'remap': return this.renderShowcase(game, STAGES[3], [], [640, 330, 1500], [640, 230, 0]);
+      case 'ladder': return this.renderShowcase(game, STAGES[game.stageIndex], [
+        { key: 'L', char: CHARACTERS[game.select.p1], x: 330, pose: 'idle', t: game.t, facing: 1 },
+        { key: 'R', char: CHARACTERS[game.select.p2], x: 950, pose: 'idle', t: game.t + 20, facing: -1 },
+      ], [640, 250, 1250], [640, 110, 0]);
+      case 'continue': return this.renderShowcase(game, STAGES[game.stageIndex], [{ key: 'L', char: CHARACTERS[game.select.p1], x: 640, pose: 'ko', t: game.t, facing: 1 }], [640, 250, 1250], [640, 110, 0]);
+      case 'ending': return this.renderShowcase(game, STAGES[game.stageIndex], [{ key: 'L', char: CHARACTERS[game.select.p1], x: 300, pose: 'win', t: game.t, facing: 1 }], [500, 250, 1100], [640, 110, 0]);
+      case 'survivalEnd': return this.renderShowcase(game, STAGES[game.stageIndex], [{ key: 'L', char: CHARACTERS[game.select.p1], x: 640, pose: 'ko', t: game.t, facing: 1 }], [640, 250, 1250], [640, 110, 0]);
       case 'select': { const s = game.select;
         return this.renderShowcase(game, STAGES[1], [
           { key: 'L', char: CHARACTERS[s.p1], x: 250, pose: s.p1Done ? 'win' : 'idle', t: game.t, facing: 1 },
@@ -302,6 +309,29 @@ const STAGE3D = {
       for (let i = 0; i < 7; i++) prop(g, G.box, ice, [-100 + i * 240, 25, 340], [60, 50, 40]);
       const l = r.addStageLight(new THREE.PointLight(0x9fd3ff, 1.2, 1500, 1.5)); l.position.set(220, 500, -700);
     } },
+  deserto: { bg: '#f6b26b', fog: '#f1d28a', hemi: ['#ffe6b0', '#8a6a3a', 0.8], sun: ['#fff0c0', 0.9], sunPos: [900, 900, 500],
+    build(g) { const G = Rig3D.geos(); const sand = toon('#d9b06a'), stone = toon('#b48a52');
+      for (const [x, z, s] of [[-300, -700, 500], [500, -900, 700], [1300, -650, 450], [900, -400, 260]]) prop(g, G.sphere, sand, [x, -s * 0.72, z], [s, s * 0.35, s * 0.8]);
+      prop(g, G.box, stone, [180, 75, -380], [40, 150, 40]); prop(g, G.box, stone, [255, 60, -380], [30, 120, 30]); prop(g, G.box, stone, [215, 158, -380], [130, 14, 50]);
+      prop(g, G.box, stone, [1060, 70, -300], [46, 140, 46]);
+      for (let i = 0; i < 6; i++) prop(g, G.sphere, stone, [-100 + i * 260, 10, 330], [34, 18, 26]);
+    } },
+  pantano: { bg: '#15301c', fog: '#2e5a33', hemi: ['#9fd3a0', '#1a2e14', 0.75], sun: ['#cfe8b0', 0.6], sunPos: [640, 900, 300],
+    build(g, r) { const G = Rig3D.geos(); const bark = toon('#2b1d12'), leaf = toon('#1f4a28');
+      prop(g, G.cyl, bark, [650, 300, -520], [110, 600, 110]);
+      for (const [x, tilt] of [[420, 0.5], [880, -0.5], [560, 0.25], [760, -0.25]]) prop(g, G.cyl, bark, [x, 30, -420], [22, 220, 22], [0, 0, tilt]);
+      for (let i = 0; i < 6; i++) prop(g, G.sphere, leaf, [350 + i * 120, 560, -520], [150, 70, 150]);
+      for (let i = 0; i < 8; i++) prop(g, G.cyl, toon('#3f6b2f'), [300 + i * 100, 420, -300], [3, 240 + (i % 3) * 60, 3]);
+      for (let i = 0; i < 5; i++) prop(g, G.sphere, bark, [-60 + i * 330, 8, 340], [60, 16, 40]);
+      const l = r.addStageLight(new THREE.PointLight(0x9fd3a0, 0.8, 1200, 1.5)); l.position.set(640, 300, 200);
+    } },
+  omashu: { bg: '#7fb6e6', fog: '#cfe4f3', hemi: ['#dceeff', '#8a7a66', 0.85], sun: ['#fff2d6', 0.95],
+    build(g) { const G = Rig3D.geos(); const a = toon('#cdbb95'), b = toon('#bfa97f'), roof = toon('#3f6b3a'), chute = toon('#8d7a55');
+      for (let i = 0; i < 6; i++) { const w = 1100 - i * 150, h = 70, y = i * h + h / 2; prop(g, G.box, i % 2 ? a : b, [640, y, -620 - i * 60], [w, h, 240]);
+        for (let k = 0; k < Math.floor(w / 140); k++) prop(g, G.cone, roof, [640 - w / 2 + 70 + k * 140, y + h / 2 + 20, -620 - i * 60 + 60], [40, 40, 40], [0, Math.PI / 4, 0]); }
+      prop(g, G.box, chute, [130, 220, -300], [12, 520, 30], [0, 0, 0.5]); prop(g, G.box, chute, [1150, 220, -300], [12, 520, 30], [0, 0, -0.5]);
+      for (let i = 0; i < 6; i++) prop(g, G.box, a, [-80 + i * 260, 14, 330], [70, 28, 40]);
+    } },
   ember: { bg: '#3b1f52', fog: '#7a3a4a', hemi: ['#f7b267', '#6b4a2a', 1.0], sun: ['#ffb070', 1.2], sunPos: [-200, 350, 700],
     build(g) { const G = Rig3D.geos(); const trunk = toon('#6b4a2a'), leaf = toon('#2f7a3a');
       for (const [x, tilt] of [[80, 0.12], [1200, -0.12], [-250, 0.2], [1500, -0.18]]) {
@@ -374,11 +404,49 @@ function makeProjectileVisual(p, r) {
       v.update = (p) => { pos(p); group.rotation.z = p.rot * 1.4; };
       break;
     }
+    case 'breath': {
+      const rot = [0, 0, p.facing === 1 ? Math.PI / 2 : -Math.PI / 2];
+      const outer = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff5a00'), transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false }), [p.h * 0.5, p.w, p.h * 0.5]);
+      const inner = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff1a8'), transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }), [p.h * 0.28, p.w * 0.9, p.h * 0.28]);
+      outer.rotation.set(...rot); inner.rotation.set(...rot);
+      glow('#ff8a30', p.h * 2.2);
+      const light = new THREE.PointLight(0xff8a30, 1.8, 600, 2); group.add(light);
+      v.update = (p) => { pos(p); const s = 1 + Math.sin(p.frame * 0.8) * 0.08; outer.scale.set(p.h * 0.5 * s, p.w, p.h * 0.5 / s); inner.scale.set(p.h * 0.28 / s, p.w * 0.9, p.h * 0.28 * s); };
+      break;
+    }
+    case 'firewave': {
+      const flames = [-1, 0, 1].map((k) => add(G.sphere, new THREE.MeshBasicMaterial({ color: new THREE.Color(k ? '#ff6a00' : '#ffd36b'), transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }), [p.w * 0.22, p.h * 0.5, 30]));
+      flames.forEach((f, i) => { f.position.x = (i - 1) * p.w * 0.3; });
+      glow('#ff8a30', p.h * 2.4);
+      const light = new THREE.PointLight(0xff8a30, 1.4, 500, 2); group.add(light); light.position.y = 30;
+      v.update = (p) => { group.position.set(p.x, p.h * 0.5, 0); flames.forEach((f, i) => { f.scale.y = p.h * (0.4 + 0.3 * Math.abs(Math.sin(p.frame * 0.5 + i))); f.position.y = f.scale.y * 0.3; }); };
+      break;
+    }
+    case 'knife': {
+      const blade = add(G.box, new THREE.MeshToonMaterial({ color: new THREE.Color('#cfd8dc'), gradientMap: Rig3D.gradient() }), [p.w, p.h * 0.5, 2.5]);
+      const handle = add(G.box, toon('#5a1a1a'), [p.w * 0.3, p.h * 0.7, 3.5]); handle.position.x = -p.w * 0.35;
+      v.update = (p) => { pos(p); group.rotation.z = Math.atan2(-p.vy, p.vx); };
+      break;
+    }
+    case 'fan': {
+      const disc = add(G.cyl, toon('#e3b23c'), [p.w * 0.5, 3, p.w * 0.5]); disc.rotation.x = Math.PI / 2;
+      const half = add(G.cyl, toon('#2e7d32'), [p.w * 0.3, 3.5, p.w * 0.3]); half.rotation.x = Math.PI / 2;
+      v.update = (p) => { pos(p); group.rotation.z = p.rot * 1.2; };
+      break;
+    }
+    case 'fanspin': {
+      const discs = [0, 1, 2, 3].map((i) => { const d = add(G.cyl, toon(i % 2 ? '#e3b23c' : '#2e7d32'), [26, 3, 26]); d.rotation.x = Math.PI / 2; return d; });
+      const ring = add(G.torus, new THREE.MeshBasicMaterial({ color: new THREE.Color('#e3b23c'), transparent: true, opacity: 0.35 }), [p.w * 0.42, p.h * 0.42, p.w * 0.3]);
+      glow('#ffe082', p.w * 0.5);
+      v.update = (p) => { pos(p); discs.forEach((d, i) => { const a = p.rot * 1.5 + (i * Math.PI) / 2; d.position.set(Math.cos(a) * p.w * 0.42, Math.sin(a) * p.h * 0.42, Math.sin(a * 2) * 20); d.rotation.z = a; }); ring.rotation.y = p.rot; };
+      break;
+    }
     case 'beam': {
-      const core = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff') }), [5, p.w, 5]);
-      const halo = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#4fd5ff'), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }), [16, p.w, 16]);
+      const fire = p.color === 'fire';
+      const core = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color(fire ? '#fff1a8' : '#ffffff') }), [fire ? 14 : 5, p.w, fire ? 14 : 5]);
+      const halo = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color(fire ? '#ff6a00' : '#4fd5ff'), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }), [fire ? 40 : 16, p.w, fire ? 40 : 16]);
       core.rotation.z = halo.rotation.z = Math.PI / 2;
-      const light = new THREE.PointLight(0x4fd5ff, 2.5, 900, 2); group.add(light);
+      const light = new THREE.PointLight(fire ? 0xff8a30 : 0x4fd5ff, 2.5, 900, 2); group.add(light);
       v.update = (p) => { const x0 = p.owner.x + p.facing * 40; group.position.set(x0 + p.facing * p.w / 2, CFG.GROUND - p.y, 0); core.position.y = rand(-6, 6); halo.position.y = rand(-4, 4); light.position.set(-p.facing * p.w * 0.3, 0, 40); };
       break;
     }

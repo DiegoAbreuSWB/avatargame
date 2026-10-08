@@ -35,6 +35,8 @@ if (PARAMS.r === '3d') {
 <script src="../js/render3d.js"></script>
 <script src="../js/game.js"></script>
 <script src="../js/settings-ui.js"></script>
+<script src="../js/modes.js"></script>
+<script src="../js/content.js"></script>
 <script>
 (function () {
   const out = { errors: window.__errors, warns: window.__warns, mode: PARAMS.mode || 'all', r: PARAMS.r || '2d', scenes: {}, moves: [], cpuFight: null, matchups: null, shot: null };
@@ -67,8 +69,11 @@ if (PARAMS.r === '3d') {
           game.mode = '2p'; game.select.p1 = i; game.select.p2 = (i + 1) % CHARACTERS.length; game.stageIndex = i % STAGES.length; game.seed = seed;
           game.startMatch(); game.phase = 'play'; game.fighters.forEach((f) => { f.state = 'idle'; });
           const a = game.fighters[0], b = game.fighters[1];
-          a.x = 500; b.x = 500 + (key === 'special' || key === 'super' ? 300 : 90); a.chi = 100;
           const m = a.moves[key]; if (!m) { out.moves.push({ ch: ch.id, move: key, dmg: -1, missing: true }); return; }
+          if (m.counter) { out.moves.push({ ch: ch.id, move: key, name: m.name, dmg: 1, counter: true }); return; }   // posturas não causam dano por si
+          const ranged = (m.projectile || m.projectiles || m.volley) && !m.hitbox;
+          const dist = !ranged ? 90 : (m.projectile && m.projectile.follow) ? 120 : 300;
+          a.x = 500; b.x = 500 + dist; a.chi = 100;
           if (m.air) { a.airborne = true; a.vy = -14; a.y = CFG.GROUND - 1; a.state = 'jump'; }
           const hpBefore = b.hp;
           a.startAttack(m);
@@ -215,6 +220,44 @@ if (PARAMS.r === '3d') {
     game.padSourceA = null; game.padSourceB = null;
   }
 
+  if (mode === 'all' || mode === 'modes') {
+    const md = out.modes = {};
+    const runUntilSceneChange = (max) => { const sc = game.scene; for (let i = 0; i < max && game.scene === sc; i++) game.update(); return game.scene; };
+    safe('arcade', () => {
+      game.mode = 'arcade'; game.select = { p1: 0, p2: 1, p1Done: false, p2Done: false, timer: 0 }; game.seed = seed;
+      game.startArcade();
+      const scenes = []; let guard = 0;
+      while (guard++ < 12 && game.scene === 'ladder') {
+        scenes.push('ladder:' + game.arcade.ladder[game.arcade.index]);
+        game.ladderT = 400; game.update();                              // começa a luta automaticamente
+        if (game.scene !== 'fight') break;
+        game.fighters[0].isCPU = true; game.fighters[0].aiLevel = 'hard'; game.fighters[1].aiLevel = 'easy';
+        game.fighters[0].hp = 100; game.fighters[1].hp = 20; game.fighters[1].hpGhost = 20;   // encurta a luta a favor do P1
+        for (let r = 0; r < 3 && game.scene === 'fight'; r++) { runUntilSceneChange(40000); }
+        scenes.push(game.scene);
+        if (game.scene === 'continue') { game.continueIndex = 0; game.continueT = 30; game.update(); game.scene = 'ladder'; }
+      }
+      md.arcade = { scenes, reachedEnding: game.scene === 'ending', score: game.arcade.score, fights: game.arcade.index };
+      game.draw();
+    });
+    safe('survival', () => {
+      game.mode = 'survival'; game.select = { p1: 2, p2: 1, p1Done: false, p2Done: false, timer: 0 }; game.seed = seed;
+      game.startSurvival();
+      let wins = 0, guard = 0;
+      while (guard++ < 4 && game.scene === 'ladder') {
+        game.ladderT = 400; game.update();
+        if (game.scene !== 'fight') break;
+        game.fighters[0].isCPU = true;
+        if (guard < 3) { game.fighters[1].hp = 15; game.fighters[1].hpGhost = 15; } else { game.fighters[0].hp = 10; game.fighters[0].hpGhost = 10; game.fighters[1].hp = 100; }
+        runUntilSceneChange(40000);
+        if (game.scene === 'ladder') wins = game.survival.wins;
+      }
+      md.survival = { wins, ended: game.scene === 'survivalEnd', hpCarry: game.survival.hpCarry, best: game.survival.best };
+      game.draw();
+    });
+    game.aiLevelOverride = null;
+  }
+
   if (mode === 'matchups') {
     safe('matchups', () => {
       const per = parseInt(PARAMS.pairs || '6', 10), maxFrames = 30000;
@@ -237,7 +280,7 @@ if (PARAMS.r === '3d') {
     });
   }
 
-  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { if (PARAMS.scene === 'remap') game.remap = { player: 'p1', index: 4, listening: true, message: '' }; game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
+  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { if (PARAMS.scene === 'remap') game.remap = { player: 'p1', index: 4, listening: true, message: '' }; if (PARAMS.scene === 'ladder') { game.mode = 'arcade'; game.select.p1 = parseInt(PARAMS.p1 || '0', 10); game.startArcade(); } game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
   document.getElementById('log').textContent = JSON.stringify(out);
 })();
 </script>

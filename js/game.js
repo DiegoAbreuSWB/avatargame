@@ -24,8 +24,9 @@ class Game {
     this.prevPadA = Input.emptyPad();
   }
   get is3D() { return !!(this.r3d && this.use3D); }
-  get p1PicksBoth() { return this.mode !== '2p'; }
-  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'TREINO', 'CONTROLES', 'CONFIGURAÇÕES']; }
+  get p1PicksBoth() { return this.mode === 'cpu' || this.mode === 'training'; }
+  get soloMode() { return this.mode === 'arcade' || this.mode === 'survival'; }
+  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'TREINO', 'CONTROLES', 'CONFIGURAÇÕES']; }
 
   /* ---------- utilidades ---------- */
   get stage() { return STAGES[this.stageIndex]; }
@@ -73,6 +74,9 @@ class Game {
       case 'remap': this.updateRemap(); break;
       case 'select': this.updateSelect(); break;
       case 'stage': this.updateStage(); break;
+      case 'ladder': this.updateLadder(); break;
+      case 'continue': this.updateContinue(); break;
+      case 'ending': case 'survivalEnd': this.updateEnding(); break;
       case 'fight': this.updateFight(); break;
       case 'result': this.updateResult(); break;
     }
@@ -94,6 +98,10 @@ class Game {
       case 'remap': drawRemap(ctx, this); break;
       case 'select': drawSelect(ctx, this); break;
       case 'stage': drawStageSelect(ctx, this); break;
+      case 'ladder': drawLadder(ctx, this); break;
+      case 'continue': drawContinue(ctx, this); break;
+      case 'ending': drawEnding(ctx, this); break;
+      case 'survivalEnd': drawSurvivalEnd(ctx, this); break;
       case 'fight': this.drawFight(ctx); break;
       case 'result': drawResult(ctx, this); break;
     }
@@ -110,9 +118,11 @@ class Game {
       switch (this.menuIndex) {
         case 0: this.mode = '2p'; this.gotoSelect(); break;
         case 1: this.mode = 'cpu'; this.gotoSelect(); break;
-        case 2: this.mode = 'training'; this.gotoSelect(); break;
-        case 3: this.scene = 'controls'; break;
-        case 4: this.scene = 'settings'; this.settingsIndex = 0; break;
+        case 2: this.mode = 'arcade'; this.gotoSelect(); break;
+        case 3: this.mode = 'survival'; this.gotoSelect(); break;
+        case 4: this.mode = 'training'; this.gotoSelect(); break;
+        case 5: this.scene = 'controls'; break;
+        case 6: this.scene = 'settings'; this.settingsIndex = 0; break;
       }
     }
   }
@@ -123,7 +133,7 @@ class Game {
 
   /* ---------- seleção de personagem ---------- */
   moveCursor(key, map) {
-    const cols = 3, n = CHARACTERS.length, rows = Math.ceil(n / cols);
+    const cols = SELECT_COLS, n = CHARACTERS.length, rows = Math.ceil(n / cols);
     let i = this.select[key];
     if (Input.pressed(map.left)) i = i % cols === 0 ? Math.min(i + cols - 1, n - 1) : i - 1;
     if (Input.pressed(map.right)) i = (i % cols === cols - 1 || i === n - 1) ? i - (i % cols) : i + 1;
@@ -141,6 +151,7 @@ class Game {
       return;
     }
     if (s.p1Done && s.p2Done) { if (++s.timer > 40) this.scene = 'stage'; return; }
+    if (s.p1Done && this.soloMode) { if (++s.timer > 30) { if (this.mode === 'arcade') this.startArcade(); else this.startSurvival(); } return; }
     if (!s.p1Done) {
       this.moveCursor('p1', KEYMAPS.p1);
       if (Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter')) { s.p1Done = true; Audio_.play('confirm'); }
@@ -172,10 +183,11 @@ class Game {
     this.fighters = [new Fighter(c1, 0, this), new Fighter(c2, 1, this)];
     const cpu = this.fighters[1];
     cpu.isCPU = this.mode !== '2p';
+    this.fighters.forEach((f) => { f.maxHp = CFG.MAX_HP; f.hp = CFG.MAX_HP; });
     cpu.aiLevel = this.aiLevelOverride || Settings.data.difficulty;
     this.fighters[0].aiLevel = cpu.aiLevel;
     this.fighters.forEach((f) => { f.rounds = 0; f.chi = 0; f.hpGhost = CFG.MAX_HP; });
-    this.roundsToWin = this.mode === 'training' ? 99 : Settings.data.roundsToWin;
+    this.roundsToWin = this.mode === 'training' ? 99 : this.mode === 'survival' ? 1 : Settings.data.roundsToWin;
     this.infiniteTime = this.mode === 'training' || Settings.data.roundTime === 0;
     this.round = 1; this.winner = null; this.paused = false;
     this.training.history = []; this.training.lastCombo = 0;
@@ -185,7 +197,7 @@ class Game {
   startRound() {
     const [a, b] = this.fighters;
     a.reset(380, 1); b.reset(CFG.W - 380, -1);
-    a.hpGhost = b.hpGhost = CFG.MAX_HP;
+    a.hpGhost = a.hp; b.hpGhost = b.hp;
     a.state = b.state = 'intro';
     this.projectiles = []; Particles.clear();
     this.timer = this.infiniteTime ? 0 : Settings.data.roundTime; this.timerFrames = 0;
@@ -259,7 +271,7 @@ class Game {
     if (training && control) {
       this.recordInput(padA);
       if (this.training.chiInf) a.chi = CFG.MAX_CHI;
-      for (const f of this.fighters) if (f.hp < CFG.MAX_HP && this.t - (f.lastHitAt || 0) > 100 && f.canAct) { f.hp = CFG.MAX_HP; f.hpGhost = CFG.MAX_HP; }
+      for (const f of this.fighters) if (f.hp < f.maxHp && this.t - (f.lastHitAt || 0) > 100 && f.canAct) { f.hp = f.maxHp; f.hpGhost = f.maxHp; }
       if (a.combo > this.training.lastCombo) this.training.lastCombo = a.combo;
       if (a.combo === 0 && b.canAct) this.training.lastCombo = this.training.lastCombo; // mantém o último até o próximo combo
     }
@@ -363,6 +375,7 @@ class Game {
 
   nextRound() {
     const w = this.fighters.find((f) => f.rounds >= this.roundsToWin);
+    if (w && this.soloMode) { this.winner = w; return this.onMatchEnd(w); }
     if (w) { this.winner = w; this.scene = 'result'; this.resultT = 0; Audio_.play('win'); return; }
     this.round++;
     this.startRound();
@@ -376,7 +389,7 @@ class Game {
       Audio_.play('confirm');
       if (this.pauseIndex === 0) this.paused = false;
       else if (this.pauseIndex === 1) this.startMatch();
-      else { this.paused = false; this.scene = 'title'; }
+      else { this.paused = false; this.aiLevelOverride = null; this.scene = 'title'; }
     }
   }
 

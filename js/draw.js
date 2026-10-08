@@ -171,6 +171,23 @@ function drawOutfit(ctx, ch, J) {
   } else if (ch.id === 'sokka') {
     ctx.fillStyle = c.accent; // gola de pele
     ctx.beginPath(); ctx.moveTo(J.sb[0] - 12, J.sb[1] - 8); ctx.lineTo(J.sf[0] + 12, J.sf[1] - 8); ctx.lineTo(J.sf[0] + 2, J.sf[1] + 8); ctx.lineTo(J.sb[0] - 2, J.sb[1] + 8); ctx.closePath(); ctx.fill();
+  } else if (ch.id === 'tylee') {
+    ctx.fillStyle = c.accent; ctx.beginPath(); ctx.moveTo(J.sb[0] - 8, J.sb[1] - 6); ctx.lineTo(J.sf[0] + 8, J.sf[1] - 6); ctx.lineTo(J.neck[0], J.neck[1] + 18); ctx.closePath(); ctx.fill();
+  } else if (ch.id === 'iroh' || ch.id === 'ozai') {
+    ctx.fillStyle = c.accent;
+    ctx.fillRect(J.sb[0] - 16, J.sb[1] - 8, 16, 8); ctx.fillRect(J.sf[0], J.sf[1] - 8, 16, 8);
+    ctx.beginPath(); ctx.moveTo(J.neck[0] - 6, J.neck[1] + 4); ctx.lineTo(J.neck[0] + 6, J.neck[1] + 4); ctx.lineTo(J.hip[0] + 2, J.hip[1] - 2); ctx.lineTo(J.hip[0] - 2, J.hip[1] - 2); ctx.closePath(); ctx.fill();
+  } else if (ch.id === 'mai') {
+    ctx.fillStyle = c.accent; ctx.fillRect(J.sb[0] - 12, J.sb[1] - 6, 10, 6); ctx.fillRect(J.sf[0] + 2, J.sf[1] - 6, 10, 6);
+    limb(ctx, [[J.neck[0] - 4, J.neck[1] + 6], [J.hip[0] - 2, J.hip[1] - 4]], 4, c.accent);
+  } else if (ch.id === 'suki') {
+    ctx.fillStyle = c.accent; // placas da armadura
+    ctx.fillRect(J.sb[0] - 16, J.sb[1] - 8, 18, 10); ctx.fillRect(J.sf[0] - 2, J.sf[1] - 8, 18, 10);
+    ctx.fillStyle = c.secondary; ctx.beginPath(); ctx.moveTo(J.neck[0] - 10, J.neck[1] + 8); ctx.lineTo(J.neck[0] + 10, J.neck[1] + 8); ctx.lineTo(J.hip[0] + 6, J.hip[1] - 4); ctx.lineTo(J.hip[0] - 6, J.hip[1] - 4); ctx.closePath(); ctx.fill();
+  } else if (ch.id === 'bumi') {
+    ctx.fillStyle = c.secondary; // túnica clara
+    ctx.beginPath(); ctx.moveTo(J.sb[0] - 4, J.sb[1] - 2); ctx.lineTo(J.sf[0] + 4, J.sf[1] - 2); ctx.lineTo(J.hpf[0] + 6, J.hip[1] + 6); ctx.lineTo(J.hpb[0] - 6, J.hip[1] + 6); ctx.closePath(); ctx.fill();
+    limb(ctx, [[J.sb[0] - 6, J.sb[1] - 4], [J.hip[0] + 4, J.hip[1] + 4]], 5, c.accent);
   }
 }
 
@@ -182,6 +199,12 @@ function drawHead(ctx, ch, J, opts) {
   if (ch.id === 'azula') { dot(ctx, [hx - 4, hy - 2], r + 3, c.hair); limb(ctx, [[hx - 10, hy - 20], [hx - 12, hy + 26]], 5, c.hair); }
   if (ch.id === 'zuko') { dot(ctx, [hx - 5, hy - 3], r + 3, c.hair); }
   if (ch.id === 'sokka') { limb(ctx, [[hx - 14, hy - 8], [hx - 30, hy + 2]], 7, c.hair); }
+  if (ch.id === 'tylee') { dot(ctx, [hx - 4, hy - 2], r + 4, c.hair); limb(ctx, [[hx - 16, hy + 4], [hx - 24, hy + 48], [hx - 20, hy + 78]], 7, c.hair); dot(ctx, [hx - 20, hy + 80], 4, c.primary); }
+  if (ch.id === 'iroh') { dot(ctx, [hx - 5, hy - 4], r + 3, c.hair); }
+  if (ch.id === 'mai') { dot(ctx, [hx - 4, hy - 3], r + 4, c.hair); dot(ctx, [hx - 14, hy - 22], 8, c.hair); dot(ctx, [hx + 6, hy - 25], 8, c.hair); }
+  if (ch.id === 'ozai') { dot(ctx, [hx - 5, hy - 3], r + 3, c.hair); limb(ctx, [[hx - 16, hy - 4], [hx - 22, hy + 60]], 12, c.hair); }
+  if (ch.id === 'suki') { dot(ctx, [hx - 6, hy - 2], r + 4, c.hair); }
+  if (ch.id === 'bumi') { for (let i = 0; i < 5; i++) { const a = Math.PI * (1.05 + i * 0.22); limb(ctx, [[hx + Math.cos(a) * 12, hy + Math.sin(a) * 12], [hx + Math.cos(a) * 30, hy + Math.sin(a) * 30 - 6]], 6, c.hair); } }
   // rosto
   dot(ctx, [hx, hy], r, c.skin);
   // olhos
@@ -225,6 +248,31 @@ function drawHead(ctx, ch, J, opts) {
     ctx.fillStyle = c.accent; ctx.beginPath(); ctx.moveTo(hx - 10, hy - 30); ctx.lineTo(hx - 4, hy - 44); ctx.lineTo(hx + 2, hy - 30); ctx.closePath(); ctx.fill();
   } else if (ch.id === 'sokka') {
     ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 8, 14, Math.PI * 1.1, Math.PI * 1.9); ctx.lineTo(hx - 2, hy - 8); ctx.closePath(); ctx.fill();
+  } else if (ch.id === 'tylee') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 1, hy - 10, 16, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.moveTo(hx + 6, hy - 18); ctx.lineTo(hx + 16, hy - 6); ctx.lineTo(hx + 10, hy - 14); ctx.closePath(); ctx.fill();
+  } else if (ch.id === 'iroh') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 3, hy - 10, 15, Math.PI, 0); ctx.fill();
+    dot(ctx, [hx - 4, hy - 26], 7, c.hair);                                         // coque
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.ellipse(hx + 4, hy + 13, 12, 10, 0, 0, Math.PI); ctx.fill();   // barba
+    limb(ctx, [[hx - 2, hy + 6], [hx + 12, hy + 5]], 3, c.hair);                   // bigode
+    limb(ctx, [[hx - 6, hy - 8], [hx + 1, hy - 9]], 3, c.hair); limb(ctx, [[hx + 4, hy - 9], [hx + 11, hy - 8]], 3, c.hair); // sobrancelhas
+  } else if (ch.id === 'mai') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.moveTo(hx - 18, hy - 2); ctx.lineTo(hx - 12, hy - 20); ctx.lineTo(hx + 12, hy - 19); ctx.lineTo(hx + 17, hy - 6); ctx.lineTo(hx + 10, hy - 11); ctx.lineTo(hx - 2, hy - 9); ctx.lineTo(hx - 10, hy - 11); ctx.closePath(); ctx.fill();
+    limb(ctx, [[hx + 14, hy - 8], [hx + 15, hy + 14]], 4, c.hair);
+  } else if (ch.id === 'ozai') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 8, 16, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.moveTo(hx - 2, hy + 10); ctx.lineTo(hx + 10, hy + 10); ctx.lineTo(hx + 5, hy + 24); ctx.closePath(); ctx.fill();   // cavanhaque
+    ctx.fillStyle = c.accent; ctx.beginPath(); ctx.moveTo(hx - 10, hy - 22); ctx.lineTo(hx - 3, hy - 40); ctx.lineTo(hx + 4, hy - 22); ctx.closePath(); ctx.fill();  // coroa
+  } else if (ch.id === 'suki') {
+    ctx.fillStyle = '#c62828'; ctx.fillRect(hx + 3, hy - 9, 8, 3); ctx.fillRect(hx - 6, hy - 9, 7, 3);                  // pintura vermelha
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 10, 15, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#c62828'; ctx.fillRect(hx - 16, hy - 16, 32, 5);                                                   // faixa
+    ctx.fillStyle = c.accent; ctx.beginPath(); ctx.moveTo(hx - 14, hy - 18); ctx.lineTo(hx, hy - 34); ctx.lineTo(hx + 14, hy - 18); ctx.closePath(); ctx.fill(); // leque dourado
+  } else if (ch.id === 'bumi') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.ellipse(hx + 2, hy + 16, 9, 16, 0, 0, Math.PI); ctx.fill();            // barba longa
+    ctx.fillStyle = c.accent; ctx.fillRect(hx - 8, hy - 26, 16, 8);                                                     // coroa
+    dot(ctx, [hx + 7, hy - 3], 3.4, '#1b1b1b');                                                                         // olho maior (o louco)
   }
 }
 

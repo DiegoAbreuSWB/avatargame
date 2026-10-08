@@ -66,6 +66,7 @@ if (j.mechanics) {
   console.log('mecânicas:', Object.entries(j.mechanics).map(([k, v]) => `${k}=${Array.isArray(v) ? v.join('/') : v}`).join(' '));
   if (bad.length) { failed = true; console.log('  FALHARAM: ' + bad.join(', ')); }
 }
+if (j.modes) { console.log('modos:', JSON.stringify(j.modes)); if (j.modes.arcade && !j.modes.arcade.reachedEnding) { failed = true; console.log('  FALHOU: arcade não chegou ao final'); } if (j.modes.survival && !j.modes.survival.ended) { failed = true; console.log('  FALHOU: sobrevivência não terminou'); } }
 if (j.cpuFight) console.log('luta CPU:', JSON.stringify(j.cpuFight));
 if (j.matchups) {
   console.log(`matchups (${j.matchups.per} lutas por par):`);

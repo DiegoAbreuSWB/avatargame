@@ -31,10 +31,10 @@ function drawHUD(ctx, game) {
     const x0 = side === 0 ? 60 : W - 60 - barW;
     ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x0 - 3, y - 3, barW + 6, barH + 6, 6); ctx.fill();
     ctx.fillStyle = '#3a0f0f'; ctx.fillRect(x0, y, barW, barH);
-    const ghostW = barW * (f.hpGhost / CFG.MAX_HP);
+    const ghostW = barW * (f.hpGhost / f.maxHp);
     ctx.fillStyle = '#e53935';
     if (side === 0) ctx.fillRect(x0, y, ghostW, barH); else ctx.fillRect(x0 + barW - ghostW, y, ghostW, barH);
-    const hpW = barW * (f.hp / CFG.MAX_HP);
+    const hpW = barW * (f.hp / f.maxHp);
     const g = ctx.createLinearGradient(0, y, 0, y + barH);
     g.addColorStop(0, f.hp > 30 ? '#ffe36b' : '#ff8a65'); g.addColorStop(1, f.hp > 30 ? '#f2a93b' : '#e53935');
     ctx.fillStyle = g;

@@ -18,6 +18,7 @@ class Projectile {
     this.vx = (spec.vx || 0) * this.facing;
     this.vy = spec.vy || 0;
     this.rot = 0;
+    this.height = spec.height || 'mid';
 
     if (GROUND_TYPES.has(this.type)) {
       this.y = CFG.GROUND - this.h / 2;
@@ -30,6 +31,7 @@ class Projectile {
       this.x = owner.x + (spec.x || 0) * this.facing;
       this.y = owner.y + (spec.y || 0);
     }
+    this.startX = this.x;
   }
 
   get box() { return { x: this.x - this.w / 2, y: this.y - this.h / 2, w: this.w, h: this.h }; }
@@ -62,8 +64,9 @@ class Projectile {
         }
       }
       this.x += this.vx; this.y += this.vy; this.vy += this.gravity;
-      if (this.y > CFG.GROUND - 8 && this.gravity) { this.dead = true; Particles.element(this.type === 'ice' ? 'gelo' : 'hit', this.x, CFG.GROUND, 6); }
+      if (this.y > CFG.GROUND - 8 && this.gravity) { this.dead = true; Particles.element(this.type === 'ice' ? 'gelo' : this.type === 'rock' ? 'terra' : 'hit', this.x, CFG.GROUND, 8); if (this.type === 'rock') this.owner.game.shakeScreen(4); }
       if (!this.returning && (this.x < -150 || this.x > CFG.W + 150)) this.dead = true;
+      if (this.maxDist && Math.abs(this.x - this.startX) > this.maxDist) { this.dead = true; Particles.element('nao', this.x, this.y, 5); }
     }
     this.rot += 0.25;
     this.life--;
@@ -86,6 +89,9 @@ class Projectile {
       case 'beam': if (f % 1 === 0) Particles.element('raio', this.x + rand(-this.w / 2, this.w / 2) * 0.9, this.y + rand(-10, 10), 2, { maxSpeed: 6, minLife: 6, maxLife: 14 }); break;
       case 'boomerang': if (f % 4 === 0) Particles.element('nao', this.x, this.y, 1, { maxSpeed: 1 }); break;
       case 'ice': if (f % 5 === 0) Particles.element('gelo', this.x, this.y, 1, { maxSpeed: 1 }); break;
+      case 'breath': Particles.element('fogo', this.x + rand(-this.w / 2, this.w / 2), this.y + rand(-this.h / 3, this.h / 3), 2, { maxSpeed: 3, minLife: 6, maxLife: 14 }); break;
+      case 'firewave': if (f % 2 === 0) Particles.element('fogo', this.x + rand(-30, 30), CFG.GROUND - rand(0, 40), 2, { maxSpeed: 2 }); break;
+      case 'fan': case 'fanspin': if (f % 4 === 0) Particles.burst(this.x, this.y, 1, { color: ['#e3b23c', '#fff'], maxSpeed: 2, shape: 'spark' }); break;
     }
   }
 
@@ -161,14 +167,59 @@ class Projectile {
         ctx.strokeStyle = '#546e7a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-w / 2, h / 3); ctx.lineTo(0, -h / 2); ctx.lineTo(w / 2, h / 3); ctx.stroke();
         break;
       }
+      case 'breath': {
+        ctx.translate(x - this.facing * w / 2, y); ctx.scale(this.facing, 1);
+        for (const [k, col] of [[1, 'rgba(255,61,0,.55)'], [0.7, 'rgba(255,179,0,.8)'], [0.4, 'rgba(255,243,176,.95)']]) {
+          ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, 0);
+          for (let i = 0; i <= 8; i++) { const px = (w * i) / 8, amp = (h / 2) * k * (0.3 + 0.7 * i / 8); ctx.lineTo(px, -amp + Math.sin(this.frame * 0.7 + i) * 6); }
+          for (let i = 8; i >= 0; i--) { const px = (w * i) / 8, amp = (h / 2) * k * (0.3 + 0.7 * i / 8); ctx.lineTo(px, amp + Math.cos(this.frame * 0.7 + i) * 6); }
+          ctx.closePath(); ctx.fill();
+        }
+        break;
+      }
+      case 'firewave': {
+        ctx.translate(x, CFG.GROUND); ctx.scale(this.facing, 1);
+        for (let i = 0; i < 6; i++) {
+          const fx = (i - 2.5) * (w / 6), fh = h * (0.5 + 0.5 * Math.abs(Math.sin(this.frame * 0.5 + i)));
+          ctx.fillStyle = i % 2 ? 'rgba(255,120,30,.9)' : 'rgba(255,210,80,.95)';
+          ctx.beginPath(); ctx.moveTo(fx - 10, 0); ctx.quadraticCurveTo(fx, -fh * 1.4, fx + 10, 0); ctx.fill();
+        }
+        break;
+      }
+      case 'knife': {
+        ctx.translate(x, y); ctx.rotate(Math.atan2(this.vy, this.vx));
+        ctx.fillStyle = '#cfd8dc'; ctx.beginPath(); ctx.moveTo(-w / 2, 0); ctx.lineTo(w / 6, -h / 2); ctx.lineTo(w / 2, 0); ctx.lineTo(w / 6, h / 2); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#5a1a1a'; ctx.fillRect(-w / 2, -h / 3, w / 4, h * 0.66);
+        break;
+      }
+      case 'fan': {
+        ctx.translate(x, y); ctx.rotate(this.rot * 1.2);
+        ctx.fillStyle = '#e3b23c'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, w / 2, -0.9, 0.9); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#2e7d32'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, w / 2, Math.PI - 0.9, Math.PI + 0.9); ctx.closePath(); ctx.fill();
+        break;
+      }
+      case 'fanspin': {
+        ctx.translate(x, y);
+        for (let i = 0; i < 4; i++) {
+          const a = this.rot * 1.5 + (i * Math.PI) / 2, rx = (w / 2) * 0.85, ry = (h / 2) * 0.85;
+          const px = Math.cos(a) * rx, py = Math.sin(a) * ry;
+          ctx.save(); ctx.translate(px, py); ctx.rotate(a + Math.PI / 2);
+          ctx.fillStyle = i % 2 ? '#e3b23c' : '#2e7d32'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 28, -0.9, 0.9); ctx.closePath(); ctx.fill();
+          ctx.restore();
+        }
+        ctx.strokeStyle = 'rgba(227,178,60,.35)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(0, 0, w / 2 * 0.85, h / 2 * 0.85, 0, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
       case 'beam': {
         const x0 = this.owner.x + this.facing * 40, x1 = x0 + this.facing * this.w;
         ctx.lineCap = 'round';
-        for (const [lw, col] of [[22, 'rgba(79,213,255,.35)'], [10, '#4fd5ff'], [4, '#ffffff']]) {
+        const fire = this.color === 'fire';
+        for (const [lw, col] of fire ? [[Math.max(22, h * 0.9), 'rgba(255,90,0,.45)'], [h * 0.45, '#ff9800'], [h * 0.18, '#fff3b0']] : [[22, 'rgba(79,213,255,.35)'], [10, '#4fd5ff'], [4, '#ffffff']]) {
           ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x0, y);
-          for (let i = 1; i <= 14; i++) { const px = lerp(x0, x1, i / 14); ctx.lineTo(px, y + (i < 14 ? rand(-18, 18) : 0)); }
+          for (let i = 1; i <= 14; i++) { const px = lerp(x0, x1, i / 14); ctx.lineTo(px, y + (i < 14 ? rand(-(fire ? 8 : 18), fire ? 8 : 18) : 0)); }
           ctx.stroke();
         }
+        if (fire) { ctx.fillStyle = 'rgba(255,200,80,.9)'; ctx.beginPath(); ctx.arc(x0, y, h * 0.7, 0, Math.PI * 2); ctx.fill(); }
         break;
       }
       case 'pillar': {

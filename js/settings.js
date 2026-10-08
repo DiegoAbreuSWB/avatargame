@@ -50,6 +50,10 @@ const Settings = (() => {
   return { load, save, reset, resetKeys, onChange, get data() { return data; }, DEFAULTS, DEFAULT_KEYS };
 })();
 
+// Valores avulsos (recordes etc.) fora do objeto de configurações
+function saveSetting(key, value) { try { localStorage.setItem('avatarArena.' + key, String(value)); } catch (e) { /* ignora */ } }
+function loadSetting(key) { try { return localStorage.getItem('avatarArena.' + key); } catch (e) { return null; } }
+
 // Nome amigável de um e.code (teclado ABNT2 em mente)
 const KEY_NAMES = {
   ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Space: 'ESPAÇO', Enter: 'ENTER', Tab: 'TAB', Backspace: 'BACKSPACE',

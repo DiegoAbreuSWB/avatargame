@@ -15,12 +15,13 @@ class Fighter {
     this.aiLevel = 'normal';
     this.ai = null;
     this.stats = { hits: 0, maxCombo: 0, damage: 0, throws: 0 };
+    this.maxHp = CFG.MAX_HP;
     this.reset(side === 0 ? 380 : CFG.W - 380, side === 0 ? 1 : -1);
   }
 
   reset(x, facing) {
     this.x = x; this.y = CFG.GROUND; this.vx = 0; this.vy = 0; this.facing = facing;
-    this.hp = CFG.MAX_HP; this.chi = this.chi || 0;
+    this.hp = this.maxHp || CFG.MAX_HP; this.chi = this.chi || 0;
     this.state = 'idle'; this.pose = 'idle'; this.poseT = 0; this.frame = 0; this.poseSmooth = 0.5;
     this.attack = null; this.attackFrame = 0; this.attackPhase = 0; this.hitsLeft = 0; this.hitCooldown = 0; this.volleyFired = 0;
     this.attackConnected = false;

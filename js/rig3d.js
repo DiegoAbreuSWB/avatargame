@@ -172,6 +172,41 @@ const Rig3D = (() => {
         hair(G.sphere, c.hair, [-4, 11, 0], [14, 9, 14]);
         hair(G.cyl, c.hair, [-20, 2, 0], [4, 20, 4], [0, 0, 0.9]);
         break;
+      case 'tylee':
+        hair(G.sphere, c.hair, [-3, 4, 0], [19.6, 19, 19.6]);
+        hair(G.cyl, c.hair, [-20, -28, 0], [4.5, 70, 4.5], [0, 0, 0.18]);        // trança
+        hair(G.sphere, c.primary, [-26, -62, 0], 5);
+        break;
+      case 'iroh':
+        hair(G.sphere, c.hair, [-4, 6, 0], [19.5, 16, 19.5]);
+        hair(G.sphere, c.hair, [-4, 26, 0], 7);                                  // coque
+        hair(G.sphere, c.hair, [12, -14, 2], [11, 12, 9]);                        // barba
+        hair(G.box, c.hair, [10, -5, 0], [16, 3, 12]);                            // bigode
+        break;
+      case 'mai':
+        hair(G.sphere, c.hair, [-3, 4, 0], [19.8, 19, 19.8]);
+        hair(G.sphere, c.hair, [-8, 24, 10], 8); hair(G.sphere, c.hair, [-8, 24, -10], 8);   // dois coques
+        hair(G.cyl, c.hair, [12, -4, 13], [2.5, 24, 2.5]);
+        break;
+      case 'ozai':
+        hair(G.sphere, c.hair, [-3, 5, 0], [19.8, 18, 19.8]);
+        hair(G.cyl, c.hair, [-16, -24, 0], [7, 70, 7], [0, 0, 0.1]);             // cabelo longo
+        hair(G.cone, c.hair, [8, -22, 2], [5, 14, 5], [Math.PI, 0, 0]);          // cavanhaque
+        hair(G.cone, c.accent, [-2, 32, 0], [6, 16, 6]);                          // coroa
+        break;
+      case 'suki': {
+        hair(G.sphere, c.hair, [-4, 4, 0], [19.6, 19, 19.6]);
+        hair(G.torus, '#c62828', [0, 10, 0], 18.6, [Math.PI / 2, 0, 0]);          // faixa
+        hair(G.cone, c.accent, [-2, 30, 0], [14, 14, 4]);                          // leque dourado
+        const dir = new THREE.Vector3(1, 0, 0.9).normalize(), perp = new THREE.Vector3(-0.9, 0, 1).normalize();
+        for (const side of [1, -1]) { const m = new THREE.Mesh(G.box, new THREE.MeshBasicMaterial({ color: 0xc62828 })); m.position.copy(dir).multiplyScalar(17.2).addScaledVector(perp, side * 6.5).add(new THREE.Vector3(0, 7, 0)); m.scale.set(7, 2.5, 1.5); m.lookAt(m.position.clone().multiplyScalar(2)); hg.add(m); }
+        break;
+      }
+      case 'bumi':
+        for (let i = 0; i < 5; i++) { const a = Math.PI * (0.25 + i * 0.125); hair(G.cone, c.hair, [Math.cos(a) * 16 - 2, Math.sin(a) * 16 + 2, (i % 2) * 8 - 4], [5, 18, 5], [0, 0, a - Math.PI / 2]); }
+        hair(G.sphere, c.hair, [6, -20, 2], [9, 18, 7]);                          // barba longa
+        hair(G.cyl, c.accent, [-2, 24, 0], [9, 8, 9]);                             // coroa
+        break;
     }
   }
 

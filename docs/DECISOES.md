@@ -141,3 +141,35 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 **Detalhes.** Escada = 6 oponentes sorteados (sem chefe) + Ozai (Azula se o jogador for Ozai). Dificuldade: lutas 1–2 fácil, 3–4 normal, 5+ difícil. Sobrevivência: 1 round por luta, vida recupera +30 por vitória, chi mantido, oponente aleatório sem repetição imediata.
 **Por quê.** Menos telas entre lutas; a dificuldade crescente substitui a seleção de cenário, que passa a ser sorteada.
 **Consequências.** `aiLevelOverride` precisa ser limpo em todas as saídas (menu de pausa, Esc, fim), senão vaza para o Versus. Os textos de final estão em `content.js`.
+
+## ADR-020 · Direção de arte: evoluir o rig procedural (opção A), 3D já entregue como opção C
+
+**Contexto.** A Fase 3 exigia decidir entre melhorar o rig procedural ou migrar para sprites.
+**Escolha.** Manter o rig procedural nos dois renderizadores. Sprites ficam como possibilidade futura, só se houver arte produzida por alguém.
+**Por quê.** Doze personagens e oito cenários foram feitos em horas com o rig; sprites custariam semanas por personagem e travariam o elenco. O cel shading do modo 3D já dá o "acabamento" que o plano pedia.
+**Consequências.** Expressões faciais e movimento secundário continuam limitados; retratos do HUD usam a cabeça do boneco 2D ampliada (ADR-023).
+
+## ADR-021 · Câmera 2D com zoom e parallax, câmera 3D já dinâmica
+
+**Escolha.** No modo 2D, a câmera acompanha o meio dos lutadores e aproxima (zoom 1,05 a 1,25; 1,3 no K.O.), com o fundo deslocado a 30% do movimento (parallax). O chão e os lutadores ficam em escala 1. O overlay de hitboxes projeta pelos mesmos parâmetros (`game.cam2d`).
+**Por quê.** Zoom mínimo de 1,05 garante que o fundo (desenhado para 1280 px) sempre cubra a tela mesmo deslocado.
+**Consequências.** O HUD é desenhado em coordenadas de tela, fora da câmera; falas e caixas de depuração usam `projectPoint`.
+
+## ADR-022 · Música sequenciada em Web Audio, um tema por "clima"
+
+**Opções.** (a) arquivos OGG/MP3; (b) sequenciador em código.
+**Escolha.** (b): cinco temas (menu, ar, água, fogo, terra), cada um um loop de 32 semicolcheias com baixo, melodia gerada por semente fixa e percussão sintetizada; cada cenário aponta para um tema (`theme`). Liga/desliga em Configurações.
+**Por quê.** Zero assets e sem licença; coerente com os efeitos sonoros (ADR-005). Só toca depois da primeira interação (política de autoplay).
+**Consequências.** Qualidade de chiptune, não de trilha orquestrada; trocar por arquivos no futuro é só substituir `music.js`.
+
+## ADR-023 · Retratos, falas e estatísticas
+
+**Escolha.** Retrato circular ao lado de cada barra de vida (cabeça do boneco 2D, recortada); balão de fala de apresentação no round 1 e de vitória no K.O. (textos em `content.js`, sorteados por partida com a semente da luta); tela de resultado com golpes, maior combo, dano e agarrões (acumulados pela partida em `fighter.stats`).
+**Por quê.** Personalidade barata; as estatísticas dão feedback para treinar.
+
+## ADR-024 · Tradução com o texto em português como chave
+
+**Opções.** (a) identificadores (`menu.play2p`) com dicionários pt e en; (b) o próprio texto pt-BR como chave e um dicionário só para inglês.
+**Escolha.** (b): `T('ESCOLHA SEU LUTADOR')` devolve a tradução quando `Settings.data.lang === 'en'`, senão o texto original. Placeholders `{0}`.
+**Por quê.** Permitiu traduzir a interface inteira envolvendo literais existentes, sem criar um catálogo paralelo; um texto sem tradução simplesmente aparece em português (nunca uma chave crua).
+**Consequências.** Finais do Arcade, falas e descrições longas continuam só em português (conteúdo narrativo); nomes de golpes são traduzidos apenas onde aparecem na tela (Super). A troca de idioma é imediata porque T() lê a configuração a cada quadro.

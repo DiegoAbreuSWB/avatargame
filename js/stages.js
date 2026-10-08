@@ -1,7 +1,7 @@
 /* Cenários desenhados proceduralmente (sem imagens). Cada um tem draw(ctx, t) e drawFloor(ctx). */
 const STAGES = [
   {
-    id: 'templo', name: 'Templo do Ar do Sul', floor: '#cfc3ad', shadow: 'rgba(60,50,40,.35)',
+    id: 'templo', theme: 'ar', name: 'Templo do Ar do Sul', floor: '#cfc3ad', shadow: 'rgba(60,50,40,.35)',
     draw(ctx, t) {
       const W = CFG.W, H = CFG.H, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);
@@ -36,7 +36,7 @@ const STAGES = [
     },
   },
   {
-    id: 'basingse', name: 'Ba Sing Se', floor: '#8c9a63', shadow: 'rgba(30,40,20,.4)',
+    id: 'basingse', theme: 'terra', name: 'Ba Sing Se', floor: '#8c9a63', shadow: 'rgba(30,40,20,.4)',
     draw(ctx, t) {
       const W = CFG.W, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);
@@ -73,7 +73,7 @@ const STAGES = [
     },
   },
   {
-    id: 'palacio', name: 'Palácio da Nação do Fogo', floor: '#3a1a16', shadow: 'rgba(0,0,0,.5)',
+    id: 'palacio', theme: 'fogo', name: 'Palácio da Nação do Fogo', floor: '#3a1a16', shadow: 'rgba(0,0,0,.5)',
     draw(ctx, t) {
       const W = CFG.W, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);
@@ -117,7 +117,7 @@ const STAGES = [
     },
   },
   {
-    id: 'agua', name: 'Tribo da Água do Norte', floor: '#bfe3f2', shadow: 'rgba(20,60,90,.35)',
+    id: 'agua', theme: 'agua', name: 'Tribo da Água do Norte', floor: '#bfe3f2', shadow: 'rgba(20,60,90,.35)',
     draw(ctx, t) {
       const W = CFG.W, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);
@@ -160,7 +160,7 @@ const STAGES = [
     },
   },
   {
-    id: 'ember', name: 'Ilha Ember', floor: '#e2c58f', shadow: 'rgba(90,60,30,.35)',
+    id: 'ember', theme: 'agua', name: 'Ilha Ember', floor: '#e2c58f', shadow: 'rgba(90,60,30,.35)',
     draw(ctx, t) {
       const W = CFG.W, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);
@@ -190,7 +190,7 @@ const STAGES = [
   },
   /* ---------- Fase 2: cenários novos ---------- */
   {
-    id: 'deserto', name: 'Deserto Si Wong', floor: '#e0c18a', shadow: 'rgba(120,80,30,.35)',
+    id: 'deserto', theme: 'terra', name: 'Deserto Si Wong', floor: '#e0c18a', shadow: 'rgba(120,80,30,.35)',
     draw(ctx, t) {
       const W = CFG.W, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);
@@ -219,7 +219,7 @@ const STAGES = [
     },
   },
   {
-    id: 'pantano', name: 'Pântano Nebuloso', floor: '#5a6b3a', shadow: 'rgba(10,30,10,.5)',
+    id: 'pantano', theme: 'agua', name: 'Pântano Nebuloso', floor: '#5a6b3a', shadow: 'rgba(10,30,10,.5)',
     draw(ctx, t) {
       const W = CFG.W, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);
@@ -247,7 +247,7 @@ const STAGES = [
     },
   },
   {
-    id: 'omashu', name: 'Omashu', floor: '#cbb892', shadow: 'rgba(60,50,30,.35)',
+    id: 'omashu', theme: 'ar', name: 'Omashu', floor: '#cbb892', shadow: 'rgba(60,50,30,.35)',
     draw(ctx, t) {
       const W = CFG.W, G = CFG.GROUND;
       let g = ctx.createLinearGradient(0, 0, 0, G);

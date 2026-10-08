@@ -6,7 +6,9 @@ const REMAP_ACTIONS = [
 
 Game.prototype.settingsRows = function () {
   const d = Settings.data;
+  const lbl = (m) => `${m.labels.move} · ${m.labels.punch} ${m.labels.kick} ${m.labels.special} ${m.labels.super}`;
   return [
+    { key: 'lang', label: 'Idioma', values: ['pt', 'en'], names: { pt: 'Português', en: 'Inglês' } },
     { key: 'graphics', label: 'Gráficos', values: ['3d', '2d'], names: { '3d': '3D', '2d': '2D clássico' }, disabled: !this.r3d, note: this.r3d ? '' : 'WebGL indisponível' },
     { key: 'sound', label: 'Efeitos sonoros', values: [true, false], names: { true: 'Ligados', false: 'Desligados' } },
     { key: 'music', label: 'Música', values: [true, false], names: { true: 'Ligada', false: 'Desligada' } },
@@ -15,11 +17,11 @@ Game.prototype.settingsRows = function () {
     { key: 'roundsToWin', label: 'Rounds para vencer', values: [1, 2, 3], names: { 1: '1', 2: '2 (melhor de 3)', 3: '3 (melhor de 5)' } },
     { key: 'touch', label: 'Controles de toque', values: ['auto', 'on', 'off'], names: { auto: 'Automático', on: 'Sempre', off: 'Nunca' } },
     { key: 'debug', label: 'Mostrar hitboxes (F1)', values: [false, true], names: { false: 'Não', true: 'Sim' } },
-    { action: 'remap', player: 'p1', label: 'Controles do Jogador 1', value: `${KEYMAPS.p1.labels.move} · ${KEYMAPS.p1.labels.punch} ${KEYMAPS.p1.labels.kick} ${KEYMAPS.p1.labels.special} ${KEYMAPS.p1.labels.super}` },
-    { action: 'remap', player: 'p2', label: 'Controles do Jogador 2', value: `${KEYMAPS.p2.labels.move} · ${KEYMAPS.p2.labels.punch} ${KEYMAPS.p2.labels.kick} ${KEYMAPS.p2.labels.special} ${KEYMAPS.p2.labels.super}` },
+    { action: 'remap', player: 'p1', label: 'Controles do Jogador 1', value: lbl(KEYMAPS.p1) },
+    { action: 'remap', player: 'p2', label: 'Controles do Jogador 2', value: lbl(KEYMAPS.p2) },
     { action: 'reset', label: 'Restaurar padrões', value: '' },
     { action: 'back', label: 'Voltar', value: '' },
-  ].map((r) => { if (r.key) r.value = r.names[d[r.key]] !== undefined ? r.names[d[r.key]] : String(d[r.key]); return r; });
+  ].map((r) => { if (r.key) { const n = r.names[d[r.key]]; r.value = T(n !== undefined ? n : String(d[r.key])); } r.label = T(r.label); if (r.note) r.note = T(r.note); return r; });
 };
 
 Game.prototype.applySettingsSideEffects = function () {
@@ -56,12 +58,12 @@ Game.prototype.updateRemap = function () {
     if (!codes.length) return;
     const code = codes[0];
     if (code === 'Escape') { r.listening = false; r.message = ''; return; }
-    if (RESERVED_KEYS.has(code)) { r.message = `${keyLabel(code)} é reservada pelo jogo.`; return; }
+    if (RESERVED_KEYS.has(code)) { r.message = T('{0} é reservada pelo jogo.', keyLabel(code)); return; }
     const action = REMAP_ACTIONS[r.index][0];
     for (const p of ['p1', 'p2']) for (const a in Settings.data.keys[p]) {
       if (Settings.data.keys[p][a] === code && !(p === r.player && a === action)) {
-        const who = p === r.player ? 'por "' + REMAP_ACTIONS.find((x) => x[0] === a)[1] + '"' : 'pelo ' + (p === 'p1' ? 'Jogador 1' : 'Jogador 2');
-        r.message = `${keyLabel(code)} já está em uso ${who}.`; return;
+        const who = p === r.player ? T('por "{0}"', T(REMAP_ACTIONS.find((x) => x[0] === a)[1])) : T(p === 'p1' ? 'pelo Jogador 1' : 'pelo Jogador 2');
+        r.message = T('{0} já está em uso {1}.', keyLabel(code), who); return;
       }
     }
     keys[action] = code; Settings.save(); r.listening = false; r.message = ''; Audio_.play('confirm');
@@ -80,27 +82,27 @@ Game.prototype.updateRemap = function () {
 
 function drawSettings(ctx, game) {
   drawMenuBackdrop(ctx, game, 2);
-  txt(ctx, 'CONFIGURAÇÕES', CFG.W / 2, 64, { font: FONT_DISPLAY, size: 48, color: '#ffd54f', stroke: '#3b1d00', strokeWidth: 6 });
+  txt(ctx, T('CONFIGURAÇÕES'), CFG.W / 2, 58, { font: FONT_DISPLAY, size: 46, color: '#ffd54f', stroke: '#3b1d00', strokeWidth: 6 });
   const rows = game.settingsRows();
-  const x0 = 200, w = 880, y0 = 120, rh = 40;
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x0 - 20, y0 - 16, w + 40, rows.length * rh + 32, 12); ctx.fill();
+  const x0 = 200, w = 880, y0 = 108, rh = 38;
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x0 - 20, y0 - 14, w + 40, rows.length * rh + 28, 12); ctx.fill();
   rows.forEach((r, i) => {
     const y = y0 + i * rh + rh / 2, sel = i === game.settingsIndex;
     if (sel) { ctx.fillStyle = 'rgba(255,213,79,.16)'; roundRect(ctx, x0 - 8, y - rh / 2 + 3, w + 16, rh - 6, 6); ctx.fill(); }
     const col = r.disabled ? '#777' : sel ? '#fff' : '#cfd8dc';
-    txt(ctx, r.label, x0, y, { size: 20, align: 'left', color: col, weight: sel ? 700 : 400 });
+    txt(ctx, r.label, x0, y, { size: 19, align: 'left', color: col, weight: sel ? 700 : 400 });
     const val = r.disabled && r.note ? r.note : r.value;
-    if (r.key) txt(ctx, (sel && !r.disabled ? '◀  ' : '') + val + (sel && !r.disabled ? '  ▶' : ''), x0 + w, y, { size: 20, align: 'right', color: sel ? '#ffd54f' : '#dfe7f2' });
-    else txt(ctx, val, x0 + w, y, { size: 16, align: 'right', color: '#9fb0bb', weight: 400 });
+    if (r.key) txt(ctx, (sel && !r.disabled ? '◀  ' : '') + val + (sel && !r.disabled ? '  ▶' : ''), x0 + w, y, { size: 19, align: 'right', color: sel ? '#ffd54f' : '#dfe7f2' });
+    else txt(ctx, val, x0 + w, y, { size: 15, align: 'right', color: '#9fb0bb', weight: 400 });
   });
-  txt(ctx, '↑/↓ escolhe · ←/→ ou Enter altera · Esc volta · As mudanças são salvas na hora', CFG.W / 2, CFG.H - 40, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  txt(ctx, T('↑/↓ escolhe · ←/→ ou Enter altera · Esc volta · As mudanças são salvas na hora'), CFG.W / 2, CFG.H - 36, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
 }
 
 function drawRemap(ctx, game) {
   drawMenuBackdrop(ctx, game, 2);
   const r = game.remap, keys = Settings.data.keys[r.player];
   const col = r.player === 'p1' ? '#f2a93b' : '#4fc3f7';
-  txt(ctx, `CONTROLES DO ${r.player === 'p1' ? 'JOGADOR 1' : 'JOGADOR 2'}`, CFG.W / 2, 64, { font: FONT_DISPLAY, size: 40, color: col, stroke: 'rgba(0,0,0,.9)', strokeWidth: 6 });
+  txt(ctx, T(r.player === 'p1' ? 'CONTROLES DO JOGADOR 1' : 'CONTROLES DO JOGADOR 2'), CFG.W / 2, 64, { font: FONT_DISPLAY, size: 40, color: col, stroke: 'rgba(0,0,0,.9)', strokeWidth: 6 });
   const x0 = 300, w = 680, y0 = 125, rh = 42;
   const total = REMAP_ACTIONS.length + 2;
   ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x0 - 20, y0 - 16, w + 40, total * rh + 32, 12); ctx.fill();
@@ -109,18 +111,18 @@ function drawRemap(ctx, game) {
     if (sel) { ctx.fillStyle = 'rgba(255,213,79,.16)'; roundRect(ctx, x0 - 8, y - rh / 2 + 3, w + 16, rh - 6, 6); ctx.fill(); }
     if (i < REMAP_ACTIONS.length) {
       const [a, label] = REMAP_ACTIONS[i];
-      txt(ctx, label, x0, y, { size: 20, align: 'left', color: sel ? '#fff' : '#cfd8dc', weight: sel ? 700 : 400 });
+      txt(ctx, T(label), x0, y, { size: 20, align: 'left', color: sel ? '#fff' : '#cfd8dc', weight: sel ? 700 : 400 });
       const listening = sel && r.listening;
-      const kt = listening ? 'PRESSIONE UMA TECLA...' : keyLabel(keys[a]);
+      const kt = listening ? T('PRESSIONE UMA TECLA...') : keyLabel(keys[a]);
       ctx.fillStyle = listening ? 'rgba(255,213,79,.35)' : 'rgba(255,255,255,.12)';
       const kw = Math.max(70, kt.length * 12 + 24);
       roundRect(ctx, x0 + w - kw, y - 15, kw, 30, 6); ctx.fill();
       txt(ctx, kt, x0 + w - kw / 2, y, { size: 17, color: listening ? '#ffd54f' : '#fff' });
     } else {
-      const label = i === REMAP_ACTIONS.length ? 'Restaurar padrões deste jogador' : 'Voltar';
+      const label = i === REMAP_ACTIONS.length ? T('Restaurar padrões deste jogador') : T('Voltar');
       txt(ctx, label, x0, y, { size: 20, align: 'left', color: sel ? '#fff' : '#cfd8dc', weight: sel ? 700 : 400 });
     }
   }
   if (r.message) txt(ctx, r.message, CFG.W / 2, CFG.H - 72, { size: 17, color: '#ff8a65', stroke: 'rgba(0,0,0,.9)' });
-  txt(ctx, r.listening ? 'Esc cancela' : 'Enter para redefinir a tecla · Esc volta · Teclas reservadas: Enter, Esc, M, F1 a F12', CFG.W / 2, CFG.H - 40, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  txt(ctx, r.listening ? T('Esc cancela') : T('Enter para redefinir a tecla · Esc volta · Teclas reservadas: Enter, Esc, M, F1 a F12'), CFG.W / 2, CFG.H - 40, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
 }

@@ -53,7 +53,7 @@ class Game {
     if (this.mode === 'training') { loser.hp = CFG.MAX_HP; loser.hpGhost = CFG.MAX_HP; return; }
     this.phase = 'ko'; this.phaseT = 0; this.winner = winner;
     loser.setKO();
-    this.setAnnounce('K.O.', 130, { color: '#ff5252', size: 120 });
+    this.setAnnounce(T('K.O.'), 130, { color: '#ff5252', size: 120 });
     Audio_.play('ko'); this.shakeScreen(12);
   }
   isThreatened(f) {
@@ -80,6 +80,8 @@ class Game {
       case 'fight': this.updateFight(); break;
       case 'result': this.updateResult(); break;
     }
+    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'ladder', 'continue', 'ending', 'survivalEnd', 'result'].includes(this.scene) ? 'menu' : null;
+    if (typeof Music !== 'undefined') Music.ensure(theme, Settings.data.music);
   }
 
   draw() {
@@ -191,6 +193,8 @@ class Game {
     this.infiniteTime = this.mode === 'training' || Settings.data.roundTime === 0;
     this.round = 1; this.winner = null; this.paused = false;
     this.training.history = []; this.training.lastCombo = 0;
+    this.quotes = this.fighters.map((f) => { const q = (typeof QUOTES !== 'undefined' && QUOTES[f.char.id]) || { intro: [''], win: [''] }; return { intro: Rng.pick(q.intro), win: Rng.pick(q.win) }; });
+    this.cam2d = null;
     this.scene = 'fight';
     this.startRound();
   }
@@ -203,8 +207,8 @@ class Game {
     this.timer = this.infiniteTime ? 0 : Settings.data.roundTime; this.timerFrames = 0;
     this.phase = 'intro'; this.phaseT = 0; this.hitstop = 0; this.shake = 0; this.superFlash = 0;
     const final = a.rounds === this.roundsToWin - 1 && b.rounds === this.roundsToWin - 1;
-    const label = this.mode === 'training' ? 'TREINO' : final ? 'ROUND FINAL' : `ROUND ${this.round}`;
-    this.setAnnounce(label, 70, { sub: this.stage.name });
+    const label = this.mode === 'training' ? T('TREINO') : final ? T('ROUND FINAL') : T('ROUND {0}', this.round);
+    this.setAnnounce(label, 70, { sub: T(this.stage.name) });
     Audio_.play('round');
   }
 
@@ -246,7 +250,7 @@ class Game {
     // fases do round
     this.phaseT++;
     if (this.phase === 'intro') {
-      if (this.phaseT === 70) this.setAnnounce('LUTEM!', 45, { color: '#ff7043' });
+      if (this.phaseT === 70) this.setAnnounce(T('LUTEM!'), 45, { color: '#ff7043' });
       if (this.phaseT >= 100) { this.phase = 'play'; this.fighters.forEach((f) => { f.state = 'idle'; }); }
     } else if (this.phase === 'play') {
       if (!this.infiniteTime && ++this.timerFrames >= CFG.FPS) { this.timerFrames = 0; this.timer--; if (this.timer <= 0) this.onTimeout(); }
@@ -311,7 +315,7 @@ class Game {
       if (o.counterStance === 'melee') {
         f.hitsLeft = 0;
         f.receiveHit(o, { damage: o.attack.counterDamage || 10, hitstun: 30, knockback: 9, knockdown: true, chi: 10 }, cx, cy, {});
-        o.endAttack(); this.setAnnounce('CONTRA-ATAQUE!', 45, { size: 44, color: '#ffd54f', y: 240 });
+        o.endAttack(); this.setAnnounce(T('CONTRA-ATAQUE!'), 45, { size: 44, color: '#ffd54f', y: 240 });
         continue;
       }
       const res = o.receiveHit(f, f.attack, cx, cy, { isLast });
@@ -332,7 +336,7 @@ class Game {
         const old = p.owner; p.owner = o; p.target = old; p.facing = -p.facing; p.vx = -p.vx * 1.15; p.damage = Math.round(p.damage * 1.5);
         p.hitsLeft = 1; p.hitCooldown = 6; p.life = Math.max(p.life, 90); p.returning = false;
         Particles.element('raio', p.x, p.y, 14); Audio_.play('lightning');
-        this.setAnnounce('REDIRECIONADO!', 45, { size: 44, color: '#9be7ff', y: 240 });
+        this.setAnnounce(T('REDIRECIONADO!'), 45, { size: 44, color: '#9be7ff', y: 240 });
         continue;
       }
       const isLast = p.hitsLeft <= 1;
@@ -368,7 +372,7 @@ class Game {
     const [a, b] = this.fighters;
     this.phase = 'timeout'; this.phaseT = 0;
     this.winner = a.hp > b.hp ? a : b.hp > a.hp ? b : null;
-    this.setAnnounce('TEMPO!', 120, { color: '#ffd54f' });
+    this.setAnnounce(T('TEMPO!'), 120, { color: '#ffd54f' });
     if (this.winner) { const l = this.fighters[1 - this.winner.side]; l.state = 'knockdown'; l.stun = 9999; l.airborne = false; l.y = CFG.GROUND; }
     Audio_.play('ko');
   }
@@ -400,19 +404,36 @@ class Game {
     if (Input.pressed('Escape')) { Audio_.play('back'); this.select.p1Done = this.select.p2Done = false; this.select.timer = 0; this.scene = 'select'; }
   }
 
+  /* câmera do modo 2D: acompanha o meio dos lutadores e aproxima quando estão perto */
+  updateCam2d() {
+    const [a, b] = this.fighters;
+    const mid = (a.x + b.x) / 2, spread = Math.abs(a.x - b.x);
+    let zoom = clamp(1.32 - spread / 1000, 1.05, 1.25);
+    if (this.phase === 'ko' && this.winner) zoom = 1.3;
+    const vw = CFG.W / zoom, vh = CFG.H / zoom;
+    const tx = clamp(mid, vw / 2, CFG.W - vw / 2), ty = CFG.H - vh / 2;
+    const c = this.cam2d || { x: tx, y: ty, zoom };
+    c.x = lerp(c.x, tx, 0.08); c.y = lerp(c.y, ty, 0.08); c.zoom = lerp(c.zoom, zoom, 0.06);
+    this.cam2d = c; return c;
+  }
+
   drawFight(ctx) {
     const st = this.stage;
     if (!this.is3D) {
+      const cam = this.updateCam2d();
       ctx.save();
       ctx.translate(this.shakeX, this.shakeY);
-      st.draw(ctx, this.t); st.drawFloor(ctx);
+      ctx.translate(CFG.W / 2, CFG.H / 2); ctx.scale(cam.zoom, cam.zoom); ctx.translate(-cam.x, -cam.y);
+      const pdx = (cam.x - CFG.W / 2) * 0.7, pdy = (cam.y - CFG.H / 2) * 0.7;
+      ctx.save(); ctx.translate(pdx, pdy); st.draw(ctx, this.t); ctx.restore();   // fundo com parallax (fator 0,3)
+      st.drawFloor(ctx);
       for (const p of this.projectiles) if (GROUND_TYPES.has(p.type) || p.type === 'wave') p.draw(ctx);
       const order = this.fighters.slice().sort((a, b) => (a.state === 'attack' ? 1 : 0) - (b.state === 'attack' ? 1 : 0));
       for (const f of order) drawFighter(ctx, f, st);
       for (const p of this.projectiles) if (!GROUND_TYPES.has(p.type) && p.type !== 'wave') p.draw(ctx);
       Particles.draw(ctx);
       ctx.restore();
-    }
+    } else this.cam2d = null;
     if (this.debug) drawDebug(ctx, this);
     drawSuperFlash(ctx, this);
     drawHUD(ctx, this);

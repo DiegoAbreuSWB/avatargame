@@ -229,7 +229,7 @@ class Fighter {
     const o = this.opponent;
     this.toNeutral(); o.toNeutral(); o.thrownBy = null;
     this.pushVx = -this.facing * 7; o.pushVx = this.facing * 7;
-    this.game.setAnnounce('ESCAPOU!', 40, { size: 44, color: '#80deea', y: 240 });
+    this.game.setAnnounce(T('ESCAPOU!'), 40, { size: 44, color: '#80deea', y: 240 });
     Audio_.play('block'); Particles.element('block', (this.x + o.x) / 2, this.y - 100, 10);
   }
   receiveThrow(attacker, damage) {
@@ -374,7 +374,7 @@ class Fighter {
       this.crouching = false;
     }
     if (data.pull) this.vx = -dir * data.pull;
-    if (data.applies && data.applies.chiBlock) { this.chiBlocked = Math.max(this.chiBlocked, data.applies.chiBlock); this.game.setAnnounce('CHI BLOQUEADO!', 50, { size: 40, color: '#f48fb1', y: 240 }); }
+    if (data.applies && data.applies.chiBlock) { this.chiBlocked = Math.max(this.chiBlocked, data.applies.chiBlock); this.game.setAnnounce(T('CHI BLOQUEADO!'), 50, { size: 40, color: '#f48fb1', y: 240 }); }
     this.chi = Math.min(CFG.MAX_CHI, this.chi + 3);
     attacker.chi = Math.min(CFG.MAX_CHI, attacker.chi + (data.chi || 5));
     attacker.combo = comboSoFar + 1;

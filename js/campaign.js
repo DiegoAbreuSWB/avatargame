@@ -132,7 +132,7 @@ function drawCampaignSelect(ctx, game) {
   });
   const y = 190 + ids.length * 70, sel = game.campSel.index === ids.length;
   txt(ctx, (sel ? '▶  ' : '') + T('Voltar'), CFG.W / 2, y, { size: 22, color: sel ? '#fff' : '#aaa' });
-  txt(ctx, T('Outras campanhas chegam nas próximas versões (Aang, Katara, Toph, Azula, Sokka).'), CFG.W / 2, CFG.H - 40, { size: 14, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  txt(ctx, T('Concluir qualquer campanha desbloqueia o Avatar Roku.'), CFG.W / 2, CFG.H - 40, { size: 14, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
 }
 
 function drawCampaignMap(ctx, game) {

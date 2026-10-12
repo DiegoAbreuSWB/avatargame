@@ -1,7 +1,7 @@
 /* Torneio local de 4 ou 8 participantes (teclado compartilhado, vagas podem ser CPU).
    Chave eliminatória sorteada com Rng; lutas entre duas CPUs são simuladas na hora, sem desenhar. */
 Game.prototype.startTournamentSetup = function () {
-  this.tournament = { size: 8, slots: Array.from({ length: 8 }, (_, i) => ({ char: i % CHARACTERS.length, cpu: i > 1, name: T('Jogador {0}', i + 1) })), cursor: 0, bracket: null, round: 0, match: 0, champion: null };
+  this.tournament = { size: 8, slots: Array.from({ length: 8 }, (_, i) => ({ char: i % CHARACTERS.filter((c) => !c.unlock).length, cpu: i > 1, name: T('Jogador {0}', i + 1) })), cursor: 0, bracket: null, round: 0, match: 0, champion: null };
   this.scene = 'tournamentSetup';
 };
 Game.prototype.updateTournamentSetup = function () {

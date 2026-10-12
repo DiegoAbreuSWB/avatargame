@@ -23,6 +23,11 @@ function skinList(ch) {
   list.push({ id: 'treino', name: TRAINING_SKIN.name, colors: Object.assign({}, ch.colors, { primary: '#eceff1', secondary: '#78909c', accent: ELEMENT_COLORS[ch.element] }), unlock: TRAINING_SKIN.unlock });
   return list;
 }
+function charUnlocked(ch) {
+  if (!ch.unlock) return true;
+  if (ch.unlock.campaignDone) { const c = Save.data.campaigns || {}; return Object.keys(c).some((k) => c[k].done); }
+  return true;
+}
 function skinUnlocked(ch, skin) { return skin.id === 'padrao' || Save.hasSkin(ch.id, skin.id); }
 function skinUnlockText(skin) {
   if (!skin.unlock) return '';

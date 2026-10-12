@@ -286,3 +286,16 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 **Ajustes.** Suki: soco 6, chute 10, leque 10 de dano e alcance 560, postura ativa por 28 frames, velocidade 6,3. Ty Lee: +1 de dano em todos os golpes. Bumi: velocidade 4,6, soco e chute mais rápidos, pedra 16 de dano. Sokka: bumerangue 7, espada 11. Zuko: chute 9, bola de fogo 10. Ozai: chute 11, cometa 14. Nova simulação registrada no CHANGELOG quando terminar.
 
 **Segunda simulação (outra semente, 3 por par):** Ozai 87%, Jet 71%, Hama 64%; Ty Lee 36%, Iroh 36%, Suki 29%. A oscilação de Ozai (62% → 87%) e de Iroh (58% → 36%) sem mudança nos kits mostra que 45 lutas por personagem têm margem de ±15 pontos: com 16 lutadores a simulação precisa de `--pairs 8` ou mais (demora ~30 min) para guiar ajustes finos. Ajuste final desta versão, só no que é consistente nas duas rodadas: Ozai mais lento e Fênix 30; Suki contra-ataque 14; gancho do Jet com hitstun 22. Balanceamento fino fica para a v1.1 com a simulação longa.
+
+## ADR-043 · Seis campanhas com o mesmo motor; Roku como desbloqueável com "postura" de elemento
+
+**Contexto.** v1.1 do roadmap.
+**Escolha.** Aang, Katara, Toph, Azula e Sokka ganharam campanhas em `content/campaigns/`, cada uma com 4–5 capítulos, 5–8 lutas, 2–3 escolhas e 2 finais, sem nenhuma linha nova no motor. Avatar Roku entra com a mecânica `stances`: ↓ + especial troca o elemento ativo (fogo → ar → água → terra) e o especial lê `moves['special_' + elemento]`; o super é a Ira do Avatar (vórtice com sucção). Roku tem `unlock: { campaignDone: true }`: fica bloqueado na seleção (e na galeria) até concluir qualquer campanha; fica fora da escada do Arcade, do torneio padrão e do desafio diário (que precisa ser igual para todos).
+**Por quê.** Validar o formato narrativo com dados puros era o objetivo do piloto (ADR-041); o teste `campaign all` percorre as seis campanhas automaticamente.
+**Consequências.** O HUD mostra o elemento ativo de quem tem posturas; o teste `roku` confirma troca de postura e projétil de ar.
+
+## ADR-044 · Galeria lê tudo do que já existe
+
+**Escolha.** `gallery.js` mostra biografia, atributos, nomes dos golpes, trajes possuídos, vitórias, arcades concluídos, estado da campanha e finais vistos, tudo derivado de `characters.js`, `skins.js`, `CAMPAIGNS` e do save. Nenhum dado novo para manter.
+
+**Simulação longa (6 lutas por par, 90 por personagem, 2026-10-12):** todos entre 42% e 58%, exceto Ozai (66%). Decisão: manter Ozai um pouco acima da faixa de propósito, por ser o chefe do Arcade e um personagem "pesado" no Versus; os demais ajustes da v1.0 ficaram validados. Próxima rodada de ajustes só com nova evidência da simulação longa.

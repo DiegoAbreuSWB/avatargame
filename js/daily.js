@@ -7,7 +7,7 @@ Game.prototype.dailyChallenge = function () {
   if (this._daily && this._daily.key === key) return this._daily;
   const seed = parseInt(key, 10);
   Rng.set(seed * 7919);
-  const n = CHARACTERS.length;
+  const n = CHARACTERS.filter((c) => !c.unlock).length;   // personagens desbloqueáveis ficam fora, para o desafio ser igual para todos
   const p1 = Rng.int(0, n - 1); let p2 = Rng.int(0, n - 2); if (p2 >= p1) p2++;
   const stage = Rng.int(0, STAGES.length - 1);
   const pool = MODIFIERS.filter((m) => !['superInfinito', 'vidaContinua'].includes(m.id)).map((m) => m.id);

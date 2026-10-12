@@ -226,3 +226,17 @@ Vantagem = quantos frames o atacante fica livre antes do defensor, supondo acert
 | special | Água do Ar | 9 | 2 | 16 | 27 | 9 |  |  |  |  |  | projétil water, cancela em super |
 | special2 | Armadilha de Água | 14 | 2 | 24 | 40 | 10 |  |  |  |  |  | projétil geyser, cancela em super |
 | super | Prisão da Lua Cheia | 18 | 2 | 34 | 54 | 12 |  |  |  |  |  | projétil blood, custa 100 chi |
+
+## Avatar Roku (fogo)
+
+| Golpe | Nome | Startup | Ativo | Recuperação | Total | Dano | Hitstun | Blockstun | Vant. acerto | Vant. bloqueio | Altura | Obs. |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| punch | Soco | 4 | 4 | 9 | 17 | 6 | 14 | 8 | 2 | -4 | mid | cancela em special |
+| kick | Chute | 8 | 5 | 16 | 29 | 10 | 20 | 12 | 0 | -8 | mid | cancela em special |
+| cpunch | Soco Baixo | 4 | 4 | 9 | 17 | 4 | 13 | 8 | 1 | -4 | low | cancela em special |
+| sweep | Rasteira | 9 | 5 | 20 | 34 | 8 | 24 | 12 | 0 | -12 | low | derruba |
+| jpunch | Soco Aéreo | 4 | 10 | 6 | 20 | 6 | 16 | 10 | 1 | -5 | high |  |
+| jkick | Chute Aéreo | 6 | 12 | 8 | 26 | 9 | 20 | 12 | 1 | -7 | high |  |
+| special | Chama do Avatar | 9 | 2 | 17 | 28 | 11 |  |  |  |  |  | projétil fire, cancela em super |
+| special2 | Trocar Elemento | 2 | 1 | 8 | 11 |  |  |  |  |  |  | cancela em super |
+| super | Ira do Avatar | 14 | 2 | 28 | 44 | 4 |  |  |  |  |  | projétil vortex, custa 100 chi |

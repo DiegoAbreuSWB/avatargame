@@ -78,6 +78,7 @@ function drawSelect(ctx, game) {
     ctx.restore();
     txt(ctx, ch.name.toUpperCase(), x + cw / 2, y + 20, { font: FONT_DISPLAY, size: ch.name.length > 11 ? 10 : 13, color: ELEMENT_COLORS[ch.element], stroke: 'rgba(0,0,0,.9)' });
     if (ch.boss) txt(ctx, T('CHEFE'), x + cw / 2, y + chh - 14, { size: 10, color: '#ff8a65', stroke: 'rgba(0,0,0,.9)' });
+    if (!charUnlocked(ch)) { ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x + 5, y + 5, cw - 10, chh - 10, 9); ctx.fill(); txt(ctx, '🔒', x + cw / 2, y + chh / 2 + 6, { size: 26, color: '#fff' }); }
     const p1Here = s.p1 === i, p2Here = s.p2 === i;
     if (p1Here) { ctx.strokeStyle = '#f2a93b'; ctx.lineWidth = 4; roundRect(ctx, x + 3, y + 3, cw - 6, chh - 6, 9); ctx.stroke(); txt(ctx, 'P1', x + 18, y + 16, { size: 12, color: '#f2a93b', stroke: '#000' }); }
     if (p2Here && !game.soloMode) { ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 4; roundRect(ctx, x + (p1Here ? 9 : 3), y + (p1Here ? 9 : 3), cw - (p1Here ? 18 : 6), chh - (p1Here ? 18 : 6), 9); ctx.stroke(); txt(ctx, game.mode === 'cpu' ? 'CPU' : game.mode === 'training' ? 'BON' : 'P2', x + cw - 20, y + 16, { size: 12, color: '#4fc3f7', stroke: '#000' }); }

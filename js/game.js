@@ -30,7 +30,7 @@ class Game {
   get p1PicksBoth() { return this.mode === 'cpu' || this.mode === 'training' || this.mode === 'online'; }
   get soloMode() { return this.mode === 'arcade' || this.mode === 'survival'; }
   get usesCompanions() { return this.mode !== 'campaign' && this.mode !== 'daily'; }
-  titleOptions() { return ['CAMPANHA', '2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'DESAFIO DIÁRIO', 'TORNEIO', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'CONTROLES', 'CONFIGURAÇÕES']; }
+  titleOptions() { return ['CAMPANHA', '2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'DESAFIO DIÁRIO', 'TORNEIO', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'GALERIA', 'CONTROLES', 'CONFIGURAÇÕES']; }
 
   /* ---------- utilidades ---------- */
   get stage() { return STAGES[this.stageIndex]; }
@@ -95,6 +95,7 @@ class Game {
       case 'online': this.updateOnline(); break;
       case 'rules': this.updateRules(); break;
       case 'campaignSelect': this.updateCampaignSelect(); break;
+      case 'gallery': this.updateGallery(); break;
       case 'campaignMap': this.updateCampaignMap(); break;
       case 'dialogue': this.updateDialogue(); break;
       case 'choice': this.updateChoice(); break;
@@ -115,7 +116,7 @@ class Game {
       case 'fight': this.updateFight(); if (this.net) this.net.advance(); break;
       case 'result': this.updateResult(); break;
     }
-    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'rules', 'daily', 'tournamentSetup', 'bracket', 'ladder', 'continue', 'ending', 'survivalEnd', 'result', 'campaignSelect', 'campaignMap', 'dialogue', 'choice', 'campaignMsg', 'campaignRetry', 'campaignEnding'].includes(this.scene) ? 'menu' : null;
+    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'rules', 'daily', 'tournamentSetup', 'bracket', 'ladder', 'continue', 'ending', 'survivalEnd', 'result', 'campaignSelect', 'campaignMap', 'dialogue', 'choice', 'campaignMsg', 'campaignRetry', 'campaignEnding', 'gallery'].includes(this.scene) ? 'menu' : null;
     if (typeof Music !== 'undefined') Music.ensure(theme, Settings.data.music);
   }
 
@@ -133,6 +134,7 @@ class Game {
       case 'online': drawOnline(ctx, this); break;
       case 'rules': drawRules(ctx, this); break;
       case 'campaignSelect': drawCampaignSelect(ctx, this); break;
+      case 'gallery': drawGallery(ctx, this); break;
       case 'campaignMap': drawCampaignMap(ctx, this); break;
       case 'dialogue': drawDialogue(ctx, this); break;
       case 'choice': drawChoice(ctx, this); break;
@@ -175,8 +177,9 @@ class Game {
         case 6: this.startTournamentSetup(); break;
         case 7: this.mode = 'training'; this.gotoSelect(); break;
         case 8: this.online = { step: 'menu', index: 0, msg: '' }; this.scene = 'online'; break;
-        case 9: this.scene = 'controls'; break;
-        case 10: this.scene = 'settings'; this.settingsIndex = 0; break;
+        case 9: this.startGallery(); break;
+        case 10: this.scene = 'controls'; break;
+        case 11: this.scene = 'settings'; this.settingsIndex = 0; break;
       }
     }
   }
@@ -194,6 +197,7 @@ class Game {
   }
   skinAllowed(which) {
     const s = this.select, ch = CHARACTERS[which === 1 ? s.p1 : s.p2], skin = skinList(ch)[s['skin' + which] || 0];
+    if (!charUnlocked(ch) && !(this.mode === 'cpu' && which === 2) && !(this.mode === 'training' && which === 2)) { s.msg = T('Personagem bloqueado: conclua qualquer campanha para liberar'); Audio_.play('back'); return false; }
     if (skinUnlocked(ch, skin)) return true;
     s.msg = T('Traje bloqueado: {0}', skinUnlockText(skin)); Audio_.play('back'); return false;
   }

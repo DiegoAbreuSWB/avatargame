@@ -5,13 +5,13 @@ HTML5 Canvas + JavaScript puro, sem build. O modo 3D usa Three.js carregado de C
 
 Repositório: https://github.com/DiegoAbreuSWB/avatargame · Jogar no navegador: https://diegoabreuswb.github.io/avatargame/
 
-Versão atual: **1.0.0**. Histórico em [CHANGELOG.md](CHANGELOG.md); decisões em [docs/DECISOES.md](docs/DECISOES.md); plano em [PLANO-DE-DESENVOLVIMENTO.md](PLANO-DE-DESENVOLVIMENTO.md).
+Versão atual: **1.1.0**. Histórico em [CHANGELOG.md](CHANGELOG.md); decisões em [docs/DECISOES.md](docs/DECISOES.md); plano em [PLANO-DE-DESENVOLVIMENTO.md](PLANO-DE-DESENVOLVIMENTO.md).
 
 ## Como jogar
 
 Abra `index.html` no navegador (Chrome, Edge ou Firefox) e pressione **Enter**. Para jogar offline/instalado como aplicativo (PWA), sirva a pasta por http (`npx serve .`) ou publique (ver [docs/PUBLICACAO.md](docs/PUBLICACAO.md)).
 
-**Elenco:** 16 lutadores. **Modos:** Campanha (Crônicas das Quatro Nações: a jornada do Zuko com diálogos, escolhas e dois finais) · 2 jogadores · 1 jogador vs CPU · Arcade (7 lutas com chefe, continue e finais) · Sobrevivência (recorde salvo) · Desafio diário (a mesma luta para todos, com regras sorteadas) · Torneio local (4 ou 8, humanos ou CPU) · Treino (boneco, vida e chi infinitos, histórico de inputs, hitboxes) · Online experimental (sem servidor, troca de código de sala).
+**Elenco:** 16 lutadores mais o Avatar Roku, desbloqueável ao concluir uma campanha (troca de elemento em luta). **Modos:** Campanha (Crônicas das Quatro Nações: seis jornadas, Zuko, Aang, Katara, Toph, Azula e Sokka, com diálogos, escolhas e dois finais cada) · Galeria · 2 jogadores · 1 jogador vs CPU · Arcade (7 lutas com chefe, continue e finais) · Sobrevivência (recorde salvo) · Desafio diário (a mesma luta para todos, com regras sorteadas) · Torneio local (4 ou 8, humanos ou CPU) · Treino (boneco, vida e chi infinitos, histórico de inputs, hitboxes) · Online experimental (sem servidor, troca de código de sala).
 
 **Companheiros:** Momo, Appa ou Nyla como assistência (barra de apoio própria; tecla R / U, LT ou RT no controle). **Regras especiais** (opcionais, antes da luta): Eclipse Solar, Lua Cheia, Cometa de Sozin, Tempestade, vida contínua, round de 30 s e super infinito. **Trajes** desbloqueáveis por personagem (Arcade e vitórias), trocados na seleção com a tecla de especial.
 
@@ -61,6 +61,7 @@ Buffer de entrada (8 frames), cancelamento normal → especial → super, dash e
 | Jet | Guerreiro | Gancho | Investida das Lâminas | Fúria dos Combatentes da Liberdade |
 | Mestre Pakku | Água | Chicote Gelado | Muralha de Gelo | Tempestade Polar |
 | Hama (chefe) | Água | Água do Ar | Armadilha de Água | Prisão da Lua Cheia |
+| Avatar Roku (desbloqueável) | Quatro elementos | Chama / Rajada / Onda / Rocha do Avatar | Trocar Elemento | Ira do Avatar |
 
 Cenários: Templo do Ar do Sul, Ba Sing Se, Palácio da Nação do Fogo, Tribo da Água do Norte, Ilha Ember, Deserto Si Wong, Pântano Nebuloso, Omashu e Prisão da Rocha Fervente.
 

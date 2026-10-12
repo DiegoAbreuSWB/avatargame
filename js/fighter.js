@@ -33,7 +33,7 @@ class Fighter {
     this.tap = { dir: 0, frame: -99 };        // toque duplo para dash
     this.dashT = 0; this.dashVx = 0; this.pushVx = 0;
     this.throwT = 0; this.thrownBy = null; this.stayedDown = false;
-    this.chiBlocked = 0;
+    this.chiBlocked = 0; this.stance = 0;
     this.combo = 0; this.comboTimer = 0; this.ai = null; this.lastHitAt = -999;
     this.joints = null; updateJoints(this, true);
   }
@@ -171,7 +171,11 @@ class Fighter {
     // ataques (prioridade: super > especial 2 > especial > chute > soco)
     const noBend = this.chiBlocked > 0 || this.noBending;
     if (this.buf.super > 0 && this.chi >= CFG.MAX_CHI) { this.buf.super = 0; if (noBend) return this.chiBlockedFx(); return this.startAttack(this.moves.super); }
-    if (this.buf.special > 0) { this.buf.special = 0; if (noBend) return this.chiBlockedFx(); return this.startAttack(pad.down ? this.moves.special2 : this.moves.special); }
+    if (this.buf.special > 0) {
+      this.buf.special = 0; if (noBend) return this.chiBlockedFx();
+      if (this.char.stances) { if (pad.down) return this.cycleStance(); return this.startAttack(this.moves['special_' + this.char.stances[this.stance]] || this.moves.special); }
+      return this.startAttack(pad.down ? this.moves.special2 : this.moves.special);
+    }
     if (this.buf.punch > 0 && this.buf.kick > 0) { this.buf.punch = this.buf.kick = 0; return this.startThrow(); }
     if (this.buf.kick > 0) { this.buf.kick = 0; this.pending = { key: 'kick', frames: 2 }; return; }
     if (this.buf.punch > 0) { this.buf.punch = 0; this.pending = { key: 'punch', frames: 2 }; return; }
@@ -192,6 +196,13 @@ class Fighter {
   startNormal(key, pad) {
     if (key === 'punch') return this.startAttack(pad.down ? this.moves.cpunch : this.moves.punch);
     return this.startAttack(pad.down ? this.moves.sweep : this.moves.kick);
+  }
+  cycleStance() {
+    this.stance = (this.stance + 1) % this.char.stances.length;
+    const el = this.char.stances[this.stance];
+    this.startAttack(this.moves.special2);
+    Particles.element(el, this.x, this.y - 100, 14, { maxSpeed: 5 }); Audio_.element(el);
+    this.game.setAnnounce(T(ELEMENT_NAMES[el]).toUpperCase(), 30, { size: 36, color: ELEMENT_COLORS[el], y: 240 });
   }
   chiBlockedFx() {
     Particles.burst(this.x + this.facing * 30, this.y - 120, 6, { color: ['#f48fb1', '#fff'], maxSpeed: 3, shape: 'spark' });

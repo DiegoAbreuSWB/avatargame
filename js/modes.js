@@ -6,7 +6,7 @@ const ARCADE_FIGHTS = 7;
 Game.prototype.startArcade = function () {
   const me = CHARACTERS[this.select.p1];
   Rng.set((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
-  const pool = CHARACTERS.filter((c) => c.id !== me.id && !c.boss);
+  const pool = CHARACTERS.filter((c) => c.id !== me.id && !c.boss && !c.unlock);
   for (let i = pool.length - 1; i > 0; i--) { const j = Rng.int(0, i); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const boss = me.id === 'ozai' ? getCharacter('azula') : getCharacter('ozai');
   const ladder = pool.slice(0, ARCADE_FIGHTS - 1).concat([boss]);

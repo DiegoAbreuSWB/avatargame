@@ -221,6 +221,12 @@ const Rig3D = (() => {
         hair(G.cyl, c.hair, [-18, -14, 0], [4, 44, 4], [0, 0, 0.15]);                // rabo de cavalo
         hair(G.box, c.hair, [12, -5, 0], [14, 3, 12]);                               // bigode
         break;
+      case 'roku':
+        hair(G.sphere, c.hair, [-4, 5, 0], [19.6, 17, 19.6]);
+        hair(G.cyl, c.hair, [-16, -18, 0], [5, 50, 5], [0, 0, 0.12]);
+        hair(G.sphere, c.hair, [10, -16, 2], [10, 16, 8]);                         // barba longa
+        hair(G.cone, c.accent, [-2, 30, 0], [6, 14, 6]);                           // coroa
+        break;
       case 'hama':
         hair(G.sphere, c.hair, [-3, 4, 0], [19.6, 18, 19.6]);
         hair(G.sphere, c.hair, [-6, 26, 0], 9);                                      // coque

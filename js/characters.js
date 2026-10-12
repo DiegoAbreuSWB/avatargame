@@ -321,6 +321,30 @@ const CHARACTERS = [
           delay: 8, life: 36, follow: true, exclusive: false, cancels: false, pierce: true, unblockable: true } },
     },
   },
+  /* ---------- v1.1: Avatar Roku (desbloqueável) ---------- */
+  {
+    id: 'roku', name: 'Avatar Roku', title: 'O Avatar Anterior', element: 'fogo', nation: 'Nação do Fogo', unlock: { campaignDone: true },
+    colors: { skin: '#f0cfa8', primary: '#b3261e', secondary: '#5a1a1a', accent: '#e3b23c', hair: '#eceff1' },
+    speed: 5.4, jump: 18, weight: 1.1, stances: ['fogo', 'ar', 'agua', 'terra'],
+    stats: { forca: 4, velocidade: 3, alcance: 5 },
+    desc: 'Lendário. Alterna entre os quatro elementos (↓ + especial troca); cada um muda o projétil. Desbloqueado ao concluir qualquer campanha.',
+    moves: {
+      punch: Object.assign({}, BASE_MOVES.punch, { damage: 6 }),
+      kick: Object.assign({}, BASE_MOVES.kick, { damage: 10 }),
+      special: { name: 'Chama do Avatar', startup: 9, active: 2, recovery: 17, chi: 5, pose: 'cast', sound: 'fire',
+        projectile: { type: 'fire', x: 55, y: -115, vx: 11, w: 56, h: 44, damage: 11, chip: 2, knockback: 7, hitstun: 20, life: 110 } },
+      special_ar: { name: 'Rajada do Avatar', startup: 9, active: 2, recovery: 16, chi: 5, pose: 'cast', sound: 'air',
+        projectile: { type: 'air', x: 60, y: -115, vx: 13, w: 70, h: 50, damage: 9, chip: 1, knockback: 16, hitstun: 18, life: 100 } },
+      special_agua: { name: 'Onda do Avatar', startup: 10, active: 2, recovery: 18, chi: 5, pose: 'cast', sound: 'water',
+        projectile: { type: 'water', x: 55, y: -110, vx: 9, w: 84, h: 44, damage: 12, chip: 2, knockback: 9, hitstun: 22, life: 110 } },
+      special_terra: { name: 'Rocha do Avatar', startup: 13, active: 2, recovery: 22, chi: 6, pose: 'cast', sound: 'earth',
+        projectile: { type: 'rock', x: 50, y: -125, vx: 7.5, w: 60, h: 56, damage: 14, chip: 3, knockback: 9, hitstun: 26, life: 130, knockdown: true } },
+      special2: { name: 'Trocar Elemento', startup: 2, active: 1, recovery: 8, chi: 0, pose: 'cast', stanceCycle: true },
+      super: { name: 'Ira do Avatar', startup: 14, active: 2, recovery: 28, chi: 0, cost: 100, pose: 'super', sound: 'super',
+        projectile: { type: 'vortex', x: 0, y: -90, vx: 0, w: 600, h: 320, damage: 4, chip: 1, hitstun: 10, blockstun: 6, knockback: 0,
+          life: 66, follow: true, multi: 8, pull: 3, suction: { radius: 600, force: 5 }, exclusive: false, cancels: false, lastKnockdown: true } },
+    },
+  },
 ];
 
 function getCharacter(id) { return CHARACTERS.find((c) => c.id === id); }

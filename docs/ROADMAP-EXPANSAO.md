@@ -42,7 +42,7 @@ viram ADR em `DECISOES.md` quando forem implementadas.
 | **v0.8 Companheiros** ✔ feito (2026-10-11) | Momo, Appa, Nyla; tecla, HUD, IA, 3D, online; opção competitiva desligada | Release próprio porque toca todos os subsistemas |
 | **v0.9 Novos guerreiros** ✔ feito (2026-10-11) | Homem Combustão, Jet, Pakku, Hama (+ Rocha Fervente) | Jet e Azula são rivais do piloto do Zuko; melhor existirem antes |
 | **v1.0 Crônicas: piloto do Zuko** ✔ feito (2026-10-11) | motor de campanha + diálogos + mapa + campanha completa do Zuko | Valida o formato narrativo com um único personagem |
-| **v1.1 Crônicas completas** | Aang, Katara, Toph, Azula, Sokka; Roku desbloqueável; galeria | Replicar o formato validado |
+| **v1.1 Crônicas completas** ✔ feito (2026-10-11) | Aang, Katara, Toph, Azula, Sokka; Roku desbloqueável; galeria | Replicar o formato validado |
 
 ## 5. Cuidados técnicos (confirmados no código)
 

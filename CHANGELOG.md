@@ -2,6 +2,13 @@
 
 Todas as versões são de 2026-10-08. Decisões por trás de cada item em `docs/DECISOES.md`.
 
+## 1.1.0 — Crônicas completas
+- Campanhas de Aang (O Peso do Mundo), Katara (A Água Encontra um Caminho), Toph (A Bandida Cega), Azula (Perfeita) e Sokka (O Plano), cada uma com escolhas e dois finais.
+- Avatar Roku: personagem desbloqueável (concluir qualquer campanha) que troca de elemento durante a luta.
+- Galeria com biografias, golpes, trajes, estatísticas e finais vistos.
+- Testes: todas as campanhas percorridas automaticamente; postura e desbloqueio do Roku. ADR-043 e 044.
+- Simulação longa de balanceamento (6 lutas por par): 15 dos 16 lutadores entre 42% e 58%; Ozai (chefe) em 66%, mantido.
+
 ## 1.0.0 — Crônicas das Quatro Nações: campanha piloto do Zuko
 - Motor de campanha (capítulos, diálogos com retratos, escolhas com reputação, lutas com regras, recompensas, ramificações, finais) com progresso salvo a cada passo.
 - Campanha "O Caminho da Honra": 6 capítulos, 8 lutas por rota, 3 escolhas, 2 finais, trajes Espírito Azul e de treino como recompensa.

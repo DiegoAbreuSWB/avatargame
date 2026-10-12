@@ -212,6 +212,7 @@ function drawHead(ctx, ch, J, opts) {
   if (ch.id === 'mai') { dot(ctx, [hx - 4, hy - 3], r + 4, c.hair); dot(ctx, [hx - 14, hy - 22], 8, c.hair); dot(ctx, [hx + 6, hy - 25], 8, c.hair); }
   if (ch.id === 'ozai') { dot(ctx, [hx - 5, hy - 3], r + 3, c.hair); limb(ctx, [[hx - 16, hy - 4], [hx - 22, hy + 60]], 12, c.hair); }
   if (ch.id === 'suki') { dot(ctx, [hx - 6, hy - 2], r + 4, c.hair); }
+  if (ch.id === 'roku') { dot(ctx, [hx - 4, hy - 4], r + 3, c.hair); limb(ctx, [[hx - 14, hy - 2], [hx - 24, hy + 50]], 8, c.hair); }
   if (ch.id === 'pakku') { dot(ctx, [hx - 4, hy - 4], r + 3, c.hair); limb(ctx, [[hx - 14, hy - 2], [hx - 26, hy + 40]], 7, c.hair); }
   if (ch.id === 'hama') { dot(ctx, [hx - 3, hy - 3], r + 3, c.hair); dot(ctx, [hx - 6, hy - 24], 9, c.hair); }
   if (ch.id === 'jet') { dot(ctx, [hx - 5, hy - 5], r + 4, c.hair); }
@@ -295,6 +296,10 @@ function drawHead(ctx, ch, J, opts) {
     ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 8, 15, Math.PI, 0); ctx.fill();
     limb(ctx, [[hx - 2, hy + 6], [hx + 13, hy + 7]], 3, c.hair);                                                        // bigode
     limb(ctx, [[hx - 6, hy - 8], [hx + 1, hy - 9]], 3, c.hair); limb(ctx, [[hx + 4, hy - 9], [hx + 11, hy - 8]], 3, c.hair);
+  } else if (ch.id === 'roku') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 9, 15, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.ellipse(hx + 5, hy + 18, 9, 16, 0, 0, Math.PI); ctx.fill();   // barba longa
+    ctx.fillStyle = c.accent; ctx.beginPath(); ctx.moveTo(hx - 10, hy - 22); ctx.lineTo(hx - 3, hy - 40); ctx.lineTo(hx + 4, hy - 22); ctx.closePath(); ctx.fill();  // coroa
   } else if (ch.id === 'hama') {
     ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 9, 15, Math.PI, 0); ctx.fill();
     ctx.strokeStyle = 'rgba(90,60,50,.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx + 2, hy + 4); ctx.lineTo(hx + 9, hy + 3); ctx.moveTo(hx - 4, hy + 2); ctx.lineTo(hx, hy + 3); ctx.stroke();   // rugas

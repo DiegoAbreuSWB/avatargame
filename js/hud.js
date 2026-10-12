@@ -56,6 +56,7 @@ function drawHUD(ctx, game) {
     const tag = f.isCPU ? (game.mode === 'training' ? T('  (BONECO)') : T('  (CPU)')) : '';
     txt(ctx, f.char.name.toUpperCase() + tag, nameX, y + barH + 18, { font: FONT_DISPLAY, size: 20, align: side === 0 ? 'left' : 'right', color: '#fff', stroke: 'rgba(0,0,0,.8)' });
     txt(ctx, T(ELEMENT_NAMES[f.char.element]).toUpperCase(), nameX, y + barH + 38, { size: 12, align: side === 0 ? 'left' : 'right', color: ELEMENT_COLORS[f.char.element], stroke: 'rgba(0,0,0,.8)' });
+    if (f.char.stances) txt(ctx, T('ELEMENTO: {0}', T(ELEMENT_NAMES[f.char.stances[f.stance]]).toUpperCase()), nameX, y + barH + 58 + (f.noBending || f.chiBlocked > 0 ? 18 : 0), { size: 13, align: side === 0 ? 'left' : 'right', color: ELEMENT_COLORS[f.char.stances[f.stance]], stroke: 'rgba(0,0,0,.9)' });
     if (f.noBending) txt(ctx, T('SEM DOBRA (ECLIPSE)'), nameX, y + barH + 58, { size: 13, align: side === 0 ? 'left' : 'right', color: '#ffab91', stroke: 'rgba(0,0,0,.9)' });
     else if (f.chiBlocked > 0) txt(ctx, T('CHI BLOQUEADO {0}s', Math.ceil(f.chiBlocked / 60)), nameX, y + barH + 58, { size: 13, align: side === 0 ? 'left' : 'right', color: '#f48fb1', stroke: 'rgba(0,0,0,.9)' });
     const rtw = Math.min(game.roundsToWin, 5);

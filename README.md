@@ -5,7 +5,7 @@ HTML5 Canvas + JavaScript puro, sem build. O modo 3D usa Three.js carregado de C
 
 Repositório: https://github.com/DiegoAbreuSWB/avatargame · Jogar no navegador: https://diegoabreuswb.github.io/avatargame/
 
-Versão atual: **0.7.0**. Histórico em [CHANGELOG.md](CHANGELOG.md); decisões em [docs/DECISOES.md](docs/DECISOES.md); plano em [PLANO-DE-DESENVOLVIMENTO.md](PLANO-DE-DESENVOLVIMENTO.md).
+Versão atual: **0.8.0**. Histórico em [CHANGELOG.md](CHANGELOG.md); decisões em [docs/DECISOES.md](docs/DECISOES.md); plano em [PLANO-DE-DESENVOLVIMENTO.md](PLANO-DE-DESENVOLVIMENTO.md).
 
 ## Como jogar
 
@@ -13,7 +13,7 @@ Abra `index.html` no navegador (Chrome, Edge ou Firefox) e pressione **Enter**. 
 
 **Modos:** 2 jogadores · 1 jogador vs CPU · Arcade (7 lutas com chefe, continue e finais) · Sobrevivência (recorde salvo) · Desafio diário (a mesma luta para todos, com regras sorteadas) · Torneio local (4 ou 8, humanos ou CPU) · Treino (boneco, vida e chi infinitos, histórico de inputs, hitboxes) · Online experimental (sem servidor, troca de código de sala).
 
-**Regras especiais** (opcionais, antes da luta): Eclipse Solar, Lua Cheia, Cometa de Sozin, Tempestade, vida contínua, round de 30 s e super infinito. **Trajes** desbloqueáveis por personagem (Arcade e vitórias), trocados na seleção com a tecla de especial.
+**Companheiros:** Momo, Appa ou Nyla como assistência (barra de apoio própria; tecla R / U, LT ou RT no controle). **Regras especiais** (opcionais, antes da luta): Eclipse Solar, Lua Cheia, Cometa de Sozin, Tempestade, vida contínua, round de 30 s e super infinito. **Trajes** desbloqueáveis por personagem (Arcade e vitórias), trocados na seleção com a tecla de especial.
 
 **Gráficos:** 3D (lutadores low-poly com cel shading, cenários em 3D, câmera dinâmica, sombras, bloom) ou 2D clássico (câmera com zoom e parallax). Alterna em Configurações; sem WebGL o jogo cai no 2D sozinho.
 
@@ -32,6 +32,7 @@ Abra `index.html` no navegador (Chrome, Edge ou Firefox) e pressione **Enter**. 
 | Agarrão | F + G juntos | J + K juntos | RB |
 | Dash / recuo | toque duplo ← ou → | toque duplo ← ou → | LB (dash) |
 | Rasteira | S + G | ↓ + K | ↓ + A |
+| Companheiro | R | U | LT ou RT |
 
 Teclas remapeáveis em **Configurações → Controles do Jogador 1/2**. Em telas sensíveis ao toque aparecem controles virtuais para o Jogador 1.
 Enter confirma, Esc pausa ou volta, M liga/desliga o som, F1 mostra hitboxes. No Treino: F2 muda o boneco, F3 reposiciona, F4 chi infinito.
@@ -94,6 +95,7 @@ js/rig3d.js, render3d.js renderizador Three.js
 js/game.js               cenas, rounds, colisões
 js/settings-ui.js, modes.js, online.js, netplay.js, content.js   configurações, arcade/sobrevivência, online, textos
 js/modifiers.js, save.js, skins.js, daily.js, tournament.js   regras especiais, salvamento versionado, trajes, desafio diário, torneio
+js/companions.js         companheiros (dados, barra de apoio, desenho 2D/3D)
 js/main.js               inicialização, loop, PWA
 tests/                   harness e runner;  tools/  frame data, ícone, pacote;  docs/  decisões, frame data, publicação
 ```

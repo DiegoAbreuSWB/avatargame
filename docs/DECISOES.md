@@ -241,3 +241,16 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 
 **Escolha.** 4 ou 8 vagas, cada uma humana (P1 x P2 no teclado, passando a vez) ou CPU; chave sorteada com `Rng`; lutas CPU x CPU são resolvidas chamando `updateFight` em loop sem desenhar. Campeões ficam no save.
 **Por quê.** Reaproveita o fluxo de duas pessoas no teclado e o Arcade de IA; o torneio só adiciona a chave e a ordem das lutas.
+
+## ADR-037 · Companheiros são invocações, não lutadores
+
+**Contexto.** v0.8 do roadmap: animais como assistências (Momo, Appa, Nyla).
+**Escolha.** Invocar = golpe sintético (pose de chamado, 6+2+12 frames) que lança um projétil com visual próprio (`companions.js`). Barra de apoio separada do CHI: enche com o tempo (taxa por companheiro) e com golpes dados/recebidos; invocar gasta a barra inteira e só é possível com o lutador livre. Momo: rápido, 4 de dano e hitstun longo para abrir combos; Appa: surge atrás, atravessa a arena, derruba (recarga lenta); Nyla: língua em linha reta, 60 frames de paralisia.
+**Por quê.** Reaproveita `Projectile` (hitbox, bloqueio, chip, pierce, delay) e `startAttack`; nada novo em `Fighter` além de `assist` e `companion`. Barra separada evita competir com o Super.
+**Consequências.** Nova tecla `assist` (R / U, LT ou RT no controle, botão A no toque, bit no pacote online); a CPU invoca com 50% de chance quando a barra enche e o oponente está a 110–560 px; a CPU sempre recebe um companheiro sorteado (`Rng`). A opção "Companheiros: desligados (competitivo)" remove tudo; a simulação de balanceamento roda sem companheiros.
+
+## ADR-038 · Correção do overlay inicial
+
+**Contexto.** Fora do artefato (Pages e file://) o aviso "Pressione Enter" nunca sumia.
+**Causa.** `.overlay { display: flex }` (estilo do autor) vence o `display: none` que o navegador aplica ao atributo `hidden`; no claude.ai a página injeta `[hidden]{display:none!important}` e por isso o teste visual não pegou.
+**Escolha.** Regra `[hidden] { display: none !important; }` no CSS do projeto e estilo inline como garantia. Lição: testar a página real (`index.html`) além do harness, que não tem o overlay.

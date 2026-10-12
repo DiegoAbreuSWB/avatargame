@@ -165,8 +165,12 @@ class Game {
     }
   }
   gotoSelect() {
-    this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0, skin1: 0, skin2: 0, msg: '' };
+    this.select = { p1: 0, p2: 2, p1Done: false, p2Done: false, timer: 0, skin1: 0, skin2: 0, msg: '', comp1: this.select.comp1 || 'momo', comp2: this.select.comp2 || 'momo' };
     this.scene = 'select';
+  }
+  cycleCompanion(which) {
+    const s = this.select, i = COMPANIONS.findIndex((c) => c.id === (s['comp' + which] || 'none'));
+    s['comp' + which] = COMPANIONS[(i + 1) % COMPANIONS.length].id; Audio_.play('menu');
   }
   cycleSkin(which) {
     const s = this.select, ch = CHARACTERS[which === 1 ? s.p1 : s.p2], n = skinList(ch).length;
@@ -203,16 +207,19 @@ class Game {
     if (!s.p1Done) {
       this.moveCursor('p1', KEYMAPS.p1);
       if (Input.pressed(KEYMAPS.p1.special)) this.cycleSkin(1);
+      if (Input.pressed(KEYMAPS.p1.super) && Companions.enabled()) this.cycleCompanion(1);
       if ((Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter')) && this.skinAllowed(1)) { s.p1Done = true; Audio_.play('confirm'); }
     } else if (this.p1PicksBoth && !s.p2Done) {
       this.moveCursor('p2', KEYMAPS.p1);
       if (Input.pressed(KEYMAPS.p1.special)) this.cycleSkin(2);
+      if (Input.pressed(KEYMAPS.p1.super) && Companions.enabled()) this.cycleCompanion(2);
       if (Input.pressed(KEYMAPS.p1.kick)) { s.p2 = Rng.int(0, CHARACTERS.length - 1); s.skin2 = 0; }
       if ((Input.pressed(KEYMAPS.p1.punch) || Input.pressed('Enter') || Input.pressed(KEYMAPS.p1.kick)) && this.skinAllowed(2)) { s.p2Done = true; Audio_.play('confirm'); }
     }
     if (!this.p1PicksBoth && !s.p2Done) {
       this.moveCursor('p2', KEYMAPS.p2);
       if (Input.pressed(KEYMAPS.p2.special)) this.cycleSkin(2);
+      if (Input.pressed(KEYMAPS.p2.super) && Companions.enabled()) this.cycleCompanion(2);
       if ((Input.pressed(KEYMAPS.p2.punch) || (s.p1Done && Input.pressed('Enter') && !Input.pressed(KEYMAPS.p1.punch))) && this.skinAllowed(2)) { s.p2Done = true; Audio_.play('confirm'); }
     }
   }
@@ -246,6 +253,7 @@ class Game {
     this.quotes = this.fighters.map((f) => { const q = (typeof QUOTES !== 'undefined' && QUOTES[f.char.id]) || { intro: [''], win: [''] }; return { intro: Rng.pick(q.intro), win: Rng.pick(q.win) }; });
     this.cam2d = null; this.newUnlocks = [];
     Modifiers.onMatchStart(this);
+    Companions.setup(this);
     this.scene = 'fight';
     this.startRound();
   }
@@ -333,7 +341,7 @@ class Game {
       if (a.combo === 0 && b.canAct) this.training.lastCombo = this.training.lastCombo; // mantém o último até o próximo combo
     }
     this.roundFrame++;
-    if (control) Modifiers.onFrame(this);   // antes dos lutadores lerem o input (flags como 'sem dobra')
+    if (control) { Modifiers.onFrame(this); Companions.onFrame(this); }   // antes dos lutadores lerem o input (flags como 'sem dobra')
     a.update(padA, control); b.update(padB, control);
     this.separate(a, b);
 

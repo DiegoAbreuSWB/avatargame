@@ -2,6 +2,12 @@
 
 Todas as versões são de 2026-10-08. Decisões por trás de cada item em `docs/DECISOES.md`.
 
+## 0.8.0 — Companheiros
+- Momo (Distração Aérea), Appa (Investida do Bisão) e Nyla (Língua Paralisante) como assistências: barra de apoio própria, tecla R/U (LT/RT no controle, botão A no toque), escolha na seleção com a tecla de super.
+- CPU usa companheiros; opção "Companheiros: desligados (competitivo)"; companheiros viajam no cfg do Online.
+- Correção: overlay "Pressione Enter" não sumia fora do artefato (CSS do atributo hidden).
+- Testes: 4 verificações de companheiros; ADR-037 e 038.
+
 ## 0.7.0 — Regras e progressão (v0.7 do roadmap de expansão)
 - Regras especiais antes da luta: Eclipse Solar, Lua Cheia, Cometa de Sozin, Tempestade (raios e vento), vida contínua, round de 30 s, super infinito; valem no Versus, CPU e Online.
 - Salvamento versionado (estatísticas, desbloqueios, desafio diário, torneios) com migração e recuperação de dados corrompidos.

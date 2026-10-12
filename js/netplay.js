@@ -4,7 +4,7 @@
    Decisão: os dois lados simulam a mesma luta a partir dos mesmos inputs e da mesma semente (ADR-014);
    cada frame só avança quando o input remoto daquele frame chegou. Atraso de 3 frames (50 ms). */
 const NET_DELAY = 3;
-const PAD_BITS = ['left', 'right', 'up', 'down', 'upPressed', 'punch', 'kick', 'special', 'super', 'throw', 'dashF', 'dashB'];
+const PAD_BITS = ['left', 'right', 'up', 'down', 'upPressed', 'punch', 'kick', 'special', 'super', 'throw', 'dashF', 'dashB', 'assist'];
 function packPad(p) { let n = 0; PAD_BITS.forEach((k, i) => { if (p && p[k]) n |= 1 << i; }); return n; }
 function unpackPad(n) { const p = Input.emptyPad(); PAD_BITS.forEach((k, i) => { p[k] = !!(n & (1 << i)); }); return p; }
 

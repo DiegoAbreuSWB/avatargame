@@ -19,7 +19,7 @@ Game.prototype.dailyChallenge = function () {
 Game.prototype.startDaily = function () {
   const d = this.dailyChallenge();
   this.mode = 'daily';
-  this.select.p1 = d.p1; this.select.p2 = d.p2; this.select.skin1 = 0; this.select.skin2 = 0; this.stageIndex = d.stage;
+  this.select.p1 = d.p1; this.select.p2 = d.p2; this.select.skin1 = 0; this.select.skin2 = 0; this.select.comp1 = 'none'; this.select.comp2 = 'none'; this.stageIndex = d.stage;
   this.modifiers = d.mods.slice();
   this.aiLevelOverride = 'hard';
   this.seed = d.seed; this.startMatch(); this.seed = null;

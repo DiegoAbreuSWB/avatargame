@@ -28,7 +28,7 @@ class Fighter {
     this.stun = 0; this.airborne = false; this.crouching = false; this.blocking = false;
     this.invulnFrames = 0; this.flash = 0; this.launched = false; this.superActive = false;
     this.pad = Input.emptyPad(); this.prevPad = Input.emptyPad();
-    this.buf = { punch: 0, kick: 0, special: 0, super: 0 };
+    this.buf = { punch: 0, kick: 0, special: 0, super: 0, assist: 0 };
     this.pending = null;                      // soco/chute aguardando 2 frames para virar agarrão
     this.tap = { dir: 0, frame: -99 };        // toque duplo para dash
     this.dashT = 0; this.dashVx = 0; this.pushVx = 0;
@@ -166,6 +166,8 @@ class Fighter {
       if (--this.pending.frames <= 0) { const k = this.pending.key; this.pending = null; this.buf[k] = 0; return this.startNormal(k, pad); }
       return;
     }
+    // companheiro (barra de apoio cheia)
+    if (this.buf.assist > 0) { this.buf.assist = 0; if (typeof Companions !== 'undefined' && Companions.invoke(this)) return; }
     // ataques (prioridade: super > especial 2 > especial > chute > soco)
     const noBend = this.chiBlocked > 0 || this.noBending;
     if (this.buf.super > 0 && this.chi >= CFG.MAX_CHI) { this.buf.super = 0; if (noBend) return this.chiBlockedFx(); return this.startAttack(this.moves.super); }
@@ -379,6 +381,7 @@ class Fighter {
     this.chi = Math.min(CFG.MAX_CHI, this.chi + 3);
     attacker.chi = Math.min(CFG.MAX_CHI, attacker.chi + Math.round((data.chi || 5) * Modifiers.chiMult(this.game, attacker)));
     attacker.combo = comboSoFar + 1;
+    if (typeof Companions !== 'undefined' && attacker.companion) Companions.onHit(attacker, this);
     this.comboTimer = 45;
     attacker.comboTimer = 45;
     attacker.stats.hits++; attacker.stats.damage += dmg; attacker.stats.maxCombo = Math.max(attacker.stats.maxCombo, attacker.combo);

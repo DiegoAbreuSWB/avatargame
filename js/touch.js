@@ -9,6 +9,7 @@ const Touch = (() => {
     { id: 'up', x: 155, y: 480, r: 46, label: '▲' }, { id: 'down', x: 155, y: 640, r: 46, label: '▼' },
     { id: 'punch', x: 1000, y: 585, r: 44, label: 'S', color: '#f2a93b' }, { id: 'kick', x: 1095, y: 585, r: 44, label: 'C', color: '#4fc3f7' },
     { id: 'special', x: 1000, y: 490, r: 44, label: 'E', color: '#ffd54f' }, { id: 'super', x: 1095, y: 490, r: 44, label: 'U', color: '#bfe9ff' },
+    { id: 'assist', x: 1047, y: 400, r: 34, label: 'A', color: '#d7ccc8' },
     { id: 'pause', x: CFG.W / 2 + 90, y: 48, r: 22, label: 'II' },
   ];
 
@@ -43,7 +44,7 @@ const Touch = (() => {
   function pad() {
     if (!enabled()) return null;
     return { left: !!held.left, right: !!held.right, up: !!held.up, down: !!held.down, upPressed: !!pressed.up,
-      punch: !!pressed.punch, kick: !!pressed.kick, special: !!pressed.special, super: !!pressed.super, throw: false, dashF: false, dashB: false };
+      punch: !!pressed.punch, kick: !!pressed.kick, special: !!pressed.special, super: !!pressed.super, assist: !!pressed.assist, throw: false, dashF: false, dashB: false };
   }
   function menu() {
     if (!enabled()) return null;

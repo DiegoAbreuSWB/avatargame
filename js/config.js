@@ -17,13 +17,13 @@ const CFG = {
 const KEYMAPS = {
   p1: {
     left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS',
-    punch: 'KeyF', kick: 'KeyG', special: 'KeyH', super: 'KeyT',
-    labels: { move: 'W A S D', punch: 'F', kick: 'G', special: 'H', super: 'T' },
+    punch: 'KeyF', kick: 'KeyG', special: 'KeyH', super: 'KeyT', assist: 'KeyR',
+    labels: { move: 'W A S D', punch: 'F', kick: 'G', special: 'H', super: 'T', assist: 'R' },
   },
   p2: {
     left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown',
-    punch: 'KeyJ', kick: 'KeyK', special: 'KeyL', super: 'KeyI',
-    labels: { move: 'SETAS', punch: 'J', kick: 'K', special: 'L', super: 'I' },
+    punch: 'KeyJ', kick: 'KeyK', special: 'KeyL', super: 'KeyI', assist: 'KeyU',
+    labels: { move: 'SETAS', punch: 'J', kick: 'K', special: 'L', super: 'I', assist: 'U' },
   },
 };
 

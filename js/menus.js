@@ -37,13 +37,13 @@ function drawControls(ctx, game) {
   txt(ctx, T('CONTROLES'), CFG.W / 2, 60, { font: FONT_DISPLAY, size: 52, color: '#ffd54f', stroke: '#3b1d00', strokeWidth: 6 });
   const cols = [[KEYMAPS.p1, T('JOGADOR 1'), '#f2a93b', 330], [KEYMAPS.p2, T('JOGADOR 2'), '#4fc3f7', 950]];
   for (const [m, title, col, cx] of cols) {
-    ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, cx - 260, 100, 520, 470, 12); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, cx - 260, 100, 520, 500, 12); ctx.fill();
     txt(ctx, title, cx, 130, { font: FONT_DISPLAY, size: 26, color: col });
     const L = m.labels;
     const rows = [
       [T('Mover'), `${L.left} / ${L.right}`], [T('Pular'), L.up], [T('Agachar'), L.down], [T('Bloquear'), T('segurar para trás')],
       [T('Soco'), L.punch], [T('Chute'), L.kick], [T('Especial (dobra)'), L.special], [T('Especial 2'), `${L.down} + ${L.special}`], [T('Super (chi cheio)'), L.super],
-      [T('Rasteira'), `${L.down} + ${L.kick}`], [T('Golpes aéreos'), T('pulo + soco/chute')], [T('Agarrão'), T('soco + chute juntos')], [T('Dash'), T('toque duplo ← ou →')],
+      [T('Rasteira'), `${L.down} + ${L.kick}`], [T('Golpes aéreos'), T('pulo + soco/chute')], [T('Agarrão'), T('soco + chute juntos')], [T('Dash'), T('toque duplo ← ou →')], [T('Companheiro'), L.assist],
     ];
     rows.forEach(([k, v], i) => {
       const y = 166 + i * 30;
@@ -51,8 +51,8 @@ function drawControls(ctx, game) {
       txt(ctx, v, cx + 230, y, { size: 17, align: 'right', color: '#fff' });
     });
   }
-  txt(ctx, T('Melhor de 3 rounds · 99 segundos · Golpes acertados enchem o CHI para o Super'), CFG.W / 2, 600, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
-  txt(ctx, T('Esc ou Enter para voltar · As teclas podem ser alteradas em Configurações'), CFG.W / 2, 630, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  txt(ctx, T('Melhor de 3 rounds · 99 segundos · Golpes acertados enchem o CHI para o Super'), CFG.W / 2, 622, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
+  txt(ctx, T('Esc ou Enter para voltar · As teclas podem ser alteradas em Configurações'), CFG.W / 2, 648, { size: 15, color: '#b0bec5', stroke: 'rgba(0,0,0,.8)' });
 }
 
 function drawSelect(ctx, game) {
@@ -93,6 +93,7 @@ function drawSelect(ctx, game) {
     txt(ctx, label, px + pw / 2, 148, { size: 16, color: col, stroke: 'rgba(0,0,0,.8)' });
     const skinIdx = side === 0 ? s.skin1 : s.skin2;
     drawSkinLabel(ctx, ch, skinIdx, px + pw / 2, 170, side === 0 || game.p1PicksBoth ? KEYMAPS.p1.labels.special : KEYMAPS.p2.labels.special);
+    if (Companions.enabled()) { const comp = Companions.get(side === 0 ? s.comp1 : s.comp2); txt(ctx, T('Companheiro: {0}', comp.id === 'none' ? T('Nenhum') : comp.name) + `  (${side === 0 || game.p1PicksBoth ? KEYMAPS.p1.labels.super : KEYMAPS.p2.labels.super})`, px + pw / 2, 204, { size: 13, color: comp.color || '#cfd8dc', weight: 400, stroke: 'rgba(0,0,0,.8)' }); if (comp.id !== 'none') txt(ctx, T(comp.title), px + pw / 2, 220, { size: 12, color: '#9fb0bb', weight: 400, stroke: 'rgba(0,0,0,.8)' }); }
     if (!game.is3D) drawFigureAt(ctx, skinnedChar(ch, skinIdx), px + pw / 2, 420, 1.15, done ? 'win' : 'idle', game.t, side === 0 ? 1 : -1, { staff: false });
     ctx.fillStyle = 'rgba(0,0,0,.45)'; roundRect(ctx, px + 8, 436, pw - 16, 146, 10); ctx.fill();
     txt(ctx, ch.name.toUpperCase(), px + pw / 2, 460, { font: FONT_DISPLAY, size: 30, color: '#fff', stroke: 'rgba(0,0,0,.9)' });

@@ -88,6 +88,7 @@ function drawHUD(ctx, game) {
   if (Audio_.isMuted()) txt(ctx, T('MUDO (M)'), W / 2, 96, { size: 12, color: '#bbb', stroke: 'rgba(0,0,0,.8)' });
   const mods = Modifiers.labels(game);
   if (mods.length) txt(ctx, mods.join('  ·  '), W / 2, Audio_.isMuted() ? 112 : 96, { size: 12, color: '#ffd54f', stroke: 'rgba(0,0,0,.9)' });
+  if (typeof drawAssistBars === 'function') drawAssistBars(ctx, game);
   drawQuotes(ctx, game);
 }
 

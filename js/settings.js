@@ -3,12 +3,12 @@
    para que novas opções possam ser adicionadas sem invalidar o que o jogador já salvou. */
 const Settings = (() => {
   const DEFAULT_KEYS = {
-    p1: { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', punch: 'KeyF', kick: 'KeyG', special: 'KeyH', super: 'KeyT' },
-    p2: { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', punch: 'KeyJ', kick: 'KeyK', special: 'KeyL', super: 'KeyI' },
+    p1: { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', punch: 'KeyF', kick: 'KeyG', special: 'KeyH', super: 'KeyT', assist: 'KeyR' },
+    p2: { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', punch: 'KeyJ', kick: 'KeyK', special: 'KeyL', super: 'KeyI', assist: 'KeyU' },
   };
   const DEFAULTS = {
     graphics: '3d', sound: true, music: true, difficulty: 'normal', roundTime: 99, roundsToWin: 2,
-    lang: 'pt', touch: 'auto', debug: false, rules: [], keys: DEFAULT_KEYS,
+    lang: 'pt', touch: 'auto', debug: false, rules: [], companions: true, keys: DEFAULT_KEYS,
   };
   const KEY = 'avatarArena.settings';
   const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -44,7 +44,7 @@ const Settings = (() => {
     return {
       move: `${keyLabel(m.up)} ${keyLabel(m.left)} ${keyLabel(m.down)} ${keyLabel(m.right)}`,
       up: keyLabel(m.up), down: keyLabel(m.down), left: keyLabel(m.left), right: keyLabel(m.right),
-      punch: keyLabel(m.punch), kick: keyLabel(m.kick), special: keyLabel(m.special), super: keyLabel(m.super),
+      punch: keyLabel(m.punch), kick: keyLabel(m.kick), special: keyLabel(m.special), super: keyLabel(m.super), assist: keyLabel(m.assist || 'KeyR'),
     };
   }
   return { load, save, reset, resetKeys, onChange, get data() { return data; }, DEFAULTS, DEFAULT_KEYS };

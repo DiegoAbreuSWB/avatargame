@@ -75,6 +75,8 @@ const I18N = {
     'TORNEIO DAS QUATRO NAÇÕES': 'FOUR NATIONS TOURNAMENT', 'Participantes': 'Participants', 'Jogador {0}': 'Player {0}', 'humano': 'human', 'COMEÇAR': 'START',
     '←/→ troca lutador ou tamanho · Espaço ou chute alterna humano/CPU · Enter avança · Esc volta': '←/→ change fighter or size · Space or kick toggles human/CPU · Enter next · Esc back',
     'CAMPEÃO!': 'CHAMPION!', 'CHAVE DO TORNEIO': 'TOURNAMENT BRACKET', 'Campeão': 'Champion', 'Enter inicia a próxima luta ({0} x {1}) · Esc abandona': 'Enter starts the next match ({0} vs {1}) · Esc quits',
+    // v0.8: companheiros
+    'Companheiro': 'Companion', 'Companheiros': 'Companions', 'Desligados (competitivo)': 'Off (competitive)', 'Companheiro: {0}': 'Companion: {0}', 'Nenhum': 'None', 'Distração Aérea': 'Aerial Distraction', 'Investida do Bisão': 'Bison Charge', 'Língua Paralisante': 'Paralyzing Tongue', '{0} PRONTO ({1})': '{0} READY ({1})',
     // cenários
     'Templo do Ar do Sul': 'Southern Air Temple', 'Ba Sing Se': 'Ba Sing Se', 'Palácio da Nação do Fogo': 'Fire Nation Palace', 'Tribo da Água do Norte': 'Northern Water Tribe', 'Ilha Ember': 'Ember Island',
     'Deserto Si Wong': 'Si Wong Desert', 'Pântano Nebuloso': 'Foggy Swamp', 'Omashu': 'Omashu',

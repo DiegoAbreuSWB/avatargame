@@ -24,7 +24,7 @@ class Projectile {
       this.y = CFG.GROUND - this.h / 2;
       this.x = spec.atTarget ? target.x : owner.x + (spec.x || 0) * this.facing;
       if (this.type === 'quake') this.x = CFG.W / 2;
-    } else if (this.type === 'beam') {
+    } else if (this.type === 'beam' || this.type === 'nyla') {
       this.y = owner.y + spec.y;
       this.x = owner.x + this.facing * (this.w / 2 + 30);
     } else {
@@ -53,7 +53,7 @@ class Projectile {
         if (Math.abs(dx) < this.suction.radius && Math.abs(dx) > 50) t.x -= Math.sign(dx) * this.suction.force;
         if (this.frame % 3 === 0) Particles.element('ar', t.x + rand(-30, 30), t.y - rand(20, 150), 1, { maxSpeed: 2 });
       }
-    } else if (this.type !== 'beam' && !GROUND_TYPES.has(this.type)) {
+    } else if (this.type !== 'beam' && this.type !== 'nyla' && !GROUND_TYPES.has(this.type)) {
       if (this.returning) {
         const dist = Math.abs(this.x - this.owner.x);
         if (!this.returnPhase && (this.frame > 40 || this.x < 30 || this.x > CFG.W - 30)) this.returnPhase = true;
@@ -169,6 +169,7 @@ class Projectile {
         ctx.strokeStyle = '#546e7a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-w / 2, h / 3); ctx.lineTo(0, -h / 2); ctx.lineTo(w / 2, h / 3); ctx.stroke();
         break;
       }
+      case 'momo': case 'appa': case 'nyla': drawCompanion2D(ctx, this); break;
       case 'bolt': {
         if (this.delay > 0) {
           ctx.fillStyle = `rgba(155,231,255,${0.25 + 0.5 * ((this.frame % 10) / 10)})`; ctx.beginPath(); ctx.ellipse(x, CFG.GROUND, w * 1.2, 10, 0, 0, Math.PI * 2); ctx.fill();

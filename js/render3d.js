@@ -408,6 +408,7 @@ function makeProjectileVisual(p, r) {
       v.update = (p) => { pos(p); group.rotation.z = p.rot * 1.4; };
       break;
     }
+    case 'momo': case 'appa': case 'nyla': { const cv = makeCompanionVisual(p, add, glow, G); v.update = (p) => cv.update(p, group); break; }
     case 'bolt': {
       const core = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff') }), [6, CFG.GROUND, 6]);
       const halo = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#4fd5ff'), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }), [22, CFG.GROUND, 22]);

@@ -66,6 +66,7 @@ const AI = (() => {
       else { action = 'wait'; hold = 10; }
     }
     if (f.chi >= CFG.MAX_CHI && dist < 420 && Rng.chance(L.superChance)) action = 'super';
+    if (f.companion && f.companion.id !== 'none' && f.assist >= ASSIST_MAX && dist > 110 && dist < 560 && Rng.chance(0.5)) action = 'assist';
     if (f.chiBlocked > 0 && ['special', 'special2', 'super'].includes(action)) action = dist < 120 ? 'kick' : 'approach';
 
     m.action = action; m.hold = hold; m.think = randIntR(L.think[0], L.think[1]);
@@ -89,6 +90,7 @@ const AI = (() => {
       case 'jumpFwd': pad.upPressed = true; pad.up = true; pad[fwd] = true; break;
       case 'dashFwd': pad.dashF = true; pad[fwd] = true; break;
       case 'throw': pad.throw = true; break;
+      case 'assist': pad.assist = true; break;
       case 'wait': default: break;
     }
   }

@@ -13,7 +13,7 @@ const Gamepad_ = (() => {
     const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
     return {
       left: b(14) || ax < -0.5, right: b(15) || ax > 0.5, up: b(12) || ay < -0.5, down: b(13) || ay > 0.5,
-      punch: b(2), kick: b(0), special: b(1), super: b(3), throw: b(5), dash: b(4), start: b(9), back: b(8),
+      punch: b(2), kick: b(0), special: b(1), super: b(3), throw: b(5), dash: b(4), assist: b(6) || b(7), start: b(9), back: b(8),
     };
   }
 
@@ -30,7 +30,7 @@ const Gamepad_ = (() => {
       pads[slot] = {
         left: raw.left, right: raw.right, up: raw.up, down: raw.down, upPressed: edge('up'),
         punch: edge('punch'), kick: edge('kick'), special: edge('special'), super: edge('super'),
-        throw: edge('throw'), dashF: edge('dash'), dashB: false,
+        throw: edge('throw'), dashF: edge('dash'), dashB: false, assist: edge('assist'),
       };
       menu.up = menu.up || edge('up'); menu.down = menu.down || edge('down'); menu.left = menu.left || edge('left'); menu.right = menu.right || edge('right');
       menu.confirm = menu.confirm || edge('kick') || edge('start'); menu.back = menu.back || edge('special') || edge('back'); menu.start = menu.start || edge('start');

@@ -1,12 +1,12 @@
 /* Telas de Configurações e de remapeamento de controles (métodos adicionados à classe Game). */
 const REMAP_ACTIONS = [
   ['up', 'Pular / Cima'], ['down', 'Agachar / Baixo'], ['left', 'Esquerda'], ['right', 'Direita'],
-  ['punch', 'Soco'], ['kick', 'Chute'], ['special', 'Especial (dobra)'], ['super', 'Super'],
+  ['punch', 'Soco'], ['kick', 'Chute'], ['special', 'Especial (dobra)'], ['super', 'Super'], ['assist', 'Companheiro'],
 ];
 
 Game.prototype.settingsRows = function () {
   const d = Settings.data;
-  const lbl = (m) => `${m.labels.move} · ${m.labels.punch} ${m.labels.kick} ${m.labels.special} ${m.labels.super}`;
+  const lbl = (m) => `${m.labels.move} · ${m.labels.punch} ${m.labels.kick} ${m.labels.special} ${m.labels.super} ${m.labels.assist}`;
   return [
     { key: 'lang', label: 'Idioma', values: ['pt', 'en'], names: { pt: 'Português', en: 'Inglês' } },
     { key: 'graphics', label: 'Gráficos', values: ['3d', '2d'], names: { '3d': '3D', '2d': '2D clássico' }, disabled: !this.r3d, note: this.r3d ? '' : 'WebGL indisponível' },
@@ -16,6 +16,7 @@ Game.prototype.settingsRows = function () {
     { key: 'roundTime', label: 'Tempo do round', values: [60, 99, 0], names: { 60: '60 s', 99: '99 s', 0: 'Sem limite' } },
     { key: 'roundsToWin', label: 'Rounds para vencer', values: [1, 2, 3], names: { 1: '1', 2: '2 (melhor de 3)', 3: '3 (melhor de 5)' } },
     { key: 'touch', label: 'Controles de toque', values: ['auto', 'on', 'off'], names: { auto: 'Automático', on: 'Sempre', off: 'Nunca' } },
+    { key: 'companions', label: 'Companheiros', values: [true, false], names: { true: 'Ligados', false: 'Desligados (competitivo)' } },
     { key: 'debug', label: 'Mostrar hitboxes (F1)', values: [false, true], names: { false: 'Não', true: 'Sim' } },
     { action: 'remap', player: 'p1', label: 'Controles do Jogador 1', value: lbl(KEYMAPS.p1) },
     { action: 'remap', player: 'p2', label: 'Controles do Jogador 2', value: lbl(KEYMAPS.p2) },

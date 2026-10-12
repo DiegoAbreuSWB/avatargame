@@ -47,6 +47,7 @@ body {
   outline: none;
 }
 #game { background: transparent; }
+[hidden] { display: none !important; }
 .overlay {
   position: absolute;
   inset: 0;

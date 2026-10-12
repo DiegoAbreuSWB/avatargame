@@ -23,7 +23,7 @@
   function start() {
     if (started) return;
     started = true;
-    overlay.hidden = true;
+    overlay.hidden = true; overlay.style.display = 'none';   // dupla garantia: atributo e estilo inline
     Audio_.resume();
   }
   overlay.hidden = false;

@@ -2,6 +2,13 @@
 
 Todas as versões são de 2026-10-08. Decisões por trás de cada item em `docs/DECISOES.md`.
 
+## 1.0.0 — Crônicas das Quatro Nações: campanha piloto do Zuko
+- Motor de campanha (capítulos, diálogos com retratos, escolhas com reputação, lutas com regras, recompensas, ramificações, finais) com progresso salvo a cada passo.
+- Campanha "O Caminho da Honra": 6 capítulos, 8 lutas por rota, 3 escolhas, 2 finais, trajes Espírito Azul e de treino como recompensa.
+- Correção no salvamento: a migração descartava chaves novas (progresso de campanha).
+- Passada de balanceamento com 16 lutadores (Suki, Ty Lee e Bumi para cima; Sokka, Zuko e Ozai para baixo).
+- Testes: duas rotas da campanha, retomada do save; ADR-041 e 042.
+
 ## 0.9.0 — Novos guerreiros
 - Homem Combustão (explosões de longo alcance com carga vulnerável), Jet (gancho que puxa, investida, super multi-hit), Mestre Pakku (chicotes longos, muralha de gelo que absorve projéteis, tempestade polar) e Hama (armadilha de água e Prisão da Lua Cheia, chefe).
 - Cenário Prisão da Rocha Fervente. Título e seleção adaptados a 16 lutadores.

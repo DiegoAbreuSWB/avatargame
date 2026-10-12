@@ -11,6 +11,7 @@ const Save = (() => {
     stats: { matches: 0, wins: {}, arcadeWins: {}, survivalBest: 0 },   // wins/arcadeWins por id de personagem
     daily: {},                                                   // { '20261008': { best: 1234, won: true, tries: 2 } }
     tournament: { champions: [] },                               // [{ date, char, size }]
+    campaigns: {},                                               // { zuko: { chapter, node, flags, rep, endings, done } }
   };
   let data = clone(DEFAULTS);
 

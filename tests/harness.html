@@ -49,6 +49,8 @@ if (PARAMS.r === '3d') {
 <script src="../js/modifiers.js"></script>
 <script src="../js/daily.js"></script>
 <script src="../js/tournament.js"></script>
+<script src="../js/campaign.js"></script>
+<script src="../content/campaigns/zuko.js"></script>
 <script>
 (function () {
   const out = { errors: window.__errors, warns: window.__warns, mode: PARAMS.mode || 'all', r: PARAMS.r || '2d', scenes: {}, moves: [], cpuFight: null, matchups: null, shot: null };
@@ -301,7 +303,7 @@ if (PARAMS.r === '3d') {
     safe('v07 cometa', () => {
       const [a, b] = setup(2, 3, ['cometa'], 300); a.startAttack(a.moves.special); run(12);
       const p = game.projectiles.find((x) => x.type === 'fire'); const w = p ? p.w : 0;
-      run(60); v.cometa = w === 76 && 100 - b.hp === 15; v.cometaValues = [w, 100 - b.hp];
+      run(60); const exp = Math.round(a.moves.special.projectile.damage * 1.4); v.cometa = w === 76 && 100 - b.hp === exp; v.cometaValues = [w, 100 - b.hp, exp];
     });
     safe('v07 tempestade', () => {
       const [a, b] = setup(0, 5, ['tempestade'], 400); const seen = new Set(); let moved = false; const ax = a.x;
@@ -441,6 +443,38 @@ if (PARAMS.r === '3d') {
     Settings.data.companions = true;
   }
 
+  if (mode === 'all' || mode === 'campaign') {
+    const c = out.campaign = {};
+    const play = (choiceIdx) => {
+      Save.reset(); game.campaignReset ? null : null;
+      game.campaignLoad('zuko'); game.campaignReset('zuko'); game.camp.prog = game.campaignProgress('zuko');
+      const seen = [], fights = []; let guard = 0;
+      game.campaignGoto(game.camp.prog.node);
+      while (guard++ < 400) {
+        const sc = game.scene; seen.push(sc);
+        if (sc === 'dialogue') { game.dlg.chars = 9999; game.dlg.i = game.dlg.node.lines.length; game.campaignGoto(game.dlg.node.next); }
+        else if (sc === 'choice') { const opt = game.choice.node.options[Math.min(choiceIdx, game.choice.node.options.length - 1)]; const prog = game.camp.prog; if (opt.flag) prog.flags[opt.flag] = true; if (opt.rep) prog.rep += opt.rep; game.campaignGoto(opt.next); }
+        else if (sc === 'campaignMsg') game.campaignGoto(game.campMsg.next);
+        else if (sc === 'fight') { fights.push(game.fighters[1].char.id + (game.fighters[0].hp < 100 ? '(noHeal:' + game.fighters[0].hp + ')' : '')); game.fighters[0].isCPU = true; game.fighters[0].maxHp = 1000; game.fighters[0].hp = 1000; game.fighters[0].hpGhost = 1000; game.fighters[1].maxHp = 3; game.fighters[1].hp = 3; game.fighters[1].hpGhost = 3; let g2 = 0; while (game.scene === 'fight' && g2++ < 60000) game.update(); if (game.scene === 'fight') { c.stall = { phase: game.phase, paused: game.paused, hitstop: game.hitstop, timer: game.timer, inf: game.infiniteTime, hp: [game.fighters[0].hp, game.fighters[1].hp], st: [game.fighters[0].state, game.fighters[1].state], a: [game.fighters[0].x, game.fighters[1].x], mods: game.modifiers, net: !!game.net, padA: !!game.padSourceA, padB: !!game.padSourceB, cpu: [game.fighters[0].isCPU, game.fighters[1].isCPU], frame: game.roundFrame }; break; } game.fighters[0].isCPU = false; }
+        else if (sc === 'campaignEnding') break;
+        else if (sc === 'campaignRetry') { if (!c.lossInfo) c.lossInfo = { node: game.camp.prog.node, winner: game.winner && game.winner.char.id, hp: [game.fighters[0].hp, game.fighters[1].hp], maxHp: [game.fighters[0].maxHp, game.fighters[1].maxHp], hitsA: game.fighters[0].stats.hits, hitsB: game.fighters[1].stats.hits, timer: game.timer, round: game.round, lvl: [game.fighters[0].aiLevel, game.fighters[1].aiLevel, game.fighters[0].isCPU], mods: game.modifiers, noBend: game.fighters[0].noBending, chiB: game.fighters[0].chiBlocked, seed: game.matchSeed }; game.campaignGoto(game.camp.prog.node); }
+        else break;
+      }
+      return { scenes: [...new Set(seen)], fights, ending: game.campEnding && game.campEnding.id, done: game.camp.prog.done, rep: game.camp.prog.rep, endings: game.camp.prog.endings.slice(), skins: (Save.data.unlocks.skins.zuko || []).slice() };
+    };
+    safe('campaign true honor', () => { const r = play(1); c.trueHonor = r; c.okTrue = r.ending === 'honraVerdadeira' && r.fights.length >= 6 && r.skins.includes('espiritoAzul'); });
+    safe('campaign power', () => { const r = play(0); c.power = r; c.okPower = r.ending === 'honraPeloPoder' && r.fights.length >= 6 && r.fights.includes('iroh'); });
+    safe('campaign resume', () => {
+      Save.reset(); game.campaignLoad('zuko'); game.campaignReset('zuko'); game.camp.prog = game.campaignProgress('zuko');
+      game.campaignGoto('c2_f1'); const raw = JSON.stringify(Save.data); game.mode = '2p'; game.scene = 'title';
+      Save.importRaw(raw); game.campaignLoad('zuko');
+      c.resume = game.camp.prog.node === 'c2_f1'; c.resumeNode = game.camp.prog.node;
+      game.scene = 'title'; game.aiLevelOverride = null; game.modifiers = []; game.mode = '2p';
+    });
+    safe('campaign scenes draw', () => { game.campaignLoad('zuko'); game.scene = 'campaignSelect'; game.campSel = { index: 0 }; game.draw(); game.scene = 'campaignMap'; game.draw(); game.campaignGoto('c1_d1'); game.draw(); game.campaignGoto('c3_c1'); game.draw(); game.campaignGoto('ch1'); game.draw(); c.draws = true; game.scene = 'title'; });
+    Save.reset();
+  }
+
   if (mode === 'all' || mode === 'netplay') {
     safe('netplay', () => {
       const cv2 = document.createElement('canvas'); cv2.width = 1280; cv2.height = 720;
@@ -490,7 +524,7 @@ if (PARAMS.r === '3d') {
     });
   }
 
-  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { if (PARAMS.scene === 'remap') game.remap = { player: 'p1', index: 4, listening: true, message: '' }; if (PARAMS.scene === 'result') { game.winner = game.fighters[0]; game.fighters[0].stats.hits = 23; game.fighters[0].stats.maxCombo = 4; game.fighters[0].stats.damage = 210; game.fighters[1].stats.hits = 11; game.fighters[1].stats.damage = 96; game.fighters[1].stats.throws = 1; } if (PARAMS.scene === 'rules') game.gotoRules(); if (PARAMS.scene === 'tournamentSetup') game.startTournamentSetup(); if (PARAMS.scene === 'bracket') { game.startTournamentSetup(); game.tournament.slots.forEach((s) => { s.cpu = true; }); game.buildBracket(); } if (PARAMS.scene === 'ladder') { game.mode = 'arcade'; game.select.p1 = parseInt(PARAMS.p1 || '0', 10); game.startArcade(); } game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
+  if (PARAMS.scene && PARAMS.scene !== 'fight') safe('final scene', () => { if (PARAMS.scene === 'remap') game.remap = { player: 'p1', index: 4, listening: true, message: '' }; if (PARAMS.scene === 'result') { game.winner = game.fighters[0]; game.fighters[0].stats.hits = 23; game.fighters[0].stats.maxCombo = 4; game.fighters[0].stats.damage = 210; game.fighters[1].stats.hits = 11; game.fighters[1].stats.damage = 96; game.fighters[1].stats.throws = 1; } if (PARAMS.scene === 'rules') game.gotoRules(); if (PARAMS.scene === 'dialogue') { game.campaignLoad('zuko'); game.campaignGoto('c4_d1'); } if (PARAMS.scene === 'campaignMap') { game.campaignLoad('zuko'); } if (PARAMS.scene === 'choice') { game.campaignLoad('zuko'); game.campaignGoto('c3_c1'); } if (PARAMS.scene === 'tournamentSetup') game.startTournamentSetup(); if (PARAMS.scene === 'bracket') { game.startTournamentSetup(); game.tournament.slots.forEach((s) => { s.cpu = true; }); game.buildBracket(); } if (PARAMS.scene === 'ladder') { game.mode = 'arcade'; game.select.p1 = parseInt(PARAMS.p1 || '0', 10); game.startArcade(); } game.scene = PARAMS.scene; for (let i = 0; i < 30; i++) game.update(); game.draw(); });
   document.getElementById('log').textContent = JSON.stringify(out);
 })();
 </script>

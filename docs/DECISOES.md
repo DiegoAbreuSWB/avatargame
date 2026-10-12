@@ -272,3 +272,17 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 ## ADR-040 · Título e seleção escalam com o elenco
 
 **Escolha.** A fileira do título e a grade de seleção calculam posições e tamanho a partir de `CHARACTERS.length` (4 colunas, altura da célula limitada a 500 px no total). Antes, as posições do título no 3D eram uma lista fixa de 6 e os lutadores extras ficavam em `NaN` (invisíveis, sem erro).
+
+## ADR-041 · Motor de campanha como grafo de nós, conteúdo em JS
+
+**Contexto.** v1.0 do roadmap: campanha piloto do Zuko.
+**Escolha.** `campaign.js` executa um grafo de nós por id: `chapter`, `dialogue` (falas com retrato e efeito de digitação), `choice` (flags e reputação), `fight` (oponente, cenário, nível, rounds, `noHeal`, `mods`, `bossHp`), `reward` (traje), `branch` (função sobre o progresso) e `ending`. O conteúdo fica em `content/campaigns/<id>.js` definindo `CAMPAIGNS[id]` (JS, não JSON: `fetch` falha em file://, ADR-001). Progresso em `Save.data.campaigns[id]` a cada nó; derrota abre "tentar de novo" sem perder a história; Esc em qualquer tela volta ao mapa.
+**Por quê.** Reusa o motor de luta (`mode: 'campaign'` só muda rounds, nível, regras e vida carregada) e os sistemas da v0.7 (modificadores, salvamento, trajes). Um capítulo novo é só dados.
+**Consequências.** A campanha do Zuko tem 6 capítulos, 8 lutas por rota, 3 escolhas e 2 finais (reputação > 0 = honra verdadeira). Companheiros ficam desligados na campanha e no desafio diário (`usesCompanions`). O teste `campaign` percorre as duas rotas com escolhas roteirizadas e confere finais, trajes e a retomada do save. Um bug real apareceu: `migrate` descartava chaves fora dos padrões, apagando o progresso ao recarregar; `campaigns` entrou nos padrões do save.
+
+## ADR-042 · Balanceamento do elenco de 16
+
+**Resultado (3 lutas por par, sem companheiros):** Sokka 69%, Zuko 67%, Ozai 62% acima; Suki 16%, Ty Lee 27%, Bumi 29% abaixo. Causa dos fracos: kits de curto alcance com especiais que a IA usa de longe (postura e bloqueio de chi erram o tempo) e Bumi lento demais para chegar perto.
+**Ajustes.** Suki: soco 6, chute 10, leque 10 de dano e alcance 560, postura ativa por 28 frames, velocidade 6,3. Ty Lee: +1 de dano em todos os golpes. Bumi: velocidade 4,6, soco e chute mais rápidos, pedra 16 de dano. Sokka: bumerangue 7, espada 11. Zuko: chute 9, bola de fogo 10. Ozai: chute 11, cometa 14. Nova simulação registrada no CHANGELOG quando terminar.
+
+**Segunda simulação (outra semente, 3 por par):** Ozai 87%, Jet 71%, Hama 64%; Ty Lee 36%, Iroh 36%, Suki 29%. A oscilação de Ozai (62% → 87%) e de Iroh (58% → 36%) sem mudança nos kits mostra que 45 lutas por personagem têm margem de ±15 pontos: com 16 lutadores a simulação precisa de `--pairs 8` ou mais (demora ~30 min) para guiar ajustes finos. Ajuste final desta versão, só no que é consistente nas duas rodadas: Ozai mais lento e Fênix 30; Suki contra-ataque 14; gancho do Jet com hitstun 22. Balanceamento fino fica para a v1.1 com a simulação longa.

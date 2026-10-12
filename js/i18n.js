@@ -80,6 +80,11 @@ const I18N = {
     // v0.9
     'O Assassino de Longo Alcance': 'The Long-Range Assassin', 'Combatente da Liberdade': 'Freedom Fighter', 'Mestre da Tribo do Norte': 'Master of the Northern Tribe', 'A Marionetista': 'The Puppetmaster',
     'Explosão Devastadora': 'Devastating Blast', 'Fúria dos Combatentes da Liberdade': 'Freedom Fighters\' Fury', 'Tempestade Polar': 'Polar Storm', 'Prisão da Lua Cheia': 'Full Moon Prison', 'Prisão da Rocha Fervente': 'Boiling Rock Prison',
+    // v1.0: campanha
+    'CAMPANHA': 'CAMPAIGN', 'CRÔNICAS DAS QUATRO NAÇÕES': 'CHRONICLES OF THE FOUR NATIONS', 'Capítulo {0}': 'Chapter {0}', 'Capítulo {0} de {1}': 'Chapter {0} of {1}', 'Capítulo {0}: {1}': 'Chapter {0}: {1}', 'Não iniciada': 'Not started', 'Concluída · finais: {0}/{1}': 'Completed · endings: {0}/{1}',
+    'Recompensa': 'Reward', 'Traje desbloqueado: {0}': 'Outfit unlocked: {0}', 'já desbloqueado': 'already unlocked', 'ESCOLHA': 'CHOICE', 'DERROTA': 'DEFEAT', 'FINAL: {0}': 'ENDING: {0}', 'Honra verdadeira': 'True honor', 'Honra pelo poder': 'Honor through power', 'Indefinida': 'Undecided',
+    'Rota: {0}  ·  Finais vistos: {1}/{2}': 'Route: {0}  ·  Endings seen: {1}/{2}', 'Campanha concluída. Final: {0}': 'Campaign completed. Ending: {0}', 'Enter = continuar · Esc = menu': 'Enter = continue · Esc = menu', 'Enter = jogar de novo · Esc = menu': 'Enter = play again · Esc = menu',
+    'Enter avança · Esc volta ao mapa': 'Enter next · Esc back to the map', 'Enter para continuar': 'Enter to continue', 'Enter para voltar ao mapa': 'Enter to return to the map', 'A história continua de onde parou. Tentar de novo?': 'The story continues from here. Try again?', 'Enter = tentar de novo · Esc = voltar ao mapa': 'Enter = retry · Esc = back to the map',
     // cenários
     'Templo do Ar do Sul': 'Southern Air Temple', 'Ba Sing Se': 'Ba Sing Se', 'Palácio da Nação do Fogo': 'Fire Nation Palace', 'Tribo da Água do Norte': 'Northern Water Tribe', 'Ilha Ember': 'Ember Island',
     'Deserto Si Wong': 'Si Wong Desert', 'Pântano Nebuloso': 'Foggy Swamp', 'Omashu': 'Omashu',

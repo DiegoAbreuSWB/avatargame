@@ -29,7 +29,8 @@ class Game {
   get is3D() { return !!(this.r3d && this.use3D); }
   get p1PicksBoth() { return this.mode === 'cpu' || this.mode === 'training' || this.mode === 'online'; }
   get soloMode() { return this.mode === 'arcade' || this.mode === 'survival'; }
-  titleOptions() { return ['2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'DESAFIO DIÁRIO', 'TORNEIO', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'CONTROLES', 'CONFIGURAÇÕES']; }
+  get usesCompanions() { return this.mode !== 'campaign' && this.mode !== 'daily'; }
+  titleOptions() { return ['CAMPANHA', '2 JOGADORES', '1 JOGADOR  vs  CPU', 'ARCADE', 'SOBREVIVÊNCIA', 'DESAFIO DIÁRIO', 'TORNEIO', 'TREINO', 'ONLINE (EXPERIMENTAL)', 'CONTROLES', 'CONFIGURAÇÕES']; }
 
   /* ---------- utilidades ---------- */
   get stage() { return STAGES[this.stageIndex]; }
@@ -93,6 +94,13 @@ class Game {
       case 'title': this.updateTitle(); break;
       case 'online': this.updateOnline(); break;
       case 'rules': this.updateRules(); break;
+      case 'campaignSelect': this.updateCampaignSelect(); break;
+      case 'campaignMap': this.updateCampaignMap(); break;
+      case 'dialogue': this.updateDialogue(); break;
+      case 'choice': this.updateChoice(); break;
+      case 'campaignMsg': this.updateCampaignMsg(); break;
+      case 'campaignRetry': this.updateCampaignRetry(); break;
+      case 'campaignEnding': this.updateCampaignEnding(); break;
       case 'daily': this.updateDaily(); break;
       case 'tournamentSetup': this.updateTournamentSetup(); break;
       case 'bracket': this.updateBracket(); break;
@@ -107,7 +115,7 @@ class Game {
       case 'fight': this.updateFight(); if (this.net) this.net.advance(); break;
       case 'result': this.updateResult(); break;
     }
-    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'rules', 'daily', 'tournamentSetup', 'bracket', 'ladder', 'continue', 'ending', 'survivalEnd', 'result'].includes(this.scene) ? 'menu' : null;
+    const theme = this.scene === 'fight' ? this.stage.theme : ['title', 'controls', 'settings', 'remap', 'select', 'stage', 'rules', 'daily', 'tournamentSetup', 'bracket', 'ladder', 'continue', 'ending', 'survivalEnd', 'result', 'campaignSelect', 'campaignMap', 'dialogue', 'choice', 'campaignMsg', 'campaignRetry', 'campaignEnding'].includes(this.scene) ? 'menu' : null;
     if (typeof Music !== 'undefined') Music.ensure(theme, Settings.data.music);
   }
 
@@ -124,6 +132,13 @@ class Game {
       case 'title': drawTitle(ctx, this); break;
       case 'online': drawOnline(ctx, this); break;
       case 'rules': drawRules(ctx, this); break;
+      case 'campaignSelect': drawCampaignSelect(ctx, this); break;
+      case 'campaignMap': drawCampaignMap(ctx, this); break;
+      case 'dialogue': drawDialogue(ctx, this); break;
+      case 'choice': drawChoice(ctx, this); break;
+      case 'campaignMsg': drawCampaignMsg(ctx, this); break;
+      case 'campaignRetry': drawCampaignRetry(ctx, this); break;
+      case 'campaignEnding': drawCampaignEnding(ctx, this); break;
       case 'daily': drawDaily(ctx, this); break;
       case 'tournamentSetup': drawTournamentSetup(ctx, this); break;
       case 'bracket': drawBracket(ctx, this); break;
@@ -151,16 +166,17 @@ class Game {
     if (this.confirmPressed()) {
       Audio_.play('confirm');
       switch (this.menuIndex) {
-        case 0: this.mode = '2p'; this.gotoSelect(); break;
-        case 1: this.mode = 'cpu'; this.gotoSelect(); break;
-        case 2: this.mode = 'arcade'; this.gotoSelect(); break;
-        case 3: this.mode = 'survival'; this.gotoSelect(); break;
-        case 4: this.dailyResult = null; this.dailyT = 0; this.scene = 'daily'; break;
-        case 5: this.startTournamentSetup(); break;
-        case 6: this.mode = 'training'; this.gotoSelect(); break;
-        case 7: this.online = { step: 'menu', index: 0, msg: '' }; this.scene = 'online'; break;
-        case 8: this.scene = 'controls'; break;
-        case 9: this.scene = 'settings'; this.settingsIndex = 0; break;
+        case 0: this.startCampaignSelect(); break;
+        case 1: this.mode = '2p'; this.gotoSelect(); break;
+        case 2: this.mode = 'cpu'; this.gotoSelect(); break;
+        case 3: this.mode = 'arcade'; this.gotoSelect(); break;
+        case 4: this.mode = 'survival'; this.gotoSelect(); break;
+        case 5: this.dailyResult = null; this.dailyT = 0; this.scene = 'daily'; break;
+        case 6: this.startTournamentSetup(); break;
+        case 7: this.mode = 'training'; this.gotoSelect(); break;
+        case 8: this.online = { step: 'menu', index: 0, msg: '' }; this.scene = 'online'; break;
+        case 9: this.scene = 'controls'; break;
+        case 10: this.scene = 'settings'; this.settingsIndex = 0; break;
       }
     }
   }
@@ -246,7 +262,7 @@ class Game {
     cpu.aiLevel = this.aiLevelOverride || Settings.data.difficulty;
     this.fighters[0].aiLevel = cpu.aiLevel;
     this.fighters.forEach((f) => { f.rounds = 0; f.chi = 0; f.hpGhost = CFG.MAX_HP; });
-    this.roundsToWin = this.mode === 'training' ? 99 : this.mode === 'survival' ? 1 : Settings.data.roundsToWin;
+    this.roundsToWin = this.mode === 'training' ? 99 : this.mode === 'survival' ? 1 : this.mode === 'campaign' ? (this.campaignRounds || 1) : Settings.data.roundsToWin;
     this.infiniteTime = this.mode === 'training' || Settings.data.roundTime === 0;
     this.round = 1; this.winner = null; this.paused = false;
     this.training.history = []; this.training.lastCombo = 0;
@@ -463,6 +479,7 @@ class Game {
     if (w) {
       this.winner = w; this.onMatchFinished(w);
       if (this.mode === 'daily') return this.onDailyEnd(w);
+      if (this.mode === 'campaign') return this.onCampaignFightEnd(w);
       if (this.mode === 'tournament') return this.onTournamentEnd(w);
       if (this.soloMode) return this.onMatchEnd(w);
       this.scene = 'result'; this.resultT = 0; Audio_.play('win'); return;

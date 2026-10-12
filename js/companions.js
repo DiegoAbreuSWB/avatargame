@@ -24,7 +24,7 @@ const Companions = (() => {
   /* chamado em startMatch: define o companheiro de cada lutador e zera a barra */
   function setup(game) {
     game.fighters.forEach((f, i) => {
-      let id = enabled() ? (i === 0 ? game.select.comp1 : game.select.comp2) || 'none' : 'none';
+      let id = enabled() && (game.usesCompanions === undefined || game.usesCompanions) ? (i === 0 ? game.select.comp1 : game.select.comp2) || 'none' : 'none';
       if (enabled() && f.isCPU && (!id || id === 'none') && game.mode !== 'training') id = Rng.pick(COMPANIONS.slice(1)).id;
       f.companion = get(id); f.assist = 0;
     });

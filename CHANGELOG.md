@@ -2,6 +2,11 @@
 
 Todas as versões são de 2026-10-08. Decisões por trás de cada item em `docs/DECISOES.md`.
 
+## 0.9.0 — Novos guerreiros
+- Homem Combustão (explosões de longo alcance com carga vulnerável), Jet (gancho que puxa, investida, super multi-hit), Mestre Pakku (chicotes longos, muralha de gelo que absorve projéteis, tempestade polar) e Hama (armadilha de água e Prisão da Lua Cheia, chefe).
+- Cenário Prisão da Rocha Fervente. Título e seleção adaptados a 16 lutadores.
+- Testes dos quatro kits; ADR-039 e 040.
+
 ## 0.8.0 — Companheiros
 - Momo (Distração Aérea), Appa (Investida do Bisão) e Nyla (Língua Paralisante) como assistências: barra de apoio própria, tecla R/U (LT/RT no controle, botão A no toque), escolha na seleção com a tecla de super.
 - CPU usa companheiros; opção "Companheiros: desligados (competitivo)"; companheiros viajam no cfg do Online.

@@ -434,6 +434,12 @@ class Game {
     for (let i = 0; i < this.projectiles.length; i++) for (let j = i + 1; j < this.projectiles.length; j++) {
       const p = this.projectiles[i], q = this.projectiles[j];
       if (p.owner === q.owner || !p.active || !q.active || p.dead || q.dead) continue;
+      if (p.wall || q.wall) {
+        const wall = p.wall ? p : q, other = p.wall ? q : p;
+        if (other.wall || other.hazard || other.follow || GROUND_TYPES.has(other.type) || other.type === 'beam') continue;
+        if (rectsOverlap(wall.box, other.box)) { other.dead = true; wall.wall--; if (wall.wall <= 0) wall.dead = true; Particles.element('gelo', other.x, other.y, 12); Audio_.play('block'); }
+        continue;
+      }
       if (!p.cancels && !q.cancels) continue;
       if (rectsOverlap(p.box, q.box)) {
         if (p.cancels) p.dead = true; if (q.cancels) q.dead = true;

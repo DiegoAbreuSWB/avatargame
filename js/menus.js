@@ -12,8 +12,8 @@ function drawTitle(ctx, game) {
   drawMenuBackdrop(ctx, game, 0);
   if (!game.is3D) {
     CHARACTERS.forEach((ch, i) => {
-      const x = 70 + i * 104;
-      drawFigureAt(ctx, ch, x, CFG.GROUND + 60, 0.7, 'idle', game.t + i * 17, i < 6 ? 1 : -1, { staff: false });
+      const nC = CHARACTERS.length, x = 50 + i * ((CFG.W - 100) / (nC - 1));
+      drawFigureAt(ctx, ch, x, CFG.GROUND + 60, Math.min(0.7, 9 / nC), 'idle', game.t + i * 17, i < nC / 2 ? 1 : -1, { staff: false });
     });
   }
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, 0, CFG.W, 300);
@@ -61,7 +61,8 @@ function drawSelect(ctx, game) {
   txt(ctx, T('ESCOLHA SEU LUTADOR'), CFG.W / 2, 56, { font: FONT_DISPLAY, size: 40, color: '#ffd54f', stroke: '#3b1d00', strokeWidth: 6 });
 
   // grade central (4 x 3)
-  const cols = SELECT_COLS, cw = 122, chh = 140, gx = CFG.W / 2 - (cols * cw) / 2, gy = 140;
+  const rowsN = Math.ceil(CHARACTERS.length / SELECT_COLS);
+  const cols = SELECT_COLS, cw = 122, chh = Math.min(140, Math.floor(500 / rowsN)), gx = CFG.W / 2 - (cols * cw) / 2, gy = 140;
   CHARACTERS.forEach((ch, i) => {
     const c = i % cols, r = Math.floor(i / cols);
     const x = gx + c * cw, y = gy + r * chh;
@@ -72,10 +73,10 @@ function drawSelect(ctx, game) {
       ctx.beginPath(); ctx.arc(x + cw / 2, y + chh / 2 + 10, 36, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
       txt(ctx, T(ELEMENT_NAMES[ch.element]).toUpperCase(), x + cw / 2, y + chh / 2 + 10, { font: FONT_DISPLAY, size: 12, color: '#fff', stroke: 'rgba(0,0,0,.8)' });
     } else {
-      drawFigureAt(ctx, ch, x + cw / 2, y + chh - 14, 0.5, 'idle', game.t + i * 13, 1, { staff: false });
+      drawFigureAt(ctx, ch, x + cw / 2, y + chh - 12, chh / 280, 'idle', game.t + i * 13, 1, { staff: false });
     }
     ctx.restore();
-    txt(ctx, ch.name.toUpperCase(), x + cw / 2, y + 20, { font: FONT_DISPLAY, size: 13, color: ELEMENT_COLORS[ch.element], stroke: 'rgba(0,0,0,.9)' });
+    txt(ctx, ch.name.toUpperCase(), x + cw / 2, y + 20, { font: FONT_DISPLAY, size: ch.name.length > 11 ? 10 : 13, color: ELEMENT_COLORS[ch.element], stroke: 'rgba(0,0,0,.9)' });
     if (ch.boss) txt(ctx, T('CHEFE'), x + cw / 2, y + chh - 14, { size: 10, color: '#ff8a65', stroke: 'rgba(0,0,0,.9)' });
     const p1Here = s.p1 === i, p2Here = s.p2 === i;
     if (p1Here) { ctx.strokeStyle = '#f2a93b'; ctx.lineWidth = 4; roundRect(ctx, x + 3, y + 3, cw - 6, chh - 6, 9); ctx.stroke(); txt(ctx, 'P1', x + 18, y + 16, { size: 12, color: '#f2a93b', stroke: '#000' }); }

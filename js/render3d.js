@@ -197,9 +197,9 @@ class Renderer3D {
     this.frame++;
     switch (game.scene) {
       case 'fight': return this.renderFight(game);
-      case 'title': { const xs = [40, 230, 420, 860, 1050, 1240];
+      case 'title': { const nC = CHARACTERS.length, half = Math.ceil(nC / 2), xs = CHARACTERS.map((_, i) => (i < half ? 30 + i * (560 / Math.max(1, half - 1)) : 690 + (i - half) * (560 / Math.max(1, nC - half - 1))));
         return this.renderShowcase(game, STAGES[0],
-          CHARACTERS.map((ch, i) => ({ key: 't' + i, char: ch, x: xs[i], pose: 'idle', t: game.t + i * 17, facing: i < 3 ? 1 : -1 })),
+          CHARACTERS.map((ch, i) => ({ key: 't' + i, char: ch, x: xs[i], pose: 'idle', t: game.t + i * 17, facing: i < half ? 1 : -1 })),
           [640, 330, 1500], [640, 230, 0]); }
       case 'controls': case 'settings': case 'remap': case 'tournamentSetup': case 'bracket': return this.renderShowcase(game, STAGES[3], [], [640, 330, 1500], [640, 230, 0]);
       case 'rules': return this.renderShowcase(game, STAGES[game.stageIndex], [], [640, 330, 1500], [640, 230, 0]);
@@ -336,6 +336,14 @@ const STAGE3D = {
       prop(g, G.box, chute, [130, 220, -300], [12, 520, 30], [0, 0, 0.5]); prop(g, G.box, chute, [1150, 220, -300], [12, 520, 30], [0, 0, -0.5]);
       for (let i = 0; i < 6; i++) prop(g, G.box, a, [-80 + i * 260, 14, 330], [70, 28, 40]);
     } },
+  fervente: { bg: '#2a1410', fog: '#4a1e14', hemi: ['#ff8a50', '#1a0a06', 0.8], sun: ['#ffb080', 0.7], sunPos: [640, 900, 600],
+    build(g, r) { const G = Rig3D.geos(); const rock = toon('#3e2723'), lava = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff6d00') });
+      for (let i = 0; i < 6; i++) { const x = -100 + i * 300, h = 260 + (i % 3) * 120; prop(g, G.box, rock, [x, h / 2, -560], [200, h, 160]); }
+      prop(g, G.box, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff3d00') }), [640, -4, -850], [4000, 6, 500]);
+      for (let i = 0; i < 5; i++) prop(g, G.cyl, rock, [100 + i * 270, 90, -330], [26, 180, 26]);
+      for (let i = 0; i < 6; i++) prop(g, G.box, rock, [-80 + i * 260, 12, 330], [70, 24, 40]);
+      for (const x of [260, 1020]) { const l = r.addStageLight(new THREE.PointLight(0xff6d00, 1.4, 900, 2)); l.position.set(x, 60, -500); l.userData.flicker = true; }
+    } },
   ember: { bg: '#3b1f52', fog: '#7a3a4a', hemi: ['#f7b267', '#6b4a2a', 1.0], sun: ['#ffb070', 1.2], sunPos: [-200, 350, 700],
     build(g) { const G = Rig3D.geos(); const trunk = toon('#6b4a2a'), leaf = toon('#2f7a3a');
       for (const [x, tilt] of [[80, 0.12], [1200, -0.12], [-250, 0.2], [1500, -0.18]]) {
@@ -409,6 +417,29 @@ function makeProjectileVisual(p, r) {
       break;
     }
     case 'momo': case 'appa': case 'nyla': { const cv = makeCompanionVisual(p, add, glow, G); v.update = (p) => cv.update(p, group); break; }
+    case 'geyser': {
+      const m = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color('#1e88e5'), transparent: true, opacity: 0.8 }), [p.w * 0.5, p.h, p.w * 0.5]);
+      const core = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color('#e1f5fe') }), [p.w * 0.2, p.h * 0.9, p.w * 0.2]);
+      glow('#4fc3f7', p.w * 2);
+      v.update = (p) => { group.position.set(p.x, 0, 0); const k = p.delay > 0 ? 0.03 : Math.min(1, (p.maxLife - p.life + 1) / 5); m.scale.y = p.h * k; m.position.y = p.h * k / 2; core.scale.y = p.h * 0.9 * k; core.position.y = p.h * 0.9 * k / 2; };
+      break;
+    }
+    case 'icewall': {
+      const m = add(G.box, new THREE.MeshToonMaterial({ color: new THREE.Color('#b2ebf2'), gradientMap: Rig3D.gradient(), transparent: true, opacity: 0.85 }), [p.w, p.h, 60]);
+      v.update = (p) => { pos(p); m.scale.x = p.w * (0.6 + 0.13 * (p.wall || 1)); };
+      break;
+    }
+    case 'hook': {
+      const blade = add(G.box, toon('#cfd8dc'), [p.w, 6, 3]); const rope = add(G.cyl, toon('#6d4c41'), [2, 1, 2]); rope.rotation.z = Math.PI / 2;
+      v.update = (p) => { pos(p); group.scale.x = p.facing; const len = Math.abs(p.x - p.owner.x); rope.scale.y = len; rope.position.x = -len / 2; };
+      break;
+    }
+    case 'blood': {
+      const rings = [0.4, 0.7, 1].map((k) => add(G.torus, new THREE.MeshBasicMaterial({ color: new THREE.Color('#b71c1c'), transparent: true, opacity: 0.55, depthWrite: false }), [60 * k, 90 * k, 40 * k]));
+      const gl = glow('#ff5252', 260); gl.material.opacity = 0.35;
+      v.update = (p) => { const t = p.target; group.position.set(t.x, CFG.GROUND - t.y + 90, 0); group.visible = p.delay <= 0; rings.forEach((r, i) => { r.rotation.y = p.rot * (1 + i * 0.3); r.rotation.x = Math.sin(p.rot + i) * 0.5; }); };
+      break;
+    }
     case 'bolt': {
       const core = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff') }), [6, CFG.GROUND, 6]);
       const halo = add(G.cyl, new THREE.MeshBasicMaterial({ color: new THREE.Color('#4fd5ff'), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }), [22, CFG.GROUND, 22]);
@@ -469,9 +500,10 @@ function makeProjectileVisual(p, r) {
       break;
     }
     case 'firepillar': {
-      const m = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color('#4fb3ff'), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }), [p.w * 0.5, p.h, p.w * 0.5]);
-      const core = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color('#e3f6ff') }), [p.w * 0.2, p.h * 0.9, p.w * 0.2]);
-      const gl = glow('#4fb3ff', p.w * 2.5); const light = new THREE.PointLight(0x4fb3ff, 1.5, 500, 2); group.add(light);
+      const fireP = p.color === 'fire';
+      const m = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color(fireP ? '#ff6a00' : '#4fb3ff'), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }), [p.w * 0.5, p.h, p.w * 0.5]);
+      const core = add(G.cone, new THREE.MeshBasicMaterial({ color: new THREE.Color(fireP ? '#fff1a8' : '#e3f6ff') }), [p.w * 0.2, p.h * 0.9, p.w * 0.2]);
+      const gl = glow(fireP ? '#ff8a30' : '#4fb3ff', p.w * 2.5); const light = new THREE.PointLight(fireP ? 0xff8a30 : 0x4fb3ff, 1.5, 500, 2); group.add(light);
       v.update = (p) => { group.position.set(p.x, 0, 0); const k = p.delay > 0 ? 0.02 : Math.min(1, (p.maxLife - p.life + 1) / 5); m.scale.y = p.h * k; m.position.y = p.h * k / 2; core.scale.y = p.h * 0.9 * k; core.position.y = p.h * 0.9 * k / 2; gl.position.y = p.h * k * 0.5; light.position.y = p.h * k * 0.6; };
       break;
     }

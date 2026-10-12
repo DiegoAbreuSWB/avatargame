@@ -1,5 +1,5 @@
 /* Projéteis e ataques de área (dobra): bolas de fogo, chicotes de água, rochas, pilares, raios... */
-const GROUND_TYPES = new Set(['pillar', 'firepillar', 'quake']);
+const GROUND_TYPES = new Set(['pillar', 'firepillar', 'quake', 'geyser']);
 
 class Projectile {
   constructor(owner, target, spec) {
@@ -93,6 +93,9 @@ class Projectile {
       case 'bolt': if (this.delay <= 0) Particles.element('raio', this.x + rand(-20, 20), CFG.GROUND - rand(0, 600), 3, { maxSpeed: 6 }); break;
       case 'breath': Particles.element('fogo', this.x + rand(-this.w / 2, this.w / 2), this.y + rand(-this.h / 3, this.h / 3), 2, { maxSpeed: 3, minLife: 6, maxLife: 14 }); break;
       case 'firewave': if (f % 2 === 0) Particles.element('fogo', this.x + rand(-30, 30), CFG.GROUND - rand(0, 40), 2, { maxSpeed: 2 }); break;
+      case 'geyser': if (this.delay <= 0 && f % 2 === 0) Particles.element('agua', this.x + rand(-this.w / 2, this.w / 2), CFG.GROUND - rand(0, this.h), 2, { maxSpeed: 5 }); break;
+      case 'blood': if (this.delay <= 0 && f % 2 === 0) Particles.burst(this.target.x + rand(-30, 30), this.target.y - rand(20, 150), 2, { color: ['#b71c1c', '#ff5252'], maxSpeed: 2, shape: 'spark' }); break;
+      case 'icewall': if (f % 8 === 0) Particles.element('gelo', this.x + rand(-20, 20), this.y + rand(-70, 70), 1, { maxSpeed: 1 }); break;
       case 'fan': case 'fanspin': if (f % 4 === 0) Particles.burst(this.x, this.y, 1, { color: ['#e3b23c', '#fff'], maxSpeed: 2, shape: 'spark' }); break;
     }
   }
@@ -170,6 +173,36 @@ class Projectile {
         break;
       }
       case 'momo': case 'appa': case 'nyla': drawCompanion2D(ctx, this); break;
+      case 'geyser': {
+        if (this.delay > 0) { ctx.fillStyle = 'rgba(79,195,247,.45)'; ctx.beginPath(); ctx.ellipse(x, CFG.GROUND, w * 0.6, 10, 0, 0, Math.PI * 2); ctx.fill(); }
+        else {
+          const p = Math.min(1, (this.maxLife - this.life + 1) / 5), hh = h * p;
+          ctx.fillStyle = 'rgba(30,136,229,.85)'; ctx.beginPath(); ctx.moveTo(x - w / 2, CFG.GROUND); ctx.quadraticCurveTo(x - w * 0.3, CFG.GROUND - hh * 0.7, x, CFG.GROUND - hh); ctx.quadraticCurveTo(x + w * 0.3, CFG.GROUND - hh * 0.7, x + w / 2, CFG.GROUND); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = 'rgba(225,245,254,.9)'; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(x + Math.sin(this.frame + i * 2) * w * 0.3, CFG.GROUND - hh + i * 14, 8, 0, Math.PI * 2); ctx.fill(); }
+        }
+        break;
+      }
+      case 'icewall': {
+        ctx.translate(x, y);
+        ctx.fillStyle = 'rgba(178,235,242,.9)'; ctx.strokeStyle = '#4dd0e1'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-w / 2, h / 2); ctx.lineTo(-w / 2 + 6, -h / 2); ctx.lineTo(w / 2 - 4, -h / 2 + 12); ctx.lineTo(w / 2, h / 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; for (let i = 0; i < (this.wall || 1); i++) { ctx.beginPath(); ctx.moveTo(-w / 2 + 8 + i * 10, -h / 2 + 20 + i * 30); ctx.lineTo(w / 2 - 10, -h / 2 + 50 + i * 30); ctx.stroke(); }
+        break;
+      }
+      case 'hook': {
+        ctx.strokeStyle = '#6d4c41'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(this.owner.x + this.facing * 20, this.owner.y - 120); ctx.lineTo(x, y); ctx.stroke();
+        ctx.translate(x, y); ctx.scale(this.facing, 1);
+        ctx.strokeStyle = '#cfd8dc'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-w / 2, 0); ctx.lineTo(w * 0.3, 0); ctx.arc(w * 0.3, -h / 2, h / 2, Math.PI / 2, -Math.PI / 2, true); ctx.stroke();
+        break;
+      }
+      case 'blood': {
+        if (this.delay > 0) break;
+        const t = this.target;
+        ctx.strokeStyle = 'rgba(183,28,28,.8)'; ctx.lineWidth = 3;
+        for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(this.owner.x + this.facing * 30, this.owner.y - 120 + i * 6); ctx.quadraticCurveTo((this.owner.x + t.x) / 2, this.owner.y - 200 + Math.sin(this.frame * 0.5 + i) * 40, t.x + Math.cos(i) * 20, t.y - 40 - i * 20); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(255,82,82,.25)'; ctx.beginPath(); ctx.ellipse(t.x, t.y - 90, 60, 110, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
       case 'bolt': {
         if (this.delay > 0) {
           ctx.fillStyle = `rgba(155,231,255,${0.25 + 0.5 * ((this.frame % 10) / 10)})`; ctx.beginPath(); ctx.ellipse(x, CFG.GROUND, w * 1.2, 10, 0, 0, Math.PI * 2); ctx.fill();
@@ -252,10 +285,11 @@ class Projectile {
       }
       case 'firepillar': {
         if (this.delay > 0) {
-          ctx.fillStyle = 'rgba(79,179,255,.4)'; ctx.beginPath(); ctx.ellipse(x, CFG.GROUND, w / 2, 10, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = this.color === 'fire' ? 'rgba(255,120,30,.45)' : 'rgba(79,179,255,.4)'; ctx.beginPath(); ctx.ellipse(x, CFG.GROUND, w / 2, 10, 0, 0, Math.PI * 2); ctx.fill();
         } else {
           const p = Math.min(1, (this.maxLife - this.life + 1) / 5), hh = h * p;
-          for (const [col, k] of [['rgba(30,111,255,.7)', 1], ['rgba(79,179,255,.85)', 0.7], ['rgba(227,246,255,.9)', 0.35]]) {
+          const cols = this.color === 'fire' ? [['rgba(255,61,0,.7)', 1], ['rgba(255,179,0,.85)', 0.7], ['rgba(255,243,176,.95)', 0.35]] : [['rgba(30,111,255,.7)', 1], ['rgba(79,179,255,.85)', 0.7], ['rgba(227,246,255,.9)', 0.35]];
+          for (const [col, k] of cols) {
             ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - (w / 2) * k, CFG.GROUND);
             ctx.quadraticCurveTo(x - (w / 2) * k, CFG.GROUND - hh * 0.6, x + Math.sin(this.frame * 0.7) * 8, CFG.GROUND - hh * k - 10);
             ctx.quadraticCurveTo(x + (w / 2) * k, CFG.GROUND - hh * 0.6, x + (w / 2) * k, CFG.GROUND); ctx.closePath(); ctx.fill();

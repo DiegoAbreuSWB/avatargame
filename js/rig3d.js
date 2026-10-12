@@ -207,6 +207,24 @@ const Rig3D = (() => {
         hair(G.sphere, c.hair, [6, -20, 2], [9, 18, 7]);                          // barba longa
         hair(G.cyl, c.accent, [-2, 24, 0], [9, 8, 9]);                             // coroa
         break;
+      case 'combustao':
+        hair(G.sphere, '#b71c1c', [14, 10, 4], 3.5);                                // terceiro olho
+        hair(G.torus, '#8d6e63', [14, 10, 4], 6, [0, Math.PI / 2 + 0.4, 0]);
+        break;
+      case 'jet':
+        hair(G.sphere, c.hair, [-3, 6, 0], [19.8, 17, 19.8]);
+        for (let i = 0; i < 4; i++) hair(G.cone, c.hair, [-10 + i * 7, 20, (i % 2) * 8 - 4], [4, 12, 4], [0, 0, (i - 1.5) * 0.3]);
+        hair(G.cyl, '#e3b23c', [20, -8, 6], [1.2, 18, 1.2], [0, 0, 1.2]);            // talo de trigo
+        break;
+      case 'pakku':
+        hair(G.sphere, c.hair, [-4, 5, 0], [19.6, 17, 19.6]);
+        hair(G.cyl, c.hair, [-18, -14, 0], [4, 44, 4], [0, 0, 0.15]);                // rabo de cavalo
+        hair(G.box, c.hair, [12, -5, 0], [14, 3, 12]);                               // bigode
+        break;
+      case 'hama':
+        hair(G.sphere, c.hair, [-3, 4, 0], [19.6, 18, 19.6]);
+        hair(G.sphere, c.hair, [-6, 26, 0], 9);                                      // coque
+        break;
     }
   }
 

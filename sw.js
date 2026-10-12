@@ -1,7 +1,7 @@
 /* Service worker (PWA): guarda os arquivos do jogo para jogar offline.
    Estratégia: arquivos locais em cache primeiro (cache-first); CDN (Three.js, fontes) em rede primeiro com cache de reserva.
    Só é registrado quando a página é servida por http(s); em file:// o navegador não permite. */
-const VERSION = 'avatar-arena-v0.8.0';
+const VERSION = 'avatar-arena-v0.9.0';
 const LOCAL = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './js/config.js', './js/settings.js', './js/i18n.js', './js/audio.js', './js/music.js', './js/input.js', './js/gamepad.js', './js/touch.js',

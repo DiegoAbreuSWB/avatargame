@@ -170,3 +170,59 @@ Vantagem = quantos frames o atacante fica livre antes do defensor, supondo acert
 | special | Arremesso de Pedra | 16 | 2 | 24 | 42 | 15 |  |  |  |  |  | projétil rock, armadura, cancela em super |
 | special2 | Abraço de Pedra | 8 | 2 | 26 | 36 |  |  |  |  |  |  | armadura, cancela em super |
 | super | Avalanche | 16 | 2 | 36 | 54 | 8+8+8+8+8+8 |  |  |  |  |  | custa 100 chi |
+
+## Homem Combustão (fogo)
+
+| Golpe | Nome | Startup | Ativo | Recuperação | Total | Dano | Hitstun | Blockstun | Vant. acerto | Vant. bloqueio | Altura | Obs. |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| punch | Soco de Metal | 6 | 4 | 9 | 19 | 7 | 14 | 8 | 2 | -4 | mid | cancela em special |
+| kick | Chute | 10 | 5 | 16 | 31 | 11 | 20 | 12 | 0 | -8 | mid | cancela em special |
+| cpunch | Soco Baixo | 4 | 4 | 9 | 17 | 4 | 13 | 8 | 1 | -4 | low | cancela em special |
+| sweep | Rasteira | 9 | 5 | 20 | 34 | 8 | 24 | 12 | 0 | -12 | low | derruba |
+| jpunch | Soco Aéreo | 4 | 10 | 6 | 20 | 6 | 16 | 10 | 1 | -5 | high |  |
+| jkick | Chute Aéreo | 6 | 12 | 8 | 26 | 9 | 20 | 12 | 1 | -7 | high |  |
+| special | Explosão Concentrada | 24 | 2 | 30 | 56 | 14 |  |  |  |  |  | projétil fire, cancela em super |
+| special2 | Explosão de Impacto | 20 | 2 | 30 | 52 | 13 |  |  |  |  |  | projétil firepillar, cancela em super |
+| super | Explosão Devastadora | 32 | 2 | 40 | 74 | 34 |  |  |  |  |  | projétil beam, custa 100 chi |
+
+## Jet (nao)
+
+| Golpe | Nome | Startup | Ativo | Recuperação | Total | Dano | Hitstun | Blockstun | Vant. acerto | Vant. bloqueio | Altura | Obs. |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| punch | Espadas-gancho | 4 | 4 | 9 | 17 | 5 | 14 | 8 | 2 | -4 | mid | cancela em special |
+| kick | Chute | 7 | 5 | 16 | 28 | 9 | 20 | 12 | 0 | -8 | mid | cancela em special |
+| cpunch | Soco Baixo | 4 | 4 | 9 | 17 | 4 | 13 | 8 | 1 | -4 | low | cancela em special |
+| sweep | Rasteira | 9 | 5 | 20 | 34 | 8 | 24 | 12 | 0 | -12 | low | derruba |
+| jpunch | Soco Aéreo | 4 | 10 | 6 | 20 | 6 | 16 | 10 | 1 | -5 | high |  |
+| jkick | Chute Aéreo | 6 | 12 | 8 | 26 | 9 | 20 | 12 | 1 | -7 | high |  |
+| special | Gancho | 9 | 2 | 18 | 29 | 5 |  |  |  |  |  | projétil hook, cancela em super |
+| special2 | Investida das Lâminas | 6 | 14 | 18 | 38 | 12 | 24 | 12 | -7 | -19 | mid | derruba, avança, cancela em super |
+| super | Fúria dos Combatentes da Liberdade | 10 | 48 | 20 | 78 | 5 | 14 | 8 | -53 | -59 | mid | 7 hits, invul. 0-10, avança, custa 100 chi |
+
+## Mestre Pakku (agua)
+
+| Golpe | Nome | Startup | Ativo | Recuperação | Total | Dano | Hitstun | Blockstun | Vant. acerto | Vant. bloqueio | Altura | Obs. |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| punch | Soco | 4 | 4 | 9 | 17 | 6 | 14 | 8 | 2 | -4 | mid | cancela em special |
+| kick | Chicote Longo | 9 | 5 | 16 | 30 | 8 | 20 | 12 | 0 | -8 | mid | cancela em special |
+| cpunch | Soco Baixo | 4 | 4 | 9 | 17 | 4 | 13 | 8 | 1 | -4 | low | cancela em special |
+| sweep | Rasteira | 9 | 5 | 20 | 34 | 8 | 24 | 12 | 0 | -12 | low | derruba |
+| jpunch | Soco Aéreo | 4 | 10 | 6 | 20 | 6 | 16 | 10 | 1 | -5 | high |  |
+| jkick | Chute Aéreo | 6 | 12 | 8 | 26 | 9 | 20 | 12 | 1 | -7 | high |  |
+| special | Chicote Gelado | 10 | 2 | 18 | 30 | 12 |  |  |  |  |  | projétil water, cancela em super |
+| special2 | Muralha de Gelo | 12 | 2 | 20 | 34 | 4 |  |  |  |  |  | projétil icewall, cancela em super |
+| super | Tempestade Polar | 14 | 42 | 26 | 82 | 8x5 |  |  |  |  |  | custa 100 chi |
+
+## Hama (agua)
+
+| Golpe | Nome | Startup | Ativo | Recuperação | Total | Dano | Hitstun | Blockstun | Vant. acerto | Vant. bloqueio | Altura | Obs. |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| punch | Soco | 4 | 4 | 9 | 17 | 5 | 14 | 8 | 2 | -4 | mid | cancela em special |
+| kick | Chute | 8 | 5 | 16 | 29 | 8 | 20 | 12 | 0 | -8 | mid | cancela em special |
+| cpunch | Soco Baixo | 4 | 4 | 9 | 17 | 4 | 13 | 8 | 1 | -4 | low | cancela em special |
+| sweep | Rasteira | 9 | 5 | 20 | 34 | 8 | 24 | 12 | 0 | -12 | low | derruba |
+| jpunch | Soco Aéreo | 4 | 10 | 6 | 20 | 6 | 16 | 10 | 1 | -5 | high |  |
+| jkick | Chute Aéreo | 6 | 12 | 8 | 26 | 9 | 20 | 12 | 1 | -7 | high |  |
+| special | Água do Ar | 9 | 2 | 16 | 27 | 9 |  |  |  |  |  | projétil water, cancela em super |
+| special2 | Armadilha de Água | 14 | 2 | 24 | 40 | 10 |  |  |  |  |  | projétil geyser, cancela em super |
+| super | Prisão da Lua Cheia | 18 | 2 | 34 | 54 | 12 |  |  |  |  |  | projétil blood, custa 100 chi |

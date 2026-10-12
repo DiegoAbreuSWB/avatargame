@@ -86,7 +86,7 @@ if (PARAMS.r === '3d') {
           game.startMatch(); game.phase = 'play'; game.fighters.forEach((f) => { f.state = 'idle'; });
           const a = game.fighters[0], b = game.fighters[1];
           const m = a.moves[key]; if (!m) { out.moves.push({ ch: ch.id, move: key, dmg: -1, missing: true }); return; }
-          if (m.counter) { out.moves.push({ ch: ch.id, move: key, name: m.name, dmg: 1, counter: true }); return; }   // posturas não causam dano por si
+          if (m.counter || (m.projectile && m.projectile.wall)) { out.moves.push({ ch: ch.id, move: key, name: m.name, dmg: 1, counter: true }); return; }   // posturas e muralhas não causam dano por si
           const ranged = (m.projectile || m.projectiles || m.volley) && !m.hitbox;
           const dist = !ranged ? 90 : (m.projectile && m.projectile.follow) ? 120 : 300;
           a.x = 500; b.x = 500 + dist; a.chi = 100;
@@ -403,6 +403,42 @@ if (PARAMS.r === '3d') {
       game.mode = '2p';
     });
     game.select.comp1 = 'none'; game.select.comp2 = 'none';
+  }
+
+  if (mode === 'all' || mode === 'v09') {
+    const v = out.v09 = {};
+    const run = (n) => { for (let i = 0; i < n; i++) game.update(); };
+    const setup = (p1, p2, dist) => {
+      Settings.data.companions = false;
+      game.mode = '2p'; game.select = { p1, p2, p1Done: true, p2Done: true, timer: 0, skin1: 0, skin2: 0, msg: '', comp1: 'none', comp2: 'none' }; game.stageIndex = 0; game.seed = seed; game.modifiers = [];
+      game.startMatch(); game.phase = 'play'; game.announce = null; game.fighters.forEach((f) => { f.state = 'idle'; });
+      const [a, b] = game.fighters; a.x = 400; b.x = 400 + (dist || 300); a.chi = 100; b.chi = 100; return [a, b];
+    };
+    const idx = (id) => CHARACTERS.findIndex((c) => c.id === id);
+    safe('v09 icewall', () => {
+      const [a, b] = setup(idx('pakku'), idx('zuko'), 400);
+      a.startAttack(a.moves.special2); run(16); const wall = game.projectiles.find((p) => p.type === 'icewall');
+      b.startAttack(b.moves.special); run(40);
+      const fire = game.projectiles.find((p) => p.type === 'fire');
+      v.icewall = !!wall && !wall.dead && wall.wall === 2 && !fire && a.hp === 100; v.icewallParts = [!!wall, wall && wall.wall, !fire, a.hp];
+    });
+    safe('v09 hook', () => {
+      const [a, b] = setup(idx('jet'), idx('toph'), 300); const bx = b.x;
+      a.startAttack(a.moves.special); run(70);
+      v.hook = b.x < bx - 40 && 100 - b.hp === 5; v.hookPull = [bx, b.x];
+    });
+    safe('v09 blood', () => {
+      const [a, b] = setup(idx('hama'), idx('aang'), 300); let maxStun = 0;
+      a.startAttack(a.moves.super); for (let i = 0; i < 60; i++) { game.update(); if (b.state === 'hit') maxStun = Math.max(maxStun, b.stun); }
+      v.blood = maxStun >= 85 && 100 - b.hp === 12; v.bloodStun = maxStun;
+    });
+    safe('v09 combustao', () => {
+      const [a, b] = setup(idx('combustao'), idx('katara'), 500);
+      a.startAttack(a.moves.special); run(90); const d1 = 100 - b.hp;
+      const [c, d] = setup(idx('combustao'), idx('katara'), 200); c.startAttack(c.moves.special2); run(60);
+      v.combustao = d1 === 14 && 100 - d.hp === 13 && d.launched !== undefined; v.combustaoDmg = [d1, 100 - d.hp];
+    });
+    Settings.data.companions = true;
   }
 
   if (mode === 'all' || mode === 'netplay') {

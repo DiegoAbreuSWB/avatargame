@@ -274,6 +274,30 @@ const STAGES = [
       ctx.beginPath(); ctx.moveTo(0, G + 38); ctx.lineTo(W, G + 38); ctx.stroke();
     },
   },
+  {
+    id: 'fervente', theme: 'fogo', name: 'Prisão da Rocha Fervente', floor: '#4e342e', shadow: 'rgba(0,0,0,.5)',
+    draw(ctx, t) {
+      const W = CFG.W, G = CFG.GROUND;
+      let g = ctx.createLinearGradient(0, 0, 0, G);
+      g.addColorStop(0, '#1a0a06'); g.addColorStop(0.6, '#4a1e14'); g.addColorStop(1, '#8d3b2f');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, G);
+      // lago de lava ao fundo com brilho pulsante
+      ctx.fillStyle = '#ff3d00'; ctx.fillRect(0, 440, W, 60);
+      ctx.fillStyle = 'rgba(255,200,80,.5)'; for (let i = 0; i < 10; i++) { ctx.beginPath(); ctx.ellipse(i * 140 + ((t * 0.3) % 140), 470 + Math.sin(t * 0.05 + i) * 6, 50, 8, 0, 0, Math.PI * 2); ctx.fill(); }
+      // paredes de rocha e torres da prisão
+      for (let i = 0; i < 6; i++) { const x = -100 + i * 300, h = 260 + (i % 3) * 120; ctx.fillStyle = i % 2 ? '#3e2723' : '#4e342e'; ctx.fillRect(x, 440 - h, 200, h); ctx.fillStyle = 'rgba(255,109,0,.25)'; ctx.fillRect(x + 20, 460 - h, 160, 12); }
+      ctx.fillStyle = '#5d4037'; for (let i = 0; i < 5; i++) ctx.fillRect(100 + i * 270 - 12, G - 220, 24, 200);
+      // vapor
+      ctx.fillStyle = 'rgba(255,255,255,.08)'; for (let i = 0; i < 6; i++) { const cx = ((i * 260 + t * 0.6) % (W + 200)) - 100; ctx.beginPath(); ctx.ellipse(cx, 420 - (t * 0.2 + i * 40) % 200, 90, 30, 0, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = '#3e2723'; ctx.fillRect(0, G - 24, W, 24);
+    },
+    drawFloor(ctx) {
+      const W = CFG.W, H = CFG.H, G = CFG.GROUND;
+      ctx.fillStyle = '#4e342e'; ctx.fillRect(0, G, W, H - G);
+      ctx.strokeStyle = 'rgba(255,109,0,.25)'; ctx.lineWidth = 2;
+      for (let x = 0; x < W; x += 120) { ctx.beginPath(); ctx.moveTo(x, G); ctx.lineTo(x - 40, H); ctx.stroke(); }
+    },
+  },
 ];
 
 function cloud(ctx, x, y, s) {

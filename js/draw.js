@@ -188,6 +188,14 @@ function drawOutfit(ctx, ch, J) {
     ctx.fillStyle = c.secondary; // túnica clara
     ctx.beginPath(); ctx.moveTo(J.sb[0] - 4, J.sb[1] - 2); ctx.lineTo(J.sf[0] + 4, J.sf[1] - 2); ctx.lineTo(J.hpf[0] + 6, J.hip[1] + 6); ctx.lineTo(J.hpb[0] - 6, J.hip[1] + 6); ctx.closePath(); ctx.fill();
     limb(ctx, [[J.sb[0] - 6, J.sb[1] - 4], [J.hip[0] + 4, J.hip[1] + 4]], 5, c.accent);
+  } else if (ch.id === 'combustao') {
+    limb(ctx, [J.sf, J.ef, J.hf], 13, c.accent);                                                                          // braço de metal
+    ctx.fillStyle = c.accent; ctx.fillRect(J.sf[0] - 2, J.sf[1] - 10, 20, 10);
+  } else if (ch.id === 'jet') {
+    ctx.fillStyle = c.accent; ctx.fillRect(J.sb[0] - 12, J.sb[1] - 6, 10, 6); ctx.fillRect(J.sf[0] + 2, J.sf[1] - 6, 10, 6);
+    limb(ctx, [[J.sb[0] - 14, J.sb[1] + 6], [J.sb[0] - 24, J.sb[1] + 56]], 5, '#cfd8dc'); limb(ctx, [[J.sb[0] - 8, J.sb[1] + 4], [J.sb[0] - 16, J.sb[1] + 54]], 5, '#cfd8dc');   // espadas-gancho nas costas
+  } else if (ch.id === 'pakku' || ch.id === 'hama') {
+    ctx.fillStyle = c.accent; ctx.beginPath(); ctx.moveTo(J.sb[0] - 10, J.sb[1] - 6); ctx.lineTo(J.sf[0] + 10, J.sf[1] - 6); ctx.lineTo(J.neck[0], J.neck[1] + 22); ctx.closePath(); ctx.fill();
   }
 }
 
@@ -204,6 +212,9 @@ function drawHead(ctx, ch, J, opts) {
   if (ch.id === 'mai') { dot(ctx, [hx - 4, hy - 3], r + 4, c.hair); dot(ctx, [hx - 14, hy - 22], 8, c.hair); dot(ctx, [hx + 6, hy - 25], 8, c.hair); }
   if (ch.id === 'ozai') { dot(ctx, [hx - 5, hy - 3], r + 3, c.hair); limb(ctx, [[hx - 16, hy - 4], [hx - 22, hy + 60]], 12, c.hair); }
   if (ch.id === 'suki') { dot(ctx, [hx - 6, hy - 2], r + 4, c.hair); }
+  if (ch.id === 'pakku') { dot(ctx, [hx - 4, hy - 4], r + 3, c.hair); limb(ctx, [[hx - 14, hy - 2], [hx - 26, hy + 40]], 7, c.hair); }
+  if (ch.id === 'hama') { dot(ctx, [hx - 3, hy - 3], r + 3, c.hair); dot(ctx, [hx - 6, hy - 24], 9, c.hair); }
+  if (ch.id === 'jet') { dot(ctx, [hx - 5, hy - 5], r + 4, c.hair); }
   if (ch.id === 'bumi') { for (let i = 0; i < 5; i++) { const a = Math.PI * (1.05 + i * 0.22); limb(ctx, [[hx + Math.cos(a) * 12, hy + Math.sin(a) * 12], [hx + Math.cos(a) * 30, hy + Math.sin(a) * 30 - 6]], 6, c.hair); } }
   // rosto
   dot(ctx, [hx, hy], r, c.skin);
@@ -273,6 +284,20 @@ function drawHead(ctx, ch, J, opts) {
     ctx.fillStyle = c.hair; ctx.beginPath(); ctx.ellipse(hx + 2, hy + 16, 9, 16, 0, 0, Math.PI); ctx.fill();            // barba longa
     ctx.fillStyle = c.accent; ctx.fillRect(hx - 8, hy - 26, 16, 8);                                                     // coroa
     dot(ctx, [hx + 7, hy - 3], 3.4, '#1b1b1b');                                                                         // olho maior (o louco)
+  } else if (ch.id === 'combustao') {
+    ctx.fillStyle = '#b71c1c'; ctx.beginPath(); ctx.arc(hx + 3, hy - 12, 4, 0, Math.PI * 2); ctx.fill();                   // terceiro olho
+    ctx.strokeStyle = '#8d6e63'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(hx + 3, hy - 12, 7, 0, Math.PI * 2); ctx.stroke();
+    limb(ctx, [[hx - 6, hy - 9], [hx + 12, hy - 9]], 2.5, '#5d4037');                                                   // sobrancelha única
+  } else if (ch.id === 'jet') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.moveTo(hx - 18, hy - 2); ctx.lineTo(hx - 14, hy - 24); ctx.lineTo(hx - 4, hy - 14); ctx.lineTo(hx + 4, hy - 26); ctx.lineTo(hx + 10, hy - 12); ctx.lineTo(hx + 18, hy - 18); ctx.lineTo(hx + 16, hy - 4); ctx.closePath(); ctx.fill();
+    limb(ctx, [[hx + 8, hy + 8], [hx + 26, hy + 2]], 2.5, '#e3b23c');                                                   // talo de trigo na boca
+  } else if (ch.id === 'pakku') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 8, 15, Math.PI, 0); ctx.fill();
+    limb(ctx, [[hx - 2, hy + 6], [hx + 13, hy + 7]], 3, c.hair);                                                        // bigode
+    limb(ctx, [[hx - 6, hy - 8], [hx + 1, hy - 9]], 3, c.hair); limb(ctx, [[hx + 4, hy - 9], [hx + 11, hy - 8]], 3, c.hair);
+  } else if (ch.id === 'hama') {
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(hx - 2, hy - 9, 15, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = 'rgba(90,60,50,.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx + 2, hy + 4); ctx.lineTo(hx + 9, hy + 3); ctx.moveTo(hx - 4, hy + 2); ctx.lineTo(hx, hy + 3); ctx.stroke();   // rugas
   }
 }
 

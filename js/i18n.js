@@ -77,6 +77,9 @@ const I18N = {
     'CAMPEÃO!': 'CHAMPION!', 'CHAVE DO TORNEIO': 'TOURNAMENT BRACKET', 'Campeão': 'Champion', 'Enter inicia a próxima luta ({0} x {1}) · Esc abandona': 'Enter starts the next match ({0} vs {1}) · Esc quits',
     // v0.8: companheiros
     'Companheiro': 'Companion', 'Companheiros': 'Companions', 'Desligados (competitivo)': 'Off (competitive)', 'Companheiro: {0}': 'Companion: {0}', 'Nenhum': 'None', 'Distração Aérea': 'Aerial Distraction', 'Investida do Bisão': 'Bison Charge', 'Língua Paralisante': 'Paralyzing Tongue', '{0} PRONTO ({1})': '{0} READY ({1})',
+    // v0.9
+    'O Assassino de Longo Alcance': 'The Long-Range Assassin', 'Combatente da Liberdade': 'Freedom Fighter', 'Mestre da Tribo do Norte': 'Master of the Northern Tribe', 'A Marionetista': 'The Puppetmaster',
+    'Explosão Devastadora': 'Devastating Blast', 'Fúria dos Combatentes da Liberdade': 'Freedom Fighters\' Fury', 'Tempestade Polar': 'Polar Storm', 'Prisão da Lua Cheia': 'Full Moon Prison', 'Prisão da Rocha Fervente': 'Boiling Rock Prison',
     // cenários
     'Templo do Ar do Sul': 'Southern Air Temple', 'Ba Sing Se': 'Ba Sing Se', 'Palácio da Nação do Fogo': 'Fire Nation Palace', 'Tribo da Água do Norte': 'Northern Water Tribe', 'Ilha Ember': 'Ember Island',
     'Deserto Si Wong': 'Si Wong Desert', 'Pântano Nebuloso': 'Foggy Swamp', 'Omashu': 'Omashu',

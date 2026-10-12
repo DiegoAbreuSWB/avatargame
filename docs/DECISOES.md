@@ -254,3 +254,21 @@ Datas em 2026-10-08, salvo indicação. Formato inspirado em *Architecture Decis
 **Contexto.** Fora do artefato (Pages e file://) o aviso "Pressione Enter" nunca sumia.
 **Causa.** `.overlay { display: flex }` (estilo do autor) vence o `display: none` que o navegador aplica ao atributo `hidden`; no claude.ai a página injeta `[hidden]{display:none!important}` e por isso o teste visual não pegou.
 **Escolha.** Regra `[hidden] { display: none !important; }` no CSS do projeto e estilo inline como garantia. Lição: testar a página real (`index.html`) além do harness, que não tem o overlay.
+
+## ADR-039 · Quatro guerreiros novos, quatro mecânicas de dados
+
+**Contexto.** v0.9 do roadmap: Homem Combustão, Jet, Pakku e Hama.
+**Escolha.** Como na Fase 2, cada um entra como dados em `characters.js` mais aparência 2D/3D; as mecânicas novas são flags genéricas:
+
+| Lutador | Mecânica | Flag |
+|---|---|---|
+| Homem Combustão | Carga longa e vulnerável (24 a 32 frames sem invulnerabilidade) com explosões de longo alcance; explosão no ponto do alvo | `chargeFx`, `atTarget` + `firepillar` com `color: 'fire'` |
+| Jet | Gancho que puxa o oponente para perto; investida das lâminas; super multi-hit | `pull`, `maxDist` |
+| Pakku | Muralha de gelo que absorve até 3 projéteis sem morrer | `wall: 3` (tratado antes do cancelamento projétil x projétil) |
+| Hama (chefe) | Armadilha de água no ponto do alvo; Prisão da Lua Cheia: domínio inbloqueável que paralisa 90 frames e arrasta | `geyser` (tipo de chão), `blood` com `follow`, `unblockable`, `pull` |
+
+**Consequências.** `GROUND_TYPES` ganhou `geyser`; a muralha ignora perigos, feixes, projéteis de chão e invocações presas ao dono. Hama é `boss: true` (segundo chefe possível no Arcade quando o jogador é Ozai... não: a escada usa Ozai, Azula se o jogador for Ozai; Hama fica selecionável no Versus e aparece no Arcade pela escada aleatória não, pois chefes ficam fora do sorteio). Cenário novo: Prisão da Rocha Fervente (lava, vapor, luzes tremulantes no 3D).
+
+## ADR-040 · Título e seleção escalam com o elenco
+
+**Escolha.** A fileira do título e a grade de seleção calculam posições e tamanho a partir de `CHARACTERS.length` (4 colunas, altura da célula limitada a 500 px no total). Antes, as posições do título no 3D eram uma lista fixa de 6 e os lutadores extras ficavam em `NaN` (invisíveis, sem erro).
